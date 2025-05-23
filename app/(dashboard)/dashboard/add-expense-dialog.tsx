@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -191,7 +191,7 @@ export function AddExpenseDialog({
                             )}
                           >
                             {field.value ? (
-                              format(field.value, "PPP")
+                              formatDate(field.value, "MMM dd, yyyy")
                             ) : (
                               <span>Pick a date</span>
                             )}

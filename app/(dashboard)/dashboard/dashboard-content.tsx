@@ -10,11 +10,10 @@ import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import { AddExpenseDialog } from "./add-expense-dialog";
 import { expenseService, type Expense } from "@/lib/expense-service";
-import { startOfMonth } from "date-fns";
+import { startOfMonth, formatDate } from "@/lib/utils";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { PencilIcon, TrashIcon } from "lucide-react";
-import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { uniq } from "lodash";
 import { AddCashDialog } from "./add-cash-dialog";
@@ -27,7 +26,6 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
-import { TableMeta } from "@tanstack/react-table";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 
 // Extend the TableMeta type to include onEdit and onDelete
@@ -60,7 +58,7 @@ export const columns: ExpenseColumn[] = [
     accessorKey: "date",
     header: "Date",
     cell: ({ row }: { row: { original: Expense } }) =>
-      format(row.original.date, "MMM dd, yyyy"),
+      formatDate(row.original.date, "MMM dd, yyyy"),
   },
   {
     accessorKey: "amount",

@@ -1,6 +1,6 @@
 "use client";
 import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
@@ -39,11 +39,11 @@ export function DateRangePicker({
             {dateRange?.from ? (
               dateRange.to ? (
                 <>
-                  {format(dateRange.from, "LLL dd, y")} -{" "}
-                  {format(dateRange.to, "LLL dd, y")}
+                  {formatDate(dateRange.from, "LLL dd, y")} -{" "}
+                  {formatDate(dateRange.to, "LLL dd, y")}
                 </>
               ) : (
-                format(dateRange.from, "LLL dd, y")
+                formatDate(dateRange.from, "LLL dd, y")
               )
             ) : (
               <span>Pick a date range</span>

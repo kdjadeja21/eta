@@ -16,7 +16,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { format, eachDayOfInterval, isSameDay } from "date-fns";
+import { formatDate, eachDayOfInterval, isSameDay } from "@/lib/utils";
 
 interface ExpenseChartProps {
   expenses: Expense[];
@@ -54,7 +54,7 @@ export function ExpenseChart({ expenses, dateRange }: ExpenseChartProps) {
     const total = dayExpenses.reduce((sum, expense) => sum + expense.amount, 0);
 
     return {
-      date: format(day, "MMM dd"),
+      date: formatDate(day, "MMM dd"),
       total,
     };
   });

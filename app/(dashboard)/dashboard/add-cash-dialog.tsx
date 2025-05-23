@@ -28,7 +28,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { expenseService } from "@/lib/expense-service";
@@ -126,7 +126,7 @@ export const AddCashDialog = ({
                           )}
                         >
                           {field.value ? (
-                            format(field.value, "PPP")
+                            formatDate(field.value, "MMM dd, yyyy")
                           ) : (
                             <span>Pick a date</span>
                           )}

@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Expense } from "@/lib/expense-service";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/utils";
 import { MoreHorizontal, Edit, Trash } from "lucide-react";
 import {
   AlertDialog,
@@ -352,7 +352,9 @@ export function ExpensesTable({
             ) : (
               paginatedExpenses.map((expense) => (
                 <TableRow key={expense.id}>
-                  <TableCell>{format(expense.date, "MMM dd, yyyy")}</TableCell>
+                  <TableCell>
+                    {formatDate(expense.date, "MMM dd, yyyy")}
+                  </TableCell>
                   <TableCell>{formattedAmount(expense.amount)}</TableCell>
                   <TableCell className="hidden md:table-cell max-w-[200px] truncate">
                     {expense.description}

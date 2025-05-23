@@ -11,7 +11,14 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
 } from "@tanstack/react-table";
-import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import {
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
+  X,
+  Filter,
+  Trash2,
+} from "lucide-react";
 import Select from "react-select";
 
 import {
@@ -142,12 +149,20 @@ export function DataTable<TData>({
     <div className="space-y-4">
       <div className="flex items-center gap-4 py-4">
         {searchKey && (
-          <Input
-            placeholder="Search..."
-            value={globalFilter ?? ""}
-            onChange={(event) => setGlobalFilter(event.target.value)}
-            className="max-w-sm"
-          />
+          <div className="relative max-w-sm">
+            <Input
+              placeholder="Search..."
+              value={globalFilter ?? ""}
+              onChange={(event) => setGlobalFilter(event.target.value)}
+              className="pr-8"
+            />
+            {globalFilter && (
+              <X
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer"
+                onClick={() => setGlobalFilter("")}
+              />
+            )}
+          </div>
         )}
         {filters.length > 0 && (
           <>
@@ -155,15 +170,18 @@ export function DataTable<TData>({
               variant="outline"
               onClick={clearFilters}
               className={
-                Object.keys(columnFilters).length > 0 ? "block" : "hidden"
-              } // Show only if filters are applied
+                Object.keys(columnFilters).length > 0
+                  ? "flex items-center gap-2 cursor-pointer"
+                  : "hidden"
+              }
             >
-              Clear Filters
+              <Trash2 className="h-4 w-4" />
+              <span>Clear Filters</span>
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="cursor-pointer" variant="outline">
-                  Filter
+                  <Filter className="mr-2 h-4 w-4" /> Filter
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -201,6 +219,7 @@ export function DataTable<TData>({
                   ))}
                   <div className="flex justify-end gap-4">
                     <Button
+                      className="cursor-pointer"
                       variant="outline"
                       onClick={() => {
                         setTempFilters(columnFilters);
@@ -209,7 +228,11 @@ export function DataTable<TData>({
                     >
                       Cancel
                     </Button>
-                    <Button variant="default" onClick={applyFilters}>
+                    <Button
+                      className="cursor-pointer"
+                      variant="default"
+                      onClick={applyFilters}
+                    >
                       Apply
                     </Button>
                   </div>
