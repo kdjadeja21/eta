@@ -19,7 +19,7 @@ import {
   Filter,
   Trash2,
 } from "lucide-react";
-import Select from "react-select";
+import CustomSelect from "@/components/CustomSelect";
 
 import {
   Table,
@@ -41,48 +41,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
-const customStyles = {
-  control: (provided: any, state: any) => ({
-    ...provided,
-    backgroundColor: state.isFocused
-      ? "var(--color-bg-hover)"
-      : "var(--color-bg)",
-    borderColor: state.isFocused
-      ? "var(--color-border-focus)"
-      : "var(--color-border)",
-    color: "var(--color-text)",
-  }),
-  menu: (provided: any) => ({
-    ...provided,
-    backgroundColor: "var(--color-bg)",
-    color: "var(--color-text)",
-  }),
-  option: (provided: any, state: any) => ({
-    ...provided,
-    backgroundColor: state.isFocused
-      ? "var(--color-bg-hover)"
-      : "var(--color-bg)",
-    color: "var(--color-text)",
-  }),
-  multiValue: (provided: any) => ({
-    ...provided,
-    backgroundColor: "var(--color-bg-hover)",
-    color: "var(--color-text)",
-  }),
-  multiValueLabel: (provided: any) => ({
-    ...provided,
-    color: "var(--color-text)",
-  }),
-  multiValueRemove: (provided: any) => ({
-    ...provided,
-    color: "var(--color-text)",
-    ":hover": {
-      backgroundColor: "var(--color-bg-hover)",
-      color: "var(--color-text-hover)",
-    },
-  }),
-};
 
 export function DataTable<TData>({
   columns,
@@ -184,7 +142,7 @@ export function DataTable<TData>({
                   <Filter className="mr-2 h-4 w-4" /> Filter
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="sm:max-w-[500px] sm:max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Filters</DialogTitle>
                 </DialogHeader>
@@ -194,7 +152,7 @@ export function DataTable<TData>({
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         {`Filter by ${filter.columnKey}`}
                       </label>
-                      <Select
+                      <CustomSelect
                         isMulti
                         options={filter.options.map((option) => ({
                           value: option,
@@ -206,9 +164,9 @@ export function DataTable<TData>({
                             label: value,
                           })
                         )}
-                        onChange={(selectedOptions) => {
+                        onChange={(selectedOptions: any[]) => {
                           const values = selectedOptions.map(
-                            (option) => option.value
+                            (option: any) => option.value
                           );
                           handleFilterChange(filter.columnKey, values);
                         }}

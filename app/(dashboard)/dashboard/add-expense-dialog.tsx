@@ -41,8 +41,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { type Expense, expenseService } from "@/lib/expense-service";
-import { mockExpenseService } from "@/lib/mock-expense-service";
 import CreatableSelect from "react-select/creatable";
+import CustomCreatableSelect from "@/components/CustomCreatableSelect";
+import {
+  getPaidByOptions,
+  getCategoryOptions,
+  getSubcategoryOptions,
+  getTagOptions,
+} from "@/lib/utils";
 
 const formSchema = z.object({
   date: z.date(),
@@ -72,7 +78,7 @@ export function AddExpenseDialog({
   expense,
   userId,
 }: AddExpenseDialogProps) {
-  const [categories, setCategories] = useState<any[]>([]);
+  const [records, setRecords] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FormValues>({
@@ -93,17 +99,17 @@ export function AddExpenseDialog({
   const service = expenseService;
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchRecords = async () => {
       try {
-        const data = await service.getCategories(userId);
-        setCategories(data);
+        const data = await service.getExpenses(userId);
+        setRecords(data);
       } catch (error) {
-        console.error("Error fetching categories:", error);
+        console.error("Error fetching records:", error);
       }
     };
 
     if (open) {
-      fetchCategories();
+      fetchRecords();
     }
   }, [userId, open, service]);
 
@@ -147,14 +153,6 @@ export function AddExpenseDialog({
   };
 
   const selectedCategory = form.watch("category");
-  const subcategories =
-    categories.find((c) => c.name === selectedCategory)?.subcategories || [];
-
-  // Explicitly type subcategories
-  const subcategoryOptions = subcategories.map((subcategory: string) => ({
-    value: subcategory,
-    label: subcategory,
-  }));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -260,9 +258,9 @@ export function AddExpenseDialog({
                   <FormItem>
                     <FormLabel>Paid By</FormLabel>
                     <FormControl>
-                      <CreatableSelect
+                      <CustomCreatableSelect
                         isClearable
-                        onChange={(option) =>
+                        onChange={(option: any) =>
                           field.onChange(option?.value || "")
                         }
                         value={
@@ -270,14 +268,7 @@ export function AddExpenseDialog({
                             ? { label: field.value, value: field.value }
                             : null
                         }
-                        options={[
-                          { value: "UPI", label: "UPI" },
-                          { value: "Credit Card", label: "Credit Card" },
-                          { value: "Debit Card", label: "Debit Card" },
-                          { value: "Cash", label: "Cash" },
-                          { value: "Bank Transfer", label: "Bank Transfer" },
-                          { value: "Mobile Payment", label: "Mobile Payment" },
-                        ]}
+                        options={getPaidByOptions(records)}
                         placeholder="Payment method"
                       />
                     </FormControl>
@@ -322,9 +313,9 @@ export function AddExpenseDialog({
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <FormControl>
-                      <CreatableSelect
+                      <CustomCreatableSelect
                         isClearable
-                        onChange={(option) =>
+                        onChange={(option: any) =>
                           field.onChange(option?.value || "")
                         }
                         value={
@@ -332,10 +323,7 @@ export function AddExpenseDialog({
                             ? { label: field.value, value: field.value }
                             : null
                         }
-                        options={categories.map((category) => ({
-                          value: category.name,
-                          label: category.name,
-                        }))}
+                        options={getCategoryOptions(records)}
                         placeholder="Select a category"
                       />
                     </FormControl>
@@ -351,9 +339,9 @@ export function AddExpenseDialog({
                   <FormItem>
                     <FormLabel>Subcategory</FormLabel>
                     <FormControl>
-                      <CreatableSelect
+                      <CustomCreatableSelect
                         isClearable
-                        onChange={(option) =>
+                        onChange={(option: any) =>
                           field.onChange(option?.value || "")
                         }
                         value={
@@ -361,10 +349,10 @@ export function AddExpenseDialog({
                             ? { label: field.value, value: field.value }
                             : null
                         }
-                        options={subcategoryOptions}
-                        // isDisabled={
-                        //   !selectedCategory || subcategories.length === 0
-                        // }
+                        options={getSubcategoryOptions(
+                          records,
+                          selectedCategory
+                        )}
                         placeholder="Select a subcategory"
                       />
                     </FormControl>
@@ -381,18 +369,21 @@ export function AddExpenseDialog({
                 <FormItem>
                   <FormLabel>Tags</FormLabel>
                   <FormControl>
-                    <CreatableSelect
+                    <CustomCreatableSelect
                       isMulti
                       isClearable
-                      onChange={(options) =>
+                      onChange={(options: any) =>
                         field.onChange(
-                          options ? options.map((option) => option.value) : []
+                          options
+                            ? options.map((option: any) => option.value)
+                            : []
                         )
                       }
                       value={(field.value || []).map((tag) => ({
                         label: tag,
                         value: tag,
                       }))}
+                      options={getTagOptions(records)}
                       placeholder="Enter tags separated by commas"
                     />
                   </FormControl>

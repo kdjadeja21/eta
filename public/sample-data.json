@@ -1,0 +1,202 @@
+[
+  {
+    "date": "2025-05-01",
+    "amount": 100.5,
+    "description": "Groceries",
+    "paidBy": "Credit Card",
+    "category": "Food",
+    "subcategory": "Groceries",
+    "tags": ["essential"],
+    "type": "need"
+  },
+  {
+    "date": "2025-05-02",
+    "amount": 50.0,
+    "description": "Fuel",
+    "paidBy": "Cash",
+    "category": "Transport",
+    "subcategory": "Fuel",
+    "tags": ["car"],
+    "type": "need"
+  },
+  {
+    "date": "2025-05-03",
+    "amount": 200.0,
+    "description": "Dining Out",
+    "paidBy": "Debit Card",
+    "category": "Food",
+    "subcategory": "Dining",
+    "tags": ["luxury"],
+    "type": "want"
+  },
+  {
+    "date": "2025-05-04",
+    "amount": 75.0,
+    "description": "Electricity Bill",
+    "paidBy": "Net Banking",
+    "category": "Utilities",
+    "subcategory": "Electricity",
+    "tags": ["monthly"],
+    "type": "need"
+  },
+  {
+    "date": "2025-05-05",
+    "amount": 30.0,
+    "description": "Internet Bill",
+    "paidBy": "Net Banking",
+    "category": "Utilities",
+    "subcategory": "Internet",
+    "tags": ["monthly"],
+    "type": "need"
+  },
+  {
+    "date": "2025-05-06",
+    "amount": 120.0,
+    "description": "Clothing",
+    "paidBy": "Credit Card",
+    "category": "Shopping",
+    "subcategory": "Clothing",
+    "tags": ["seasonal"],
+    "type": "want"
+  },
+  {
+    "date": "2025-05-07",
+    "amount": 15.0,
+    "description": "Coffee",
+    "paidBy": "Cash",
+    "category": "Food",
+    "subcategory": "Beverages",
+    "tags": ["luxury"],
+    "type": "want"
+  },
+  {
+    "date": "2025-05-08",
+    "amount": 300.0,
+    "description": "Car Maintenance",
+    "paidBy": "Debit Card",
+    "category": "Transport",
+    "subcategory": "Maintenance",
+    "tags": ["car"],
+    "type": "need"
+  },
+  {
+    "date": "2025-05-09",
+    "amount": 40.0,
+    "description": "Movie Tickets",
+    "paidBy": "Credit Card",
+    "category": "Entertainment",
+    "subcategory": "Movies",
+    "tags": ["fun"],
+    "type": "want"
+  },
+  {
+    "date": "2025-05-10",
+    "amount": 25.0,
+    "description": "Books",
+    "paidBy": "Cash",
+    "category": "Education",
+    "subcategory": "Books",
+    "tags": ["learning"],
+    "type": "need"
+  },
+  {
+    "date": "2025-05-11",
+    "amount": 60.0,
+    "description": "Gym Membership",
+    "paidBy": "Net Banking",
+    "category": "Health",
+    "subcategory": "Fitness",
+    "tags": ["monthly"],
+    "type": "need"
+  },
+  {
+    "date": "2025-05-12",
+    "amount": 90.0,
+    "description": "Gadgets",
+    "paidBy": "Credit Card",
+    "category": "Shopping",
+    "subcategory": "Electronics",
+    "tags": ["luxury"],
+    "type": "want"
+  },
+  {
+    "date": "2025-05-13",
+    "amount": 10.0,
+    "description": "Snacks",
+    "paidBy": "Cash",
+    "category": "Food",
+    "subcategory": "Snacks",
+    "tags": ["fun"],
+    "type": "want"
+  },
+  {
+    "date": "2025-05-14",
+    "amount": 45.0,
+    "description": "Taxi Fare",
+    "paidBy": "Cash",
+    "category": "Transport",
+    "subcategory": "Taxi",
+    "tags": ["travel"],
+    "type": "need"
+  },
+  {
+    "date": "2025-05-15",
+    "amount": 35.0,
+    "description": "Stationery",
+    "paidBy": "Debit Card",
+    "category": "Education",
+    "subcategory": "Stationery",
+    "tags": ["office"],
+    "type": "need"
+  },
+  {
+    "date": "2025-05-16",
+    "amount": 80.0,
+    "description": "Dinner",
+    "paidBy": "Credit Card",
+    "category": "Food",
+    "subcategory": "Dining",
+    "tags": ["luxury"],
+    "type": "want"
+  },
+  {
+    "date": "2025-05-17",
+    "amount": 20.0,
+    "description": "Parking Fee",
+    "paidBy": "Cash",
+    "category": "Transport",
+    "subcategory": "Parking",
+    "tags": ["car"],
+    "type": "need"
+  },
+  {
+    "date": "2025-05-18",
+    "amount": 150.0,
+    "description": "Furniture",
+    "paidBy": "Debit Card",
+    "category": "Home",
+    "subcategory": "Furniture",
+    "tags": ["essential"],
+    "type": "need"
+  },
+  {
+    "date": "2025-05-19",
+    "amount": 55.0,
+    "description": "Pet Supplies",
+    "paidBy": "Credit Card",
+    "category": "Pets",
+    "subcategory": "Supplies",
+    "tags": ["pets"],
+    "type": "need"
+  },
+  {
+    "date": "2025-05-20",
+    "amount": 70.0,
+    "description": "Concert Tickets",
+    "paidBy": "Credit Card",
+    "category": "Entertainment",
+    "subcategory": "Concerts",
+    "tags": ["fun"],
+    "type": "want"
+  }
+]

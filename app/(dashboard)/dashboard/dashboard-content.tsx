@@ -27,6 +27,9 @@ import {
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
+import LineChart from "@/components/ui/line-chart";
+import { Card } from "@/components/ui/card";
+import { BulkUploadDialog } from "./bulk-upload-dialog";
 
 // Extend the TableMeta type to include onEdit and onDelete
 interface CustomTableMeta {
@@ -151,6 +154,11 @@ export function DashboardContent({ userId }: { userId: string }) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
   const [totalExpenses, setTotalExpenses] = useState(0);
+  const [chartData, setChartData] = useState<{ name: string; value: number }[]>(
+    []
+  );
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const service = expenseService;
 
@@ -199,12 +207,16 @@ export function DashboardContent({ userId }: { userId: string }) {
     }
   };
 
-  const handleDeleteExpense = async (id: string) => {
+  const handleBulkUpload = async (data: any[]) => {
     try {
-      await service.deleteExpense(id);
-      setExpenses((prev) => prev.filter((e) => e.id !== id));
+      await Promise.all(
+        data.map((expense) => service.addExpense(userId, expense))
+      );
+      showSuccessToast("Bulk records added successfully.");
+      setExpenses((prev) => [...data, ...prev]);
     } catch (error) {
-      showErrorToast("Error deleting expense");
+      console.log("Error adding bulk records:", error);
+      showErrorToast("Error adding bulk records.");
     }
   };
 
@@ -243,7 +255,7 @@ export function DashboardContent({ userId }: { userId: string }) {
   ];
 
   const filteredExpenses = expenses.filter((expense) => {
-    return Object.entries(filters).every(([key, value]) => {
+    const matchesFilters = Object.entries(filters).every(([key, value]) => {
       const field = expense[key as keyof Expense];
       const selectedValues = value.split(",");
       if (Array.isArray(field)) {
@@ -251,6 +263,12 @@ export function DashboardContent({ userId }: { userId: string }) {
       }
       return selectedValues.includes(String(field));
     });
+
+    const matchesSearch = searchQuery
+      ? expense.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      : true;
+
+    return matchesFilters && matchesSearch;
   });
 
   useEffect(() => {
@@ -301,6 +319,18 @@ export function DashboardContent({ userId }: { userId: string }) {
     }
   };
 
+  useEffect(() => {
+    const updateChartData = () => {
+      const data = filteredExpenses.map((expense) => ({
+        name: formatDate(expense.date, "yyyy-MM-dd"),
+        value: expense.amount,
+      }));
+      setChartData(data);
+    };
+
+    updateChartData();
+  }, [expenses]);
+
   return (
     <div className="container mx-auto p-4 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -329,11 +359,17 @@ export function DashboardContent({ userId }: { userId: string }) {
             <PlusIcon className="mr-2 h-4 w-4" />
             Add Cash
           </Button>
+          <Button
+            className="w-full sm:w-auto cursor-pointer"
+            onClick={() => setIsBulkUploadOpen(true)}
+          >
+            <PlusIcon className="mr-2 h-4 w-4" />
+            Upload Bulk Records
+          </Button>
           <AddCashDialog
             open={isAddCashOpen}
             onOpenChange={setIsAddCashOpen}
             onCashAdded={() => {
-              // Refresh data or perform any necessary updates
               showSuccessToast("Cash added successfully");
             }}
             onClose={() => setIsAddCashOpen(false)}
@@ -342,6 +378,13 @@ export function DashboardContent({ userId }: { userId: string }) {
       </div>
 
       <StatsCards totalExpenses={totalExpenses} onHandCash={onHandCash} />
+
+      <div className="mb-8">
+        <Card>
+          <h2 className="text-xl font-bold m-4">Daily Expenses</h2>
+          <LineChart data={chartData} />
+        </Card>
+      </div>
 
       <DataTable
         columns={columns}
@@ -366,6 +409,12 @@ export function DashboardContent({ userId }: { userId: string }) {
         }}
         expense={editingExpense}
         userId={userId}
+      />
+
+      <BulkUploadDialog
+        open={isBulkUploadOpen}
+        onOpenChange={setIsBulkUploadOpen}
+        onSubmit={handleBulkUpload}
       />
 
       <AlertDialog

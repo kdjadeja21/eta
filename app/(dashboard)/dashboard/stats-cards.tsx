@@ -3,6 +3,7 @@ import { DollarSign, Wallet } from "lucide-react";
 import { useFormattedCurrency } from "@/lib/currency-utils";
 import { expenseService } from "@/lib/expense-service";
 import { useEffect, useState } from "react";
+import CountUp from "@/components/count-up";
 
 interface StatsCardsProps {
   totalExpenses: number;
@@ -21,7 +22,7 @@ export function StatsCards({ totalExpenses, onHandCash }: StatsCardsProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {formattedAmount(totalExpenses)}
+            <CountUp end={totalExpenses} duration={300} />
           </div>
           <p className="text-xs text-muted-foreground">
             For the selected date range
@@ -35,7 +36,7 @@ export function StatsCards({ totalExpenses, onHandCash }: StatsCardsProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {formattedAmount(onHandCash)}
+            <CountUp end={onHandCash} duration={300} />
           </div>
           <p className="text-xs text-muted-foreground">
             Cash withdrawals minus cash expenses

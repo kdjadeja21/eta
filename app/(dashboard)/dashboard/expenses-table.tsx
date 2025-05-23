@@ -226,11 +226,11 @@ export function ExpensesTable({
   const getTypeColor = (type: string) => {
     switch (type) {
       case "need":
-        return "bg-green-500 hover:bg-green-600";
+        return "bg-success hover:bg-success-dark";
       case "want":
-        return "bg-blue-500 hover:bg-blue-600";
+        return "bg-primary hover:bg-primary-dark";
       case "not_sure":
-        return "bg-yellow-500 hover:bg-yellow-600";
+        return "bg-warning hover:bg-warning-dark";
       default:
         return "";
     }
@@ -324,7 +324,7 @@ export function ExpensesTable({
           </div>
         </div>
 
-        <Table>
+        <Table className="bg-surface text-text-primary">
           <TableHeader>
             <TableRow>
               <TableHead>Date</TableHead>
