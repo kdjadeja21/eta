@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -99,11 +99,11 @@ export const AddCashDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] sm:max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Add Cash</DialogTitle>
-        </DialogHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="p-5 overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>Add Cash</SheetTitle>
+        </SheetHeader>
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
@@ -177,21 +177,26 @@ export const AddCashDialog = ({
               )}
             />
 
-            <DialogFooter>
+            <SheetFooter className="flex flex-col sm:flex-row sm:justify-end gap-2">
               <Button
+                className="w-auto cursor-pointer"
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button
+                className="w-full sm:w-auto cursor-pointer"
+                type="submit"
+                disabled={isLoading}
+              >
                 {isLoading ? "Adding..." : "Add Cash"}
               </Button>
-            </DialogFooter>
+            </SheetFooter>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 };

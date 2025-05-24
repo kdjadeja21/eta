@@ -41,6 +41,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 export function DataTable<TData>({
   columns,
@@ -126,6 +132,14 @@ export function DataTable<TData>({
           <>
             <Button
               variant="outline"
+              onClick={() => setIsDialogOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              <span>Filters</span>
+            </Button>
+            <Button
+              variant="outline"
               onClick={clearFilters}
               className={
                 Object.keys(columnFilters).length > 0
@@ -136,16 +150,11 @@ export function DataTable<TData>({
               <Trash2 className="h-4 w-4" />
               <span>Clear Filters</span>
             </Button>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="cursor-pointer" variant="outline">
-                  <Filter className="mr-2 h-4 w-4" /> Filter
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px] sm:max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Filters</DialogTitle>
-                </DialogHeader>
+            <Sheet open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <SheetContent side="right" className="p-5 overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>Filters</SheetTitle>
+                </SheetHeader>
                 <div className="space-y-4">
                   {filters.map((filter) => (
                     <div key={filter.columnKey} className="w-full">
@@ -181,7 +190,7 @@ export function DataTable<TData>({
                       variant="outline"
                       onClick={() => {
                         setTempFilters(columnFilters);
-                        setIsDialogOpen(false); // Close the dialog
+                        setIsDialogOpen(false); // Close the sheet
                       }}
                     >
                       Cancel
@@ -195,8 +204,8 @@ export function DataTable<TData>({
                     </Button>
                   </div>
                 </div>
-              </DialogContent>
-            </Dialog>
+              </SheetContent>
+            </Sheet>
           </>
         )}
       </div>

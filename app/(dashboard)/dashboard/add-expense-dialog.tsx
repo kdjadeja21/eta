@@ -49,6 +49,14 @@ import {
   getSubcategoryOptions,
   getTagOptions,
 } from "@/lib/utils";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from "@/components/ui/sheet";
 
 const formSchema = z.object({
   date: z.date(),
@@ -155,16 +163,16 @@ export function AddExpenseDialog({
   const selectedCategory = form.watch("category");
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] sm:max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{expense ? "Edit Expense" : "Add Expense"}</DialogTitle>
-          <DialogDescription>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="p-5 overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>{expense ? "Edit Expense" : "Add Expense"}</SheetTitle>
+          <SheetDescription>
             {expense
               ? "Update the expense details below."
               : "Enter the expense details below."}
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
         <Form {...form}>
           <form
@@ -395,7 +403,7 @@ export function AddExpenseDialog({
               )}
             />
 
-            <DialogFooter>
+            <SheetFooter>
               <Button
                 type="button"
                 variant="outline"
@@ -409,10 +417,10 @@ export function AddExpenseDialog({
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Saving..." : expense ? "Update" : "Add"}
               </Button>
-            </DialogFooter>
+            </SheetFooter>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
