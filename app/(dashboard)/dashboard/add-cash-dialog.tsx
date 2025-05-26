@@ -136,11 +136,9 @@ export const AddCashDialog = ({
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        toDate={new Date()}
-                        initialFocus
+                        value={field.value}
+                        onChange={field.onChange}
+                        disableFutureDates
                       />
                     </PopoverContent>
                   </Popover>

@@ -133,7 +133,7 @@ export function DataTable<TData>({
             <Button
               variant="outline"
               onClick={() => setIsDialogOpen(true)}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 cursor-pointer"
             >
               <Filter className="h-4 w-4" />
               <span>Filters</span>
@@ -158,7 +158,7 @@ export function DataTable<TData>({
                 <div className="space-y-4">
                   {filters.map((filter) => (
                     <div key={filter.columnKey} className="w-full">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-foreground mb-1">
                         {`Filter by ${filter.columnKey}`}
                       </label>
                       <CustomSelect

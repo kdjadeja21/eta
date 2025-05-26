@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { DateRange } from "react-day-picker";
 import { DateRangePicker } from "@/components/date-range-picker";
 import { StatsCards } from "./stats-cards";
@@ -27,9 +27,11 @@ import {
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
-import LineChart from "@/components/ui/line-chart";
+import AreaChart from "@/components/ui/area-chart";
 import { Card } from "@/components/ui/card";
 import { BulkUploadDialog } from "./bulk-upload-dialog";
+import { ExpensePieChart } from "./widgets/expense-pie-chart";
+import { PaymentMethodCard } from "./widgets/payment-method-card";
 
 // Extend the TableMeta type to include onEdit and onDelete
 interface CustomTableMeta {
@@ -140,7 +142,7 @@ export const columns: ExpenseColumn[] = [
 ];
 
 export function DashboardContent({ userId }: { userId: string }) {
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+  const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfMonth(new Date()),
     to: new Date(),
   });
@@ -154,9 +156,6 @@ export function DashboardContent({ userId }: { userId: string }) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
   const [totalExpenses, setTotalExpenses] = useState(0);
-  const [chartData, setChartData] = useState<{ name: string; value: number }[]>(
-    []
-  );
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -319,17 +318,21 @@ export function DashboardContent({ userId }: { userId: string }) {
     }
   };
 
-  useEffect(() => {
-    const updateChartData = () => {
-      const data = filteredExpenses.map((expense) => ({
-        name: formatDate(expense.date, "yyyy-MM-dd"),
-        value: expense.amount,
-      }));
-      setChartData(data);
-    };
+  // Remove the useEffect for chart data and replace with useMemo
+  const chartData = useMemo(() => {
+    const groupedData = filteredExpenses.reduce((acc, expense) => {
+      const date = formatDate(expense.date, "yyyy-MM-dd");
+      acc[date] = (acc[date] || 0) + expense.amount;
+      return acc;
+    }, {} as Record<string, number>);
 
-    updateChartData();
-  }, [expenses]);
+    const data = Object.entries(groupedData).map(([name, value]) => ({
+      name,
+      value,
+    }));
+
+    return data.sort((a, b) => a.name.localeCompare(b.name));
+  }, [filteredExpenses]);
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -338,7 +341,8 @@ export function DashboardContent({ userId }: { userId: string }) {
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <DateRangePicker
             dateRange={dateRange}
-            onDateRangeChange={setDateRange}
+            onDateRangeChange={(range) => range && setDateRange(range)}
+            className="cursor-pointer"
           />
           <Button
             className="w-full sm:w-auto cursor-pointer"
@@ -350,7 +354,8 @@ export function DashboardContent({ userId }: { userId: string }) {
             <PlusIcon className="mr-2 h-4 w-4" />
             Add Expense
           </Button>
-          <Button
+          {/* TODO: Add cash */}
+          {/* <Button
             className="w-full sm:w-auto cursor-pointer"
             onClick={() => {
               setIsAddCashOpen(true);
@@ -358,7 +363,7 @@ export function DashboardContent({ userId }: { userId: string }) {
           >
             <PlusIcon className="mr-2 h-4 w-4" />
             Add Cash
-          </Button>
+          </Button> */}
           <Button
             className="w-full sm:w-auto cursor-pointer"
             onClick={() => setIsBulkUploadOpen(true)}
@@ -377,13 +382,23 @@ export function DashboardContent({ userId }: { userId: string }) {
         </div>
       </div>
 
-      <StatsCards totalExpenses={totalExpenses} onHandCash={onHandCash} />
+      <StatsCards 
+        totalExpenses={totalExpenses}
+        onHandCash={onHandCash}
+        userId={userId}
+        dateRange={dateRange}
+      />
 
-      <div className="mb-8">
+      <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <h2 className="text-xl font-bold m-4">Daily Expenses</h2>
-          <LineChart data={chartData} />
+          <AreaChart data={chartData} />
         </Card>
+
+        <ExpensePieChart 
+          userId={userId}
+          dateRange={dateRange}
+        />
       </div>
 
       <DataTable

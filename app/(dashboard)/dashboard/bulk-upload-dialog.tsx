@@ -123,6 +123,8 @@ export function BulkUploadDialog({
                 normalizedRecord[header] = value
                   .split(",")
                   .map((tag) => tag.trim());
+              } else if (header === "paid by" || header === "paidby") {
+                normalizedRecord["paidBy"] = value;
               } else {
                 normalizedRecord[header] = header.includes("date")
                   ? tryParseDate(value)
