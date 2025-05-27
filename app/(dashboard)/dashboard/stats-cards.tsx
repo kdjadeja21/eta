@@ -9,14 +9,29 @@ import { TopSpendingCategoryCard } from "./widgets/top-spending-category-card";
 import { PaymentMethodCard } from "./widgets/payment-method-card";
 import type { DateRange } from "react-day-picker";
 
+/**
+ * Props for the StatsCards component
+ * @interface StatsCardsProps
+ * @property {number} totalExpenses - The total amount of expenses
+ * @property {number} onHandCash - The amount of cash on hand
+ * @property {string} userId - The ID of the current user
+ * @property {DateRange} dateRange - The selected date range for filtering
+ * @property {number} [refreshKey] - Optional key to force refresh of child components
+ */
 interface StatsCardsProps {
   totalExpenses: number;
   onHandCash: number;
   userId: string;
   dateRange: DateRange;
+  refreshKey?: number;
 }
 
-export function StatsCards({ totalExpenses, onHandCash, userId, dateRange }: StatsCardsProps) {
+/**
+ * StatsCards component displays various statistics about expenses
+ * @param {StatsCardsProps} props - The component props
+ * @returns {JSX.Element} The rendered component
+ */
+export function StatsCards({ totalExpenses, onHandCash, userId, dateRange, refreshKey }: StatsCardsProps) {
   const formattedAmount = useFormattedCurrency();
 
   return (
@@ -59,11 +74,13 @@ export function StatsCards({ totalExpenses, onHandCash, userId, dateRange }: Sta
       <TopSpendingCategoryCard 
         userId={userId}
         dateRange={dateRange}
+        refreshKey={refreshKey}
       />
 
       <PaymentMethodCard 
         userId={userId}
         dateRange={dateRange}
+        refreshKey={refreshKey}
       />
     </div>
   );

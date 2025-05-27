@@ -57,16 +57,18 @@ import {
   SheetDescription,
   SheetFooter,
 } from "@/components/ui/sheet";
+import { ExpenseType, formatExpenseType } from "@/lib/types";
 
 const formSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  amount: z.number().min(0, "Amount must be positive"),
+  type: z.nativeEnum(ExpenseType),
   date: z.date(),
-  amount: z.coerce.number().positive(),
-  description: z.string().min(1, "Description is required"),
-  paidBy: z.string().min(1, "Payment method is required"),
   category: z.string().min(1, "Category is required"),
+  description: z.string().optional(),
+  paidBy: z.string().min(1, "Paid by is required"),
   subcategory: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  type: z.enum(["need", "want", "not_sure"]),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -99,7 +101,7 @@ export function AddExpenseDialog({
       category: "",
       subcategory: "",
       tags: [],
-      type: "need",
+      type: ExpenseType.Need,
     },
   });
 
@@ -142,7 +144,7 @@ export function AddExpenseDialog({
         category: "",
         subcategory: "",
         tags: [],
-        type: "need",
+        type: ExpenseType.Need,
       });
     }
   }, [expense, form]);
@@ -300,9 +302,9 @@ export function AddExpenseDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="need">Need</SelectItem>
-                        <SelectItem value="want">Want</SelectItem>
-                        <SelectItem value="not_sure">Not Sure</SelectItem>
+                        <SelectItem value={ExpenseType.Need}>{formatExpenseType(ExpenseType.Need)}</SelectItem>
+                        <SelectItem value={ExpenseType.Want}>{formatExpenseType(ExpenseType.Want)}</SelectItem>
+                        <SelectItem value={ExpenseType.NotSure}>{formatExpenseType(ExpenseType.NotSure)}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -403,6 +405,7 @@ export function AddExpenseDialog({
 
             <SheetFooter>
               <Button
+                className="cursor-pointer"
                 type="button"
                 variant="outline"
                 onClick={() => {
@@ -412,7 +415,7 @@ export function AddExpenseDialog({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button className="cursor-pointer" type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Saving..." : expense ? "Update" : "Add"}
               </Button>
             </SheetFooter>

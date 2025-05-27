@@ -12,20 +12,22 @@ import {
   Timestamp,
   type DocumentData,
 } from "firebase/firestore";
+import { ExpenseType } from "./types";
 
-export type Expense = {
-  id?: string;
-  date: Date;
+export interface Expense {
+  id: string;
+  name: string;
   amount: number;
-  description: string;
-  paidBy: string;
+  type: ExpenseType;
+  date: Date;
   category: string;
   subcategory?: string;
+  description?: string;
+  paidBy: string;
   tags?: string[];
-  type: "need" | "want" | "not_sure";
   createdAt?: Date;
   updatedAt?: Date;
-};
+}
 
 export type ExpenseFormData = Omit<Expense, "createdAt" | "updatedAt" | "id">;
 

@@ -7,12 +7,25 @@ import { useEffect, useState } from "react";
 import { expenseService } from "@/lib/expense-service";
 import type { DateRange } from "react-day-picker";
 
+/**
+ * Props for the PaymentMethodCard component
+ * @interface PaymentMethodCardProps
+ * @property {string} userId - The ID of the current user
+ * @property {DateRange} dateRange - The selected date range for filtering
+ * @property {number} [refreshKey] - Optional key to force refresh of the component
+ */
 interface PaymentMethodCardProps {
   userId: string;
   dateRange: DateRange;
+  refreshKey?: number;
 }
 
-export function PaymentMethodCard({ userId, dateRange }: PaymentMethodCardProps) {
+/**
+ * PaymentMethodCard component displays the payment method with the highest spending
+ * @param {PaymentMethodCardProps} props - The component props
+ * @returns {JSX.Element} The rendered component
+ */
+export function PaymentMethodCard({ userId, dateRange, refreshKey }: PaymentMethodCardProps) {
   const formattedAmount = useFormattedCurrency();
   const [topPaymentMethod, setTopPaymentMethod] = useState<{ method: string; amount: number }>({ method: "", amount: 0 });
 
@@ -48,7 +61,7 @@ export function PaymentMethodCard({ userId, dateRange }: PaymentMethodCardProps)
     };
 
     fetchTopPaymentMethod();
-  }, [userId, dateRange]);
+  }, [userId, dateRange, refreshKey]);
 
   return (
     <Card>

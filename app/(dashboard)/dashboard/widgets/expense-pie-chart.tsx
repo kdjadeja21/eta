@@ -5,6 +5,7 @@ import { PieChart } from "lucide-react";
 import { useFormattedCurrency } from "@/lib/currency-utils";
 import { useEffect, useState, useMemo } from "react";
 import { expenseService } from "@/lib/expense-service";
+import { ExpenseType, formatExpenseType } from "@/lib/types";
 import {
   Select,
   SelectContent,
@@ -16,20 +17,41 @@ import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Legend, T
 import type { DateRange } from "react-day-picker";
 import { useTheme } from "next-themes";
 
+/**
+ * Props for the ExpensePieChart component
+ * @interface ExpensePieChartProps
+ * @property {string} userId - The ID of the current user
+ * @property {DateRange} dateRange - The selected date range for filtering
+ * @property {number} [refreshKey] - Optional key to force refresh of the component
+ */
 interface ExpensePieChartProps {
   userId: string;
   dateRange: DateRange;
+  refreshKey?: number;
 }
 
+/**
+ * Type of field to display in the pie chart
+ * @typedef {("paidBy" | "category" | "subcategory" | "tags" | "type")} FieldType
+ */
 type FieldType = "paidBy" | "category" | "subcategory" | "tags" | "type";
 
+/**
+ * Array of colors for pie chart segments
+ * @constant {string[]}
+ */
 const COLORS = [
   "#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8",
   "#82CA9D", "#FFC658", "#FF6B6B", "#4ECDC4", "#45B7D1",
   "#96CEB4", "#FFEEAD", "#D4A5A5", "#9B59B6", "#3498DB"
 ];
 
-export function ExpensePieChart({ userId, dateRange }: ExpensePieChartProps) {
+/**
+ * ExpensePieChart component displays a pie chart of expenses distribution
+ * @param {ExpensePieChartProps} props - The component props
+ * @returns {JSX.Element} The rendered component
+ */
+export function ExpensePieChart({ userId, dateRange, refreshKey }: ExpensePieChartProps) {
   const formattedAmount = useFormattedCurrency();
   const { theme } = useTheme();
   const [selectedField, setSelectedField] = useState<FieldType>("type");
@@ -67,7 +89,7 @@ export function ExpensePieChart({ userId, dateRange }: ExpensePieChartProps) {
 
         // Convert to array format for the chart
         const data = Object.entries(aggregatedData).map(([name, value]) => ({
-          name,
+          name: selectedField === "type" ? formatExpenseType(name as ExpenseType) : name,
           value,
         }));
 
@@ -85,7 +107,7 @@ export function ExpensePieChart({ userId, dateRange }: ExpensePieChartProps) {
     };
 
     fetchData();
-  }, [userId, dateRange, selectedField]);
+  }, [userId, dateRange, selectedField, refreshKey]);
 
   const visibleData = useMemo(() => {
     return chartData.filter(item => !hiddenSegments.has(item.name));

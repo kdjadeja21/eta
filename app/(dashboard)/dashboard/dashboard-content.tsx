@@ -9,8 +9,8 @@ import { ExpensesTable } from "./expenses-table";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import { AddExpenseDialog } from "./add-expense-dialog";
-import { expenseService, type Expense } from "@/lib/expense-service";
-import { startOfMonth, formatDate } from "@/lib/utils";
+import { expenseService, type Expense, ExpenseFormData } from "@/lib/expense-service";
+import { startOfMonth, formatDate, cn } from "@/lib/utils";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { PencilIcon, TrashIcon } from "lucide-react";
@@ -32,6 +32,7 @@ import { Card } from "@/components/ui/card";
 import { BulkUploadDialog } from "./bulk-upload-dialog";
 import { ExpensePieChart } from "./widgets/expense-pie-chart";
 import { PaymentMethodCard } from "./widgets/payment-method-card";
+import { ExpenseType, formatExpenseType } from "@/lib/types";
 
 // Extend the TableMeta type to include onEdit and onDelete
 interface CustomTableMeta {
@@ -43,16 +44,16 @@ declare module "@tanstack/react-table" {
   interface TableMeta<TData> extends CustomTableMeta {}
 }
 
-const getTypeColor = (type: string) => {
+const getTypeColor = (type: ExpenseType) => {
   switch (type) {
-    case "need":
+    case ExpenseType.Need:
       return "bg-green-500 hover:bg-green-600";
-    case "want":
+    case ExpenseType.Want:
       return "bg-blue-500 hover:bg-blue-600";
-    case "not_sure":
+    case ExpenseType.NotSure:
       return "bg-yellow-500 hover:bg-yellow-600";
     default:
-      return "";
+      return "bg-gray-500 hover:bg-gray-600";
   }
 };
 
@@ -105,9 +106,8 @@ export const columns: ExpenseColumn[] = [
     accessorKey: "type",
     header: "Type",
     cell: ({ row }: { row: { original: Expense } }) => (
-      <Badge className={getTypeColor(row.original.type)}>
-        {row.original.type.charAt(0).toUpperCase() +
-          row.original.type.slice(1).replace("_", " ")}
+      <Badge className={cn("text-white dark:text-black",getTypeColor(row.original.type))}>
+        {formatExpenseType(row.original.type)}
       </Badge>
     ),
   },
@@ -141,6 +141,9 @@ export const columns: ExpenseColumn[] = [
   },
 ];
 
+const isValidType = (v: string): v is ExpenseType =>
+  Object.values(ExpenseType).includes(v as ExpenseType);
+
 export function DashboardContent({ userId }: { userId: string }) {
   const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfMonth(new Date()),
@@ -158,11 +161,14 @@ export function DashboardContent({ userId }: { userId: string }) {
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const service = expenseService;
 
   useEffect(() => {
     const fetchExpenses = async () => {
+      console.log("fetching expenses");
+      setRefreshKey(prev => prev + 1);
       setIsLoading(true);
       try {
         if (dateRange?.from && dateRange?.to) {
@@ -186,12 +192,17 @@ export function DashboardContent({ userId }: { userId: string }) {
     fetchExpenses();
   }, [userId, dateRange, service]);
 
-  const handleAddExpense = async (expense: Expense) => {
+  const handleAddExpense = async (data: ExpenseFormData) => {
     try {
-      const newExpense = await service.addExpense(userId, expense);
+      const newExpense = {
+        ...data,
+        id: crypto.randomUUID(), // Add a temporary ID
+      };
+      await service.addExpense(userId, newExpense);
       setExpenses((prev) => [newExpense, ...prev]);
+      setRefreshKey(prev => prev + 1);
     } catch (error) {
-      showErrorToast("Error adding expense");
+      console.error("Error adding expense:", error);
     }
   };
 
@@ -201,7 +212,10 @@ export function DashboardContent({ userId }: { userId: string }) {
       setExpenses((prev) =>
         prev.map((e) => (e.id === id ? { ...e, ...expense } : e))
       );
+      showSuccessToast("Expense updated successfully");
+      setRefreshKey(prev => prev + 1);
     } catch (error) {
+      console.error("Error updating expense:", error);
       showErrorToast("Error updating expense");
     }
   };
@@ -213,6 +227,7 @@ export function DashboardContent({ userId }: { userId: string }) {
       );
       showSuccessToast("Bulk records added successfully.");
       setExpenses((prev) => [...data, ...prev]);
+      setRefreshKey(prev => prev + 1);
     } catch (error) {
       console.log("Error adding bulk records:", error);
       showErrorToast("Error adding bulk records.");
@@ -247,28 +262,30 @@ export function DashboardContent({ userId }: { userId: string }) {
     {
       columnKey: "type",
       options: uniq(expenses.map((e) => e.type)).filter(
-        (v): v is "need" | "want" | "not_sure" =>
-          ["need", "want", "not_sure"].includes(v)
+        (v): v is ExpenseType => isValidType(v)
       ),
     },
   ];
 
-  const filteredExpenses = expenses.filter((expense) => {
-    const matchesFilters = Object.entries(filters).every(([key, value]) => {
-      const field = expense[key as keyof Expense];
-      const selectedValues = value.split(",");
-      if (Array.isArray(field)) {
-        return selectedValues.some((val) => field.includes(val));
-      }
-      return selectedValues.includes(String(field));
-    });
+  const filteredExpenses = useMemo(() => {
+    return expenses.filter((expense) => {
+      const matchesFilters = Object.entries(filters).every(([key, value]) => {
+        const field = expense[key as keyof Expense];
+        const selectedValues = value.split(",");
+        if (Array.isArray(field)) {
+          return selectedValues.some((val) => field.includes(val));
+        }
+        return selectedValues.includes(String(field));
+      });
 
     const matchesSearch = searchQuery
       ? expense.description?.toLowerCase().includes(searchQuery.toLowerCase())
       : true;
 
-    return matchesFilters && matchesSearch;
-  });
+      setRefreshKey(prev => prev + 1);
+      return matchesFilters && matchesSearch;
+    });
+  }, [expenses, filters, searchQuery]);
 
   useEffect(() => {
     const calculateTotalExpenses = () => {
@@ -310,6 +327,7 @@ export function DashboardContent({ userId }: { userId: string }) {
     try {
       await service.deleteExpense(deleteExpenseId);
       setExpenses((prev) => prev.filter((e) => e.id !== deleteExpenseId));
+      setRefreshKey(prev => prev + 1);
     } catch (error) {
       showErrorToast("Error deleting expense");
     } finally {
@@ -387,6 +405,7 @@ export function DashboardContent({ userId }: { userId: string }) {
         onHandCash={onHandCash}
         userId={userId}
         dateRange={dateRange}
+        refreshKey={refreshKey}
       />
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -398,6 +417,7 @@ export function DashboardContent({ userId }: { userId: string }) {
         <ExpensePieChart 
           userId={userId}
           dateRange={dateRange}
+          refreshKey={refreshKey}
         />
       </div>
 

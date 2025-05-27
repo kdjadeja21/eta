@@ -7,16 +7,16 @@ import { auth } from "@clerk/nextjs/server";
 import { CurrencyProvider } from "@/components/currency-context";
 import { CurrencyDropdown } from "@/components/currency-dropdown";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // const { userId } = auth()
+  const { userId } = await auth();
 
-  // if (!userId) {
-  //   redirect("/sign-in")
-  // }
+  if (!userId) {
+    redirect("/sign-in");
+  }
 
   return (
     <CurrencyProvider>
@@ -32,7 +32,7 @@ export default function DashboardLayout({
           <div className="ml-auto flex items-center gap-4">
             <CurrencyDropdown />
             <ModeToggle />
-            <UserButton afterSignOutUrl="/" />
+            <UserButton afterSignOutUrl="/sign-in" />
           </div>
         </header>
         <main className="flex-1">{children}</main>

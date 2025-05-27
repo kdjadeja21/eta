@@ -20,6 +20,7 @@ import {
   Trash2,
 } from "lucide-react";
 import CustomSelect from "@/components/CustomSelect";
+import { ExpenseType, formatExpenseType } from "@/lib/types";
 
 import {
   Table,
@@ -165,12 +166,12 @@ export function DataTable<TData>({
                         isMulti
                         options={filter.options.map((option) => ({
                           value: option,
-                          label: option,
+                          label: filter.columnKey === 'type' ? formatExpenseType(option as ExpenseType) : option,
                         }))}
                         value={(tempFilters[filter.columnKey] || []).map(
                           (value) => ({
                             value,
-                            label: value,
+                            label: filter.columnKey === 'type' ? formatExpenseType(value as ExpenseType) : value,
                           })
                         )}
                         onChange={(selectedOptions: any[]) => {

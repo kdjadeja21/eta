@@ -7,12 +7,25 @@ import { useEffect, useState } from "react";
 import { expenseService } from "@/lib/expense-service";
 import type { DateRange } from "react-day-picker";
 
+/**
+ * Props for the TopSpendingCategoryCard component
+ * @interface TopSpendingCategoryCardProps
+ * @property {string} userId - The ID of the current user
+ * @property {DateRange} dateRange - The selected date range for filtering
+ * @property {number} [refreshKey] - Optional key to force refresh of the component
+ */
 interface TopSpendingCategoryCardProps {
   userId: string;
   dateRange: DateRange;
+  refreshKey?: number;
 }
 
-export function TopSpendingCategoryCard({ userId, dateRange }: TopSpendingCategoryCardProps) {
+/**
+ * TopSpendingCategoryCard component displays the category with the highest spending
+ * @param {TopSpendingCategoryCardProps} props - The component props
+ * @returns {JSX.Element} The rendered component
+ */
+export function TopSpendingCategoryCard({ userId, dateRange, refreshKey }: TopSpendingCategoryCardProps) {
   const formattedAmount = useFormattedCurrency();
   const [topCategory, setTopCategory] = useState<{ category: string; amount: number }>({ category: "", amount: 0 });
 
@@ -41,7 +54,7 @@ export function TopSpendingCategoryCard({ userId, dateRange }: TopSpendingCatego
     };
 
     fetchTopCategory();
-  }, [userId, dateRange]);
+  }, [userId, dateRange, refreshKey]);
 
   return (
     <Card>
