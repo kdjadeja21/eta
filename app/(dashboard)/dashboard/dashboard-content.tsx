@@ -4,8 +4,6 @@ import { useState, useEffect, useMemo } from "react";
 import type { DateRange } from "react-day-picker";
 import { DateRangePicker } from "@/components/date-range-picker";
 import { StatsCards } from "./stats-cards";
-import { ExpenseChart } from "./expense-chart";
-import { ExpensesTable } from "./expenses-table";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import { AddExpenseDialog } from "./add-expense-dialog";
