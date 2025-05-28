@@ -23,7 +23,6 @@ const CustomSelect = (props: any) => {
       ...base,
       backgroundColor: isDark ? "#1f2937" : "#ffffff",
       maxHeight: "200px", // Set max height for dropdown
-      overflowY: "auto", // Enable vertical scrolling
     }),
     singleValue: (base: any) => ({
       ...base,
@@ -65,11 +64,16 @@ const CustomSelect = (props: any) => {
         color: isDark ? "#ffffff" : "#b91c1c", // white or red-700
       },
     }),
+    menuList: (base: any) => ({
+      ...base,
+      maxHeight: "114px", // Approx height for 3 options (3 * 38px)
+    }),
   };
 
   return (
     <Select
-      {...props}
+      {...props}      
+      menuPlacement="auto"
       styles={customStyles}
       theme={(baseTheme) => ({
         ...baseTheme,

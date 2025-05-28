@@ -65,11 +65,16 @@ const CustomCreatableSelect = (props: any) => {
         color: isDark ? "#ffffff" : "#b91c1c", // white or red-700
       },
     }),
+    menuList: (base: any) => ({
+      ...base,
+      maxHeight: "114px", // Approx height for 3 options (3 * 38px)
+    }),
   };
 
   return (
     <CreatableSelect
       {...props}
+      menuPlacement="auto"
       styles={customStyles}
       theme={(baseTheme) => ({
         ...baseTheme,

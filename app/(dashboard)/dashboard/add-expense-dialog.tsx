@@ -3,14 +3,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   Form,
   FormControl,
   FormDescription,
@@ -41,7 +33,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { type Expense, expenseService } from "@/lib/expense-service";
-import CreatableSelect from "react-select/creatable";
 import CustomCreatableSelect from "@/components/CustomCreatableSelect";
 import {
   getPaidByOptions,
@@ -60,7 +51,6 @@ import {
 import { ExpenseType, formatExpenseType } from "@/lib/types";
 
 const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
   amount: z.number().min(0, "Amount must be positive"),
   type: z.nativeEnum(ExpenseType),
   date: z.date(),
@@ -232,6 +222,9 @@ export function AddExpenseDialog({
                         step="0.01"
                         placeholder="0.00"
                         {...field}
+                        onChange={(e) =>
+                          field.onChange(parseFloat(e.target.value))
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -302,9 +295,15 @@ export function AddExpenseDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value={ExpenseType.Need}>{formatExpenseType(ExpenseType.Need)}</SelectItem>
-                        <SelectItem value={ExpenseType.Want}>{formatExpenseType(ExpenseType.Want)}</SelectItem>
-                        <SelectItem value={ExpenseType.NotSure}>{formatExpenseType(ExpenseType.NotSure)}</SelectItem>
+                        <SelectItem value={ExpenseType.Need}>
+                          {formatExpenseType(ExpenseType.Need)}
+                        </SelectItem>
+                        <SelectItem value={ExpenseType.Want}>
+                          {formatExpenseType(ExpenseType.Want)}
+                        </SelectItem>
+                        <SelectItem value={ExpenseType.NotSure}>
+                          {formatExpenseType(ExpenseType.NotSure)}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -415,7 +414,11 @@ export function AddExpenseDialog({
               >
                 Cancel
               </Button>
-              <Button className="cursor-pointer" type="submit" disabled={isSubmitting}>
+              <Button
+                className="cursor-pointer"
+                type="submit"
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? "Saving..." : expense ? "Update" : "Add"}
               </Button>
             </SheetFooter>

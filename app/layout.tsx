@@ -4,6 +4,7 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthToast } from "@/components/auth-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,7 +47,8 @@ export default function RootLayout({
           >
             {children}
           </ThemeProvider>
-          <Toaster position="top-right" richColors />
+          <Toaster position="top-right" richColors visibleToasts={5} />
+          <AuthToast />
         </body>
       </html>
     </ClerkProvider>

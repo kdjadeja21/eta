@@ -11,12 +11,12 @@ import {
   orderBy,
   Timestamp,
   type DocumentData,
+  getDoc,
 } from "firebase/firestore";
 import { ExpenseType } from "./types";
 
 export interface Expense {
   id: string;
-  name: string;
   amount: number;
   type: ExpenseType;
   date: Date;
@@ -64,9 +64,10 @@ export const expenseService = {
   },
 
   async addExpense(userId: string, expense: ExpenseFormData) {
+    const { id, ...expenseWithoutId } = expense as any;
     const now = new Date();
     const expenseData = {
-      ...expense,
+      ...expenseWithoutId,
       userId,
       date: Timestamp.fromDate(expense.date),
       createdAt: Timestamp.fromDate(now),
@@ -77,7 +78,7 @@ export const expenseService = {
 
     return {
       id: docRef.id,
-      ...expense,
+      ...expenseWithoutId,
       createdAt: now,
       updatedAt: now,
     };
@@ -85,16 +86,21 @@ export const expenseService = {
 
   async updateExpense(id: string, expense: Partial<ExpenseFormData>) {
     const expenseRef = doc(db, "expenses", id);
-    const updateData: DocumentData = {
-      ...expense,
-      updatedAt: Timestamp.fromDate(new Date()),
-    };
+    const docSnap = await getDoc(expenseRef);
+    if (docSnap.exists()) {
+      const updateData: DocumentData = {
+        ...expense,
+        updatedAt: Timestamp.fromDate(new Date()),
+      };
 
-    if (expense.date) {
-      updateData.date = Timestamp.fromDate(expense.date);
+      if (expense.date) {
+        updateData.date = Timestamp.fromDate(expense.date);
+      }
+
+      await updateDoc(expenseRef, updateData);
+    } else {
+      console.error("Document does not exist!");
     }
-
-    await updateDoc(expenseRef, updateData);
   },
 
   async deleteExpense(id: string) {

@@ -7,13 +7,17 @@ import { StatsCards } from "./stats-cards";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import { AddExpenseDialog } from "./add-expense-dialog";
-import { expenseService, type Expense, ExpenseFormData } from "@/lib/expense-service";
+import {
+  expenseService,
+  type Expense,
+  ExpenseFormData,
+} from "@/lib/expense-service";
 import { startOfMonth, formatDate, cn } from "@/lib/utils";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { PencilIcon, TrashIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { uniq } from "lodash";
+import { set, uniq } from "lodash";
 import { AddCashDialog } from "./add-cash-dialog";
 import {
   AlertDialog,
@@ -24,15 +28,27 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
-import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
+import {
+  showSuccessToast,
+  showErrorToast,
+  showDeleteToast,
+  showWarningToast,
+  showInfoToast,
+  showLoadingToast,
+} from "@/components/ui/toast";
+import { toast } from "sonner";
 import AreaChart from "@/components/ui/area-chart";
 import { Card } from "@/components/ui/card";
 import { BulkUploadDialog } from "./bulk-upload-dialog";
 import { ExpensePieChart } from "./widgets/expense-pie-chart";
-import { PaymentMethodCard } from "./widgets/payment-method-card";
 import { ExpenseType, formatExpenseType } from "@/lib/types";
 import { useUser } from "@clerk/nextjs";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 // Extend the TableMeta type to include onEdit and onDelete
 interface CustomTableMeta {
@@ -108,7 +124,12 @@ export const columns: ExpenseColumn[] = [
     accessorKey: "type",
     header: "Type",
     cell: ({ row }: { row: { original: Expense } }) => (
-      <Badge className={cn("text-white dark:text-black",getTypeColor(row.original.type))}>
+      <Badge
+        className={cn(
+          "text-white dark:text-black",
+          getTypeColor(row.original.type)
+        )}
+      >
         {formatExpenseType(row.original.type)}
       </Badge>
     ),
@@ -164,6 +185,7 @@ export function DashboardContent({ userId }: { userId: string }) {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const service = expenseService;
   const { user } = useUser();
@@ -171,7 +193,7 @@ export function DashboardContent({ userId }: { userId: string }) {
 
   useEffect(() => {
     const fetchExpenses = async () => {
-      setRefreshKey(prev => prev + 1);
+      setRefreshKey((prev) => prev + 1);
       setIsLoading(true);
       try {
         if (dateRange?.from && dateRange?.to) {
@@ -202,8 +224,9 @@ export function DashboardContent({ userId }: { userId: string }) {
         id: crypto.randomUUID(), // Add a temporary ID
       };
       await service.addExpense(userId, newExpense);
+      showSuccessToast("Expense added successfully");
       setExpenses((prev) => [newExpense, ...prev]);
-      setRefreshKey(prev => prev + 1);
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.error("Error adding expense:", error);
     }
@@ -216,7 +239,7 @@ export function DashboardContent({ userId }: { userId: string }) {
         prev.map((e) => (e.id === id ? { ...e, ...expense } : e))
       );
       showSuccessToast("Expense updated successfully");
-      setRefreshKey(prev => prev + 1);
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.error("Error updating expense:", error);
       showErrorToast("Error updating expense");
@@ -224,16 +247,24 @@ export function DashboardContent({ userId }: { userId: string }) {
   };
 
   const handleBulkUpload = async (data: any[]) => {
+    const loadingToast = showLoadingToast("Creating bulk records...", {
+      description: `Adding ${data.length} records to your expenses`,
+    });
+
     try {
       await Promise.all(
         data.map((expense) => service.addExpense(userId, expense))
       );
       showSuccessToast("Bulk records added successfully.");
       setExpenses((prev) => [...data, ...prev]);
-      setRefreshKey(prev => prev + 1);
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.log("Error adding bulk records:", error);
       showErrorToast("Error adding bulk records.");
+    } finally {
+      if (loadingToast) {
+        toast.dismiss(loadingToast);
+      }
     }
   };
 
@@ -264,8 +295,8 @@ export function DashboardContent({ userId }: { userId: string }) {
     },
     {
       columnKey: "type",
-      options: uniq(expenses.map((e) => e.type)).filter(
-        (v): v is ExpenseType => isValidType(v)
+      options: uniq(expenses.map((e) => e.type)).filter((v): v is ExpenseType =>
+        isValidType(v)
       ),
     },
   ];
@@ -281,11 +312,11 @@ export function DashboardContent({ userId }: { userId: string }) {
         return selectedValues.includes(String(field));
       });
 
-    const matchesSearch = searchQuery
-      ? expense.description?.toLowerCase().includes(searchQuery.toLowerCase())
-      : true;
+      const matchesSearch = searchQuery
+        ? expense.description?.toLowerCase().includes(searchQuery.toLowerCase())
+        : true;
 
-      setRefreshKey(prev => prev + 1);
+      setRefreshKey((prev) => prev + 1);
       return matchesFilters && matchesSearch;
     });
   }, [expenses, filters, searchQuery]);
@@ -328,16 +359,27 @@ export function DashboardContent({ userId }: { userId: string }) {
 
   const confirmDeleteExpense = async () => {
     if (!deleteExpenseId) return;
+    setIsDeleting(true);
+
+    const loadingToast = showLoadingToast("Deleting expense...", {
+      description: "Please wait while we delete the record",
+    });
 
     try {
       await service.deleteExpense(deleteExpenseId);
+      showDeleteToast("Expense Record deleted successfully");
       setExpenses((prev) => prev.filter((e) => e.id !== deleteExpenseId));
-      setRefreshKey(prev => prev + 1);
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
       showErrorToast("Error deleting expense");
     } finally {
+      setIsDeleting(false);
       setIsDeleteDialogOpen(false);
       setDeleteExpenseId(null);
+      // Clear the loading toast
+      if (loadingToast) {
+        toast.dismiss(loadingToast);
+      }
     }
   };
 
@@ -397,7 +439,7 @@ export function DashboardContent({ userId }: { userId: string }) {
         </div>
       </div>
 
-      <StatsCards 
+      <StatsCards
         totalExpenses={totalExpenses}
         onHandCash={onHandCash}
         userId={userId}
@@ -417,7 +459,7 @@ export function DashboardContent({ userId }: { userId: string }) {
           <AccordionItem value="expense-distribution">
             <AccordionTrigger>Expense Distribution</AccordionTrigger>
             <AccordionContent>
-              <ExpensePieChart 
+              <ExpensePieChart
                 userId={userId}
                 dateRange={dateRange}
                 refreshKey={refreshKey}
@@ -434,7 +476,7 @@ export function DashboardContent({ userId }: { userId: string }) {
           <AreaChart data={chartData} />
         </Card>
 
-        <ExpensePieChart 
+        <ExpensePieChart
           userId={userId}
           dateRange={dateRange}
           refreshKey={refreshKey}
@@ -486,13 +528,20 @@ export function DashboardContent({ userId }: { userId: string }) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <Button
+              className="cursor-pointer"
               variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
             >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={confirmDeleteExpense}>
-              Delete
+            <Button
+              className="cursor-pointer"
+              variant="destructive"
+              onClick={confirmDeleteExpense}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
