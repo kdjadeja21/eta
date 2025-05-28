@@ -32,6 +32,7 @@ import { ExpensePieChart } from "./widgets/expense-pie-chart";
 import { PaymentMethodCard } from "./widgets/payment-method-card";
 import { ExpenseType, formatExpenseType } from "@/lib/types";
 import { useUser } from "@clerk/nextjs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 // Extend the TableMeta type to include onEdit and onDelete
 interface CustomTableMeta {
@@ -170,7 +171,6 @@ export function DashboardContent({ userId }: { userId: string }) {
 
   useEffect(() => {
     const fetchExpenses = async () => {
-      console.log("fetching expenses");
       setRefreshKey(prev => prev + 1);
       setIsLoading(true);
       try {
@@ -361,39 +361,31 @@ export function DashboardContent({ userId }: { userId: string }) {
     <div className="container mx-auto p-4 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
           <DateRangePicker
             dateRange={dateRange}
             onDateRangeChange={(range) => range && setDateRange(range)}
-            className="cursor-pointer"
+            className="cursor-pointer w-full sm:w-auto"
           />
-          <Button
-            className="w-full sm:w-auto cursor-pointer"
-            onClick={() => {
-              setEditingExpense(null);
-              setIsAddExpenseOpen(true);
-            }}
-          >
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Add Expense
-          </Button>
-          {/* TODO: Add cash */}
-          {/* <Button
-            className="w-full sm:w-auto cursor-pointer"
-            onClick={() => {
-              setIsAddCashOpen(true);
-            }}
-          >
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Add Cash
-          </Button> */}
-          <Button
-            className="w-full sm:w-auto cursor-pointer"
-            onClick={() => setIsBulkUploadOpen(true)}
-          >
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Upload Bulk Records
-          </Button>
+          <div className="flex gap-4 w-full sm:w-auto">
+            <Button
+              className="w-1/2 sm:w-auto cursor-pointer"
+              onClick={() => {
+                setEditingExpense(null);
+                setIsAddExpenseOpen(true);
+              }}
+            >
+              <PlusIcon className="mr-2 h-4 w-4" />
+              Add Expense
+            </Button>
+            <Button
+              className="w-2/4.5 sm:w-auto cursor-pointer"
+              onClick={() => setIsBulkUploadOpen(true)}
+            >
+              <PlusIcon className="mr-2 h-4 w-4" />
+              Upload Bulk Records
+            </Button>
+          </div>
           <AddCashDialog
             open={isAddCashOpen}
             onOpenChange={setIsAddCashOpen}
@@ -413,7 +405,30 @@ export function DashboardContent({ userId }: { userId: string }) {
         refreshKey={refreshKey}
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Mobile View with Accordion */}
+      <div className="md:hidden">
+        <Accordion type="multiple" className="w-full">
+          <AccordionItem value="daily-expenses">
+            <AccordionTrigger>Daily Expenses</AccordionTrigger>
+            <AccordionContent>
+              <AreaChart data={chartData} />
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="expense-distribution">
+            <AccordionTrigger>Expense Distribution</AccordionTrigger>
+            <AccordionContent>
+              <ExpensePieChart 
+                userId={userId}
+                dateRange={dateRange}
+                refreshKey={refreshKey}
+              />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </div>
+
+      {/* Desktop View with Grid */}
+      <div className="hidden md:grid gap-4 md:grid-cols-2">
         <Card>
           <h2 className="text-xl font-bold m-4">Daily Expenses</h2>
           <AreaChart data={chartData} />

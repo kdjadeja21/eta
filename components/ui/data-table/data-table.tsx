@@ -183,7 +183,7 @@ export function DataTable<TData>({
                 onClick={() => setIsDialogOpen(true)}
                 className={
                   Object.keys(columnFilters).length > 0
-                    ? "flex items-center gap-2 cursor-pointer w-1/2 md:w-auto"
+                    ? "flex items-center gap-2 cursor-pointer w-2/3 md:w-auto"
                     : "flex items-center gap-2 cursor-pointer w-full md:w-auto"
                 }
               >
@@ -195,7 +195,7 @@ export function DataTable<TData>({
                 onClick={clearFilters}
                 className={
                   Object.keys(columnFilters).length > 0
-                    ? "flex items-center gap-2 cursor-pointer w-1/2 md:w-auto"
+                    ? "flex items-center gap-2 cursor-pointer w-1/3.5 md:w-auto"
                     : "hidden"
                 }
               >

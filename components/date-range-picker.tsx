@@ -72,7 +72,7 @@ export function DateRangePicker({
             id="date"
             variant={"outline"}
             className={cn(
-              "w-[300px] justify-start text-left font-normal hover:bg-accent hover:text-accent-foreground",
+              "w-full sm:w-[300px] justify-start text-left font-normal hover:bg-accent hover:text-accent-foreground",
               !dateRange && "text-muted-foreground"
             )}
           >
@@ -92,7 +92,7 @@ export function DateRangePicker({
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-auto p-0 pointer-events-auto shadow-lg border-border/50"
+          className="w-[calc(100vw-2rem)] sm:w-auto p-0 pointer-events-auto shadow-lg border-border/50"
           align="start"
         >
           <div className="p-3 border-b border-border/50">
@@ -116,8 +116,8 @@ export function DateRangePicker({
               allowRange
               value={dateRange}
               onChange={(value) => onDateRangeChange(value as DateRange | undefined)}
-              className="p-0"
-              numberOfMonths={2}
+              className="p-0 w-full"
+              numberOfMonths={1}
             />
           </div>
         </PopoverContent>
