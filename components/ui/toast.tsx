@@ -1,8 +1,4 @@
-import { Toaster, toast } from "sonner";
-
-export const ToastProvider = () => (
-  <Toaster position="top-right" richColors visibleToasts={5} />
-);
+import { toast } from "sonner";
 
 export const showSuccessToast = (
   message: string = "Operation successful",

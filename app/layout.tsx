@@ -47,7 +47,12 @@ export default function RootLayout({
           >
             {children}
           </ThemeProvider>
-          <Toaster position="top-right" richColors visibleToasts={5} />
+          <Toaster
+            position="top-right"
+            richColors
+            visibleToasts={3}
+            theme="light"
+          />
           <AuthToast />
         </body>
       </html>
