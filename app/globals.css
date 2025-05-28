@@ -100,3 +100,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Add styles for active dropdown menu item */
+[data-active="true"] {
+  @apply bg-accent text-accent-foreground;
+}
