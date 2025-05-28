@@ -18,6 +18,7 @@ import {
   X,
   Filter,
   Trash2,
+  ArrowDownWideNarrow,
 } from "lucide-react";
 import CustomSelect from "@/components/CustomSelect";
 import { ExpenseType, formatExpenseType } from "@/lib/types";
@@ -48,6 +49,14 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { exportToExcel, exportToPDF } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 export function DataTable<TData>({
   columns,
@@ -110,11 +119,48 @@ export function DataTable<TData>({
     setIsDialogOpen(false); // Close the dialog
   };
 
+  // Helper to format date range for filename
+  const getDateRangeString = () => {
+    const from = meta?.dateRange?.from ? new Date(meta.dateRange.from) : null;
+    const to = meta?.dateRange?.to ? new Date(meta.dateRange.to) : null;
+    if (from && to) {
+      return `${from.toISOString().slice(0, 10)}_to_${to.toISOString().slice(0, 10)}`;
+    } else if (from) {
+      return `${from.toISOString().slice(0, 10)}`;
+    } else if (to) {
+      return `${to.toISOString().slice(0, 10)}`;
+    }
+    return "all";
+  };
+
+  // Download as Excel
+  const handleDownloadExcel = () => {
+    const dateRangeStr = getDateRangeString();
+    exportToExcel({
+      data,
+      fullName: meta?.fullName || "",
+      dateRange: meta?.dateRange || {},
+      fileName: `statements_${dateRangeStr}.xlsx`
+    });
+  };
+
+  // Download as PDF
+  const handleDownloadPDF = () => {
+    const dateRangeStr = getDateRangeString();
+    exportToPDF({
+      data,
+      fullName: meta?.fullName || "",
+      dateRange: meta?.dateRange || {},
+      fileName: `statements_${dateRangeStr}.pdf`
+    });
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4 py-4">
+      <div className="flex flex-col items-start gap-4 py-4 md:flex-row md:items-center">
+        {/* Existing controls */}
         {searchKey && (
-          <div className="relative max-w-sm">
+          <div className="relative w-full md:max-w-sm">
             <Input
               placeholder="Search..."
               value={globalFilter ?? ""}
@@ -131,26 +177,32 @@ export function DataTable<TData>({
         )}
         {filters.length > 0 && (
           <>
-            <Button
-              variant="outline"
-              onClick={() => setIsDialogOpen(true)}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <Filter className="h-4 w-4" />
-              <span>Filters</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={clearFilters}
-              className={
-                Object.keys(columnFilters).length > 0
-                  ? "flex items-center gap-2 cursor-pointer"
-                  : "hidden"
-              }
-            >
-              <Trash2 className="h-4 w-4" />
-              <span>Clear Filters</span>
-            </Button>
+            <div className="flex w-full gap-4 md:w-auto">
+              <Button
+                variant="outline"
+                onClick={() => setIsDialogOpen(true)}
+                className={
+                  Object.keys(columnFilters).length > 0
+                    ? "flex items-center gap-2 cursor-pointer w-1/2 md:w-auto"
+                    : "flex items-center gap-2 cursor-pointer w-full md:w-auto"
+                }
+              >
+                <Filter className="h-4 w-4" />
+                <span>Filters</span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={clearFilters}
+                className={
+                  Object.keys(columnFilters).length > 0
+                    ? "flex items-center gap-2 cursor-pointer w-1/2 md:w-auto"
+                    : "hidden"
+                }
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>Clear Filters</span>
+              </Button>
+            </div>
             <Sheet open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <SheetContent side="right" className="p-5 overflow-y-auto">
                 <SheetHeader>
@@ -209,6 +261,24 @@ export function DataTable<TData>({
             </Sheet>
           </>
         )}
+        {/* Download Buttons */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="flex items-center gap-2 cursor-pointer w-full md:w-auto md:ml-auto">
+              <ArrowDownWideNarrow className="h-4 w-4" />
+              <span>Download Statement</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem className="cursor-pointer" onClick={handleDownloadExcel}>
+              Download as Excel
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer" onClick={handleDownloadPDF}>
+              Download as PDF
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <div className="rounded-md border">
         <Table>

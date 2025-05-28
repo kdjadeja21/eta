@@ -31,11 +31,14 @@ import { BulkUploadDialog } from "./bulk-upload-dialog";
 import { ExpensePieChart } from "./widgets/expense-pie-chart";
 import { PaymentMethodCard } from "./widgets/payment-method-card";
 import { ExpenseType, formatExpenseType } from "@/lib/types";
+import { useUser } from "@clerk/nextjs";
 
 // Extend the TableMeta type to include onEdit and onDelete
 interface CustomTableMeta {
   onEdit?: (expense: Expense) => void;
   onDelete?: (id: string) => void;
+  fullName: string;
+  dateRange: DateRange;
 }
 
 declare module "@tanstack/react-table" {
@@ -162,6 +165,8 @@ export function DashboardContent({ userId }: { userId: string }) {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const service = expenseService;
+  const { user } = useUser();
+  const fullName = user?.fullName || "";
 
   useEffect(() => {
     const fetchExpenses = async () => {
@@ -317,6 +322,8 @@ export function DashboardContent({ userId }: { userId: string }) {
       setDeleteExpenseId(id); // Set the ID of the expense to delete
       setIsDeleteDialogOpen(true); // Open the delete confirmation dialog
     },
+    fullName,
+    dateRange,
   };
 
   const confirmDeleteExpense = async () => {
@@ -427,7 +434,7 @@ export function DashboardContent({ userId }: { userId: string }) {
         filters={filterOptions}
         onFilterChange={setFilters}
         loading={isLoading}
-        meta={tableMeta} // Pass the tableMeta object here
+        meta={tableMeta}
       />
 
       <AddExpenseDialog
