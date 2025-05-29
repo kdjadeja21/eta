@@ -93,8 +93,70 @@ export function getPaidByOptions(
   const uniquePaidBy = Array.from(
     new Set(records.map((record) => record.paidBy))
   );
-  return uniquePaidBy.map((paidBy) => ({ value: paidBy, label: paidBy }));
+  const paidByOptions = uniquePaidBy.map((paidBy) => ({
+    value: paidBy,
+    label: paidBy,
+  }));
+
+  // If there are no records or payment methods, return default options
+  if (paidByOptions.length === 0) {
+    return DEFAULT_PAID_BY_OPTIONS;
+  }
+  return paidByOptions;
 }
+
+// Default options for first-time users
+const DEFAULT_PAID_BY_OPTIONS = [
+  { value: "Cash", label: "Cash" },
+  { value: "Credit Card", label: "Credit Card" },
+  { value: "Debit Card", label: "Debit Card" },
+  { value: "UPI", label: "UPI" },
+  { value: "Bank Transfer", label: "Bank Transfer" },
+  { value: "Digital Wallet", label: "Digital Wallet" },
+];
+
+const DEFAULT_CATEGORIES = [
+  { value: "Food & Dining", label: "Food & Dining" },
+  { value: "Transportation", label: "Transportation" },
+  { value: "Shopping", label: "Shopping" },
+  { value: "Utilities", label: "Utilities" },
+  { value: "Healthcare", label: "Healthcare" },
+  { value: "Entertainment", label: "Entertainment" },
+  { value: "Education", label: "Education" },
+  { value: "Housing", label: "Housing" },
+  { value: "Travel", label: "Travel" },
+  { value: "Personal Care", label: "Personal Care" },
+];
+
+const DEFAULT_SUBCATEGORIES: Record<
+  string,
+  Array<{ value: string; label: string }>
+> = {
+  "Food & Dining": [
+    { value: "Restaurants", label: "Restaurants" },
+    { value: "Groceries", label: "Groceries" },
+    { value: "Fast Food", label: "Fast Food" },
+    { value: "Coffee Shops", label: "Coffee Shops" },
+  ],
+  Transportation: [
+    { value: "Fuel", label: "Fuel" },
+    { value: "Public Transit", label: "Public Transit" },
+    { value: "Taxi/Ride Share", label: "Taxi/Ride Share" },
+    { value: "Parking", label: "Parking" },
+  ],
+  Shopping: [
+    { value: "Clothing", label: "Clothing" },
+    { value: "Electronics", label: "Electronics" },
+    { value: "Home Goods", label: "Home Goods" },
+    { value: "Gifts", label: "Gifts" },
+  ],
+  Utilities: [
+    { value: "Electricity", label: "Electricity" },
+    { value: "Water", label: "Water" },
+    { value: "Internet", label: "Internet" },
+    { value: "Phone", label: "Phone" },
+  ],
+};
 
 /**
  * Extracts unique Category options from records.
@@ -106,10 +168,16 @@ export function getCategoryOptions(
   const uniqueCategories = Array.from(
     new Set(records.map((record) => record.category))
   );
-  return uniqueCategories.map((category) => ({
+  const categoryOptions = uniqueCategories.map((category) => ({
     value: category,
     label: category,
   }));
+
+  // If there are no records or categories, return default options
+  if (categoryOptions.length === 0) {
+    return DEFAULT_CATEGORIES;
+  }
+  return categoryOptions;
 }
 
 /**
@@ -124,14 +192,36 @@ export function getSubcategoryOptions(
   const subcategories = records
     .filter((record) => record.category === selectedCategory)
     .map((record) => record.subcategory)
-    .filter((subcategory) => subcategory); // Remove undefined or null
+    .filter((subcategory) => subcategory);
 
   const uniqueSubcategories = Array.from(new Set(subcategories));
-  return uniqueSubcategories.map((subcategory) => ({
+  const subcategoryOptions = uniqueSubcategories.map((subcategory) => ({
     value: subcategory,
     label: subcategory,
   }));
+
+  // If there are no records or subcategories, return default options for the selected category
+  if (
+    subcategoryOptions.length === 0 &&
+    DEFAULT_SUBCATEGORIES[selectedCategory]
+  ) {
+    return DEFAULT_SUBCATEGORIES[selectedCategory];
+  }
+  return subcategoryOptions;
 }
+
+// Default tags for first-time users
+const DEFAULT_TAGS = [
+  { value: "monthly", label: "monthly" },
+  { value: "essential", label: "essential" },
+  { value: "bills", label: "bills" },
+  { value: "groceries", label: "groceries" },
+  { value: "entertainment", label: "entertainment" },
+  { value: "shopping", label: "shopping" },
+  { value: "travel", label: "travel" },
+  { value: "health", label: "health" },
+  { value: "education", label: "education" },
+];
 
 /**
  * Extracts unique Tag options from records.
@@ -142,7 +232,13 @@ export function getTagOptions(
 ): { value: string; label: string }[] {
   const tags = records.flatMap((record) => record.tags || []);
   const uniqueTags = Array.from(new Set(tags));
-  return uniqueTags.map((tag) => ({ value: tag, label: tag }));
+  const tagOptions = uniqueTags.map((tag) => ({ value: tag, label: tag }));
+
+  // If there are no records or tags, return default options
+  if (tagOptions.length === 0) {
+    return DEFAULT_TAGS;
+  }
+  return tagOptions;
 }
 
 // Define the export columns and their keys in the desired order
@@ -166,7 +262,12 @@ const EXPORT_COLUMNS = [
  * @param dateRange - { from: Date, to: Date }
  * @param fileName - Optional file name
  */
-export async function exportToExcel({ data, fullName, dateRange, fileName = "records.xlsx" }: {
+export async function exportToExcel({
+  data,
+  fullName,
+  dateRange,
+  fileName = "records.xlsx",
+}: {
   data: any[];
   fullName: string;
   dateRange: { from?: Date; to?: Date };
@@ -178,7 +279,9 @@ export async function exportToExcel({ data, fullName, dateRange, fileName = "rec
   // Header rows
   worksheet.addRow([`User: ${fullName}`]);
   worksheet.addRow([
-    `Date Range: ${dateRange?.from ? formatDate(dateRange.from, "MMM dd, yyyy") : ""} - ${dateRange?.to ? formatDate(dateRange.to, "MMM dd, yyyy") : ""}`
+    `Date Range: ${
+      dateRange?.from ? formatDate(dateRange.from, "MMM dd, yyyy") : ""
+    } - ${dateRange?.to ? formatDate(dateRange.to, "MMM dd, yyyy") : ""}`,
   ]);
   worksheet.addRow([]); // Empty row
 
@@ -188,23 +291,23 @@ export async function exportToExcel({ data, fullName, dateRange, fileName = "rec
     worksheet.addRow(["No data available"]);
   } else {
     // Add column headers in the desired order
-    worksheet.addRow(EXPORT_COLUMNS.map(col => col.header));
+    worksheet.addRow(EXPORT_COLUMNS.map((col) => col.header));
     // Style header row
     const headerRow = worksheet.getRow(headerRowIndex);
     if (headerRow) {
       headerRow.font = { bold: true };
-      headerRow.alignment = { horizontal: 'center' };
+      headerRow.alignment = { horizontal: "center" };
       headerRow.eachCell((cell) => {
         cell.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FFD9EAF7' }, // Light blue
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFD9EAF7" }, // Light blue
         };
         cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' },
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
         };
       });
     }
@@ -219,7 +322,8 @@ export async function exportToExcel({ data, fullName, dateRange, fileName = "rec
           value = formatExpenseType(value as ExpenseType);
         }
         if (Array.isArray(value)) return value.join(", ");
-        if (typeof value === "object" && value !== null) return JSON.stringify(value);
+        if (typeof value === "object" && value !== null)
+          return JSON.stringify(value);
         return value ?? "";
       });
       worksheet.addRow(rowValues);
@@ -229,8 +333,8 @@ export async function exportToExcel({ data, fullName, dateRange, fileName = "rec
     worksheet.addRow(["This is a computer-generated document."]);
     const footerRow = worksheet.lastRow;
     if (footerRow) {
-      footerRow.font = { italic: true, color: { argb: 'FF888888' } };
-      footerRow.alignment = { horizontal: 'center' };
+      footerRow.font = { italic: true, color: { argb: "FF888888" } };
+      footerRow.alignment = { horizontal: "center" };
       worksheet.mergeCells(`A${footerRow.number}:H${footerRow.number}`);
     }
   }
@@ -243,17 +347,20 @@ export async function exportToExcel({ data, fullName, dateRange, fileName = "rec
   if (worksheet.columns) {
     worksheet.columns.forEach((column) => {
       let maxLength = 10;
-      column.eachCell && column.eachCell({ includeEmpty: true }, (cell) => {
-        const cellValue = cell.value ? cell.value.toString() : "";
-        maxLength = Math.max(maxLength, cellValue.length);
-      });
+      column.eachCell &&
+        column.eachCell({ includeEmpty: true }, (cell) => {
+          const cellValue = cell.value ? cell.value.toString() : "";
+          maxLength = Math.max(maxLength, cellValue.length);
+        });
       column.width = maxLength + 2;
     });
   }
 
   // Create buffer and trigger download
   const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -271,7 +378,12 @@ export async function exportToExcel({ data, fullName, dateRange, fileName = "rec
  * @param dateRange - { from: Date, to: Date }
  * @param fileName - Optional file name
  */
-export function exportToPDF({ data, fullName, dateRange, fileName = "records.pdf" }: {
+export function exportToPDF({
+  data,
+  fullName,
+  dateRange,
+  fileName = "records.pdf",
+}: {
   data: any[];
   fullName: string;
   dateRange: { from?: Date; to?: Date };
@@ -281,14 +393,16 @@ export function exportToPDF({ data, fullName, dateRange, fileName = "records.pdf
   doc.setFontSize(14);
   doc.text(`User: ${fullName}`, 14, 14);
   doc.text(
-    `Date Range: ${dateRange?.from ? formatDate(dateRange.from, "MMM dd, yyyy") : ""} - ${dateRange?.to ? formatDate(dateRange.to, "MMM dd, yyyy") : ""}`,
+    `Date Range: ${
+      dateRange?.from ? formatDate(dateRange.from, "MMM dd, yyyy") : ""
+    } - ${dateRange?.to ? formatDate(dateRange.to, "MMM dd, yyyy") : ""}`,
     14,
     22
   );
   if (!data.length) {
     doc.text("No data available", 14, 40);
   } else {
-    const headers = EXPORT_COLUMNS.map(col => col.header);
+    const headers = EXPORT_COLUMNS.map((col) => col.header);
     const rows = data.map((row) =>
       EXPORT_COLUMNS.map(({ key }) => {
         let value = row[key];
@@ -300,7 +414,8 @@ export function exportToPDF({ data, fullName, dateRange, fileName = "records.pdf
           value = formatExpenseType(value as ExpenseType);
         }
         if (Array.isArray(value)) return value.join(", ");
-        if (typeof value === "object" && value !== null) return JSON.stringify(value);
+        if (typeof value === "object" && value !== null)
+          return JSON.stringify(value);
         return value ?? "";
       })
     );
@@ -308,14 +423,23 @@ export function exportToPDF({ data, fullName, dateRange, fileName = "records.pdf
       startY: 30,
       head: [headers],
       body: rows,
-      styles: { fontSize: 10, halign: 'center' },
-      headStyles: { fillColor: [22, 160, 133], fontStyle: 'bold', halign: 'center' },
+      styles: { fontSize: 10, halign: "center" },
+      headStyles: {
+        fillColor: [22, 160, 133],
+        fontStyle: "bold",
+        halign: "center",
+      },
     });
     // Add footer note
     const pageHeight = doc.internal.pageSize.height;
     doc.setFontSize(10);
     doc.setTextColor(136, 136, 136);
-    doc.text('This file is automatically generated.', doc.internal.pageSize.width / 2, pageHeight - 10, { align: 'center' });
+    doc.text(
+      "This file is automatically generated.",
+      doc.internal.pageSize.width / 2,
+      pageHeight - 10,
+      { align: "center" }
+    );
   }
   doc.save(fileName);
 }

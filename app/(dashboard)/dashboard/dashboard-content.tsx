@@ -451,13 +451,29 @@ export function DashboardContent({ userId }: { userId: string }) {
       <div className="md:hidden">
         <Accordion type="multiple" className="w-full">
           <AccordionItem value="daily-expenses">
-            <AccordionTrigger>Daily Expenses</AccordionTrigger>
+            <AccordionTrigger>
+              <div className="flex flex-row items-center justify-between w-full">
+                <span className="font-semibold text-lg">Daily Expenses</span>
+                <span className="text-xs text-muted-foreground ml-2">
+                  tap to show/hide
+                </span>
+              </div>
+            </AccordionTrigger>
             <AccordionContent>
               <AreaChart data={chartData} />
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="expense-distribution">
-            <AccordionTrigger>Expense Distribution</AccordionTrigger>
+            <AccordionTrigger>
+              <div className="flex flex-row items-center justify-between w-full">
+                <span className="font-semibold text-lg">
+                  Expense Distribution
+                </span>
+                <span className="text-xs text-muted-foreground ml-2">
+                  tap to show/hide
+                </span>
+              </div>
+            </AccordionTrigger>
             <AccordionContent>
               <ExpensePieChart
                 userId={userId}
