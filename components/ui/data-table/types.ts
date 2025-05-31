@@ -2,6 +2,7 @@ import { ColumnDef } from "@tanstack/react-table";
 
 export type FilterOptions = {
   columnKey: string;
+  label: string;
   options: string[];
 };
 

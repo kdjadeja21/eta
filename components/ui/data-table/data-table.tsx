@@ -37,13 +37,6 @@ import { DataTableProps } from "./types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -124,7 +117,9 @@ export function DataTable<TData>({
     const from = meta?.dateRange?.from ? new Date(meta.dateRange.from) : null;
     const to = meta?.dateRange?.to ? new Date(meta.dateRange.to) : null;
     if (from && to) {
-      return `${from.toISOString().slice(0, 10)}_to_${to.toISOString().slice(0, 10)}`;
+      return `${from.toISOString().slice(0, 10)}_to_${to
+        .toISOString()
+        .slice(0, 10)}`;
     } else if (from) {
       return `${from.toISOString().slice(0, 10)}`;
     } else if (to) {
@@ -140,7 +135,7 @@ export function DataTable<TData>({
       data,
       fullName: meta?.fullName || "",
       dateRange: meta?.dateRange || {},
-      fileName: `statements_${dateRangeStr}.xlsx`
+      fileName: `statements_${dateRangeStr}.xlsx`,
     });
   };
 
@@ -151,7 +146,7 @@ export function DataTable<TData>({
       data,
       fullName: meta?.fullName || "",
       dateRange: meta?.dateRange || {},
-      fileName: `statements_${dateRangeStr}.pdf`
+      fileName: `statements_${dateRangeStr}.pdf`,
     });
   };
 
@@ -212,18 +207,24 @@ export function DataTable<TData>({
                   {filters.map((filter) => (
                     <div key={filter.columnKey} className="w-full">
                       <label className="block text-sm font-medium text-foreground mb-1">
-                        {`Filter by ${filter.columnKey}`}
+                        {`Filter by ${filter.label}`}
                       </label>
                       <CustomSelect
                         isMulti
                         options={filter.options.map((option) => ({
                           value: option,
-                          label: filter.columnKey === 'type' ? formatExpenseType(option as ExpenseType) : option,
+                          label:
+                            filter.columnKey === "type"
+                              ? formatExpenseType(option as ExpenseType)
+                              : option,
                         }))}
                         value={(tempFilters[filter.columnKey] || []).map(
                           (value) => ({
                             value,
-                            label: filter.columnKey === 'type' ? formatExpenseType(value as ExpenseType) : value,
+                            label:
+                              filter.columnKey === "type"
+                                ? formatExpenseType(value as ExpenseType)
+                                : value,
                           })
                         )}
                         onChange={(selectedOptions: any[]) => {
@@ -264,17 +265,26 @@ export function DataTable<TData>({
         {/* Download Buttons */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="flex items-center gap-2 cursor-pointer w-full md:w-auto md:ml-auto">
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 cursor-pointer w-full md:w-auto md:ml-auto"
+            >
               <ArrowDownWideNarrow className="h-4 w-4" />
               <span>Download Statement</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem className="cursor-pointer" onClick={handleDownloadExcel}>
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={handleDownloadExcel}
+            >
               Download as Excel
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer" onClick={handleDownloadPDF}>
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={handleDownloadPDF}
+            >
               Download as PDF
             </DropdownMenuItem>
           </DropdownMenuContent>

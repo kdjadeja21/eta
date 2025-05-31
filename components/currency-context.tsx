@@ -3,9 +3,20 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import type { ReactNode } from "react";
 import { fetchGeolocation } from "@/lib/geolocation-service";
+import { showSuccessToast } from "./ui/toast";
+
+// Define types for currency data
+type CurrencyInfo = {
+  symbol: string;
+  name: string;
+};
+
+type CurrencyMap = {
+  [key: string]: CurrencyInfo;
+};
 
 // Currency data mapping countries to currency symbols
-const currencyData = {
+const currencyData: CurrencyMap = {
   IN: { symbol: "₹", name: "INR" },
   US: { symbol: "$", name: "USD" },
   GB: { symbol: "£", name: "GBP" },
@@ -13,44 +24,63 @@ const currencyData = {
   // Add more countries and currencies as needed
 };
 
-const defaultCurrency = { symbol: "₹", name: "INR" };
+const defaultCurrency: CurrencyInfo = { symbol: "₹", name: "INR" };
 
 // Create a context for currency management
 const CurrencyContext = createContext({
   currency: defaultCurrency,
-  updateCurrency: (newCurrency: { symbol: string; name: string }) => {},
+  updateCurrency: (newCurrency: CurrencyInfo) => {},
 });
 
 export const CurrencyProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useUser();
-  const [currency, setCurrency] = useState(defaultCurrency);
+  const { user, isLoaded } = useUser();
+  const [currency, setCurrency] = useState<CurrencyInfo>(defaultCurrency);
 
   useEffect(() => {
+    if (!isLoaded) return; // Wait until user data is loaded
+
     const fetchCurrency = async () => {
-      if (user?.unsafeMetadata?.currency) {
-        setCurrency(
-          user.unsafeMetadata.currency as { symbol: string; name: string }
-        );
-      } else {
-        const data = await fetchGeolocation();
-        if (data) {
-          const countryCode: keyof typeof currencyData = data.country_code;
-          if (currencyData[countryCode]) {
-            setCurrency(currencyData[countryCode]);
+      try {
+        // First try to get currency from user metadata
+        if (user?.unsafeMetadata?.currency) {
+          const userCurrency = user.unsafeMetadata.currency as CurrencyInfo;
+          if (userCurrency.symbol && userCurrency.name) {
+            setCurrency(userCurrency);
+            return;
           }
         }
+
+        // If no user currency, try geolocation
+        const data = await fetchGeolocation();
+        if (data?.country_code) {
+          const countryCode = data.country_code;
+          if (currencyData[countryCode]) {
+            setCurrency(currencyData[countryCode]);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching currency:", error);
+        // Keep using default currency on error
       }
     };
 
     fetchCurrency();
   }, [user]);
 
-  const updateCurrency = (newCurrency: { symbol: string; name: string }) => {
-    setCurrency(newCurrency);
-    if (user) {
-      user.update({
-        unsafeMetadata: { ...user.unsafeMetadata, currency: newCurrency },
-      });
+  const updateCurrency = async (newCurrency: CurrencyInfo) => {
+    try {
+      setCurrency(newCurrency);
+      if (user) {
+        await user.update({
+          unsafeMetadata: { ...user.unsafeMetadata, currency: newCurrency },
+        });
+        showSuccessToast("Currency updated successfully!");
+      }
+    } catch (error) {
+      console.error("Error updating currency:", error);
+      // Revert to previous currency on error
+      setCurrency(currency);
     }
   };
 

@@ -96,7 +96,7 @@ export const columns: ExpenseColumn[] = [
   },
   {
     accessorKey: "paidBy",
-    header: "Paid By",
+    header: "Payment Method",
   },
   {
     accessorKey: "category",
@@ -271,30 +271,35 @@ export function DashboardContent({ userId }: { userId: string }) {
   const filterOptions = [
     {
       columnKey: "paidBy",
+      label: "Payment Method",
       options: uniq(expenses.map((e) => e.paidBy)).filter(
         (v): v is string => typeof v === "string"
       ),
     },
     {
       columnKey: "category",
+      label: "Category",
       options: uniq(expenses.map((e) => e.category)).filter(
         (v): v is string => typeof v === "string"
       ),
     },
     {
       columnKey: "subcategory",
+      label: "Sub Category",
       options: uniq(expenses.map((e) => e.subcategory)).filter(
         (v): v is string => typeof v === "string"
       ),
     },
     {
       columnKey: "tags",
+      label: "Tags",
       options: uniq(expenses.flatMap((e) => e.tags)).filter(
         (v): v is string => typeof v === "string"
       ),
     },
     {
       columnKey: "type",
+      label: "Type",
       options: uniq(expenses.map((e) => e.type)).filter((v): v is ExpenseType =>
         isValidType(v)
       ),

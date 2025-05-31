@@ -56,7 +56,7 @@ const formSchema = z.object({
   date: z.date(),
   category: z.string().min(1, "Category is required"),
   description: z.string().optional(),
-  paidBy: z.string().min(1, "Paid by is required"),
+  paidBy: z.string().min(1, "Payment Method is required"),
   subcategory: z.string().optional(),
   tags: z.array(z.string()).optional(),
 });
@@ -257,7 +257,7 @@ export function AddExpenseDialog({
                 name="paidBy"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Paid By</FormLabel>
+                    <FormLabel>Payment Method</FormLabel>
                     <FormControl>
                       <CustomCreatableSelect
                         isClearable
