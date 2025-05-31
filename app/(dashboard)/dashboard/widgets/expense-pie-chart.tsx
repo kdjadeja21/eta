@@ -237,7 +237,9 @@ export function ExpensePieChart({
           {chartData.map((entry, index) => (
             <div
               key={entry.name}
-              className="flex items-center gap-2 cursor-pointer hover:opacity-70"
+              className={`flex items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity ${
+                hiddenSegments.has(entry.name) ? "opacity-40" : "opacity-100"
+              }`}
               onClick={() => handleLegendClick({ payload: entry })}
             >
               <div
