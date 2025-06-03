@@ -49,16 +49,24 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { ExpenseType, formatExpenseType } from "@/lib/types";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const formSchema = z.object({
-  amount: z.number().min(0, "Amount must be positive"),
-  type: z.nativeEnum(ExpenseType),
+  amount: z.number()
+    .min(0.01, "Amount must be greater than zero")
+    .positive("Amount must be positive"),
   date: z.date(),
-  category: z.string().min(1, "Category is required"),
-  description: z.string().optional(),
-  paidBy: z.string().min(1, "Payment Method is required"),
-  subcategory: z.string().optional(),
-  tags: z.array(z.string()).optional(),
+  description: z.string().min(1, "Description is required"),
+  type: z.nativeEnum(ExpenseType),
+  category: z.string(),
+  paidBy: z.string(),
+  subcategory: z.string(),
+  tags: z.array(z.string()),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -171,6 +179,7 @@ export function AddExpenseDialog({
             onSubmit={form.handleSubmit(handleSubmit)}
             className="space-y-4"
           >
+            {/* Primary Fields - Always Visible */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -251,156 +260,172 @@ export function AddExpenseDialog({
               )}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="paidBy"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Payment Method</FormLabel>
-                    <FormControl>
-                      <CustomCreatableSelect
-                        isClearable
-                        onChange={(option: any) =>
-                          field.onChange(option?.value || "")
-                        }
-                        value={
-                          field.value
-                            ? { label: field.value, value: field.value }
-                            : null
-                        }
-                        options={getPaidByOptions(records)}
-                        placeholder="Payment method"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Type</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value={ExpenseType.Need}>
-                          {formatExpenseType(ExpenseType.Need)}
-                        </SelectItem>
-                        <SelectItem value={ExpenseType.Want}>
-                          {formatExpenseType(ExpenseType.Want)}
-                        </SelectItem>
-                        <SelectItem value={ExpenseType.NotSure}>
-                          {formatExpenseType(ExpenseType.NotSure)}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <FormControl>
-                      <CustomCreatableSelect
-                        isClearable
-                        onChange={(option: any) =>
-                          field.onChange(option?.value || "")
-                        }
-                        value={
-                          field.value
-                            ? { label: field.value, value: field.value }
-                            : null
-                        }
-                        options={getCategoryOptions(records)}
-                        placeholder="Select a category"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="subcategory"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Subcategory</FormLabel>
-                    <FormControl>
-                      <CustomCreatableSelect
-                        isClearable
-                        onChange={(option: any) =>
-                          field.onChange(option?.value || "")
-                        }
-                        value={
-                          field.value
-                            ? { label: field.value, value: field.value }
-                            : null
-                        }
-                        options={getSubcategoryOptions(
-                          records,
-                          selectedCategory
-                        )}
-                        placeholder="Select a subcategory"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
             <FormField
               control={form.control}
-              name="tags"
+              name="type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tags</FormLabel>
-                  <FormControl>
-                    <CustomCreatableSelect
-                      isMulti
-                      isClearable
-                      onChange={(options: any) =>
-                        field.onChange(
-                          options
-                            ? options.map((option: any) => option.value)
-                            : []
-                        )
-                      }
-                      value={(field.value || []).map((tag) => ({
-                        label: tag,
-                        value: tag,
-                      }))}
-                      options={getTagOptions(records)}
-                      placeholder="Enter tags separated by commas"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    E.g., "groceries, monthly, essential"
-                  </FormDescription>
+                  <FormLabel>Type</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value={ExpenseType.Need}>
+                        {formatExpenseType(ExpenseType.Need)}
+                      </SelectItem>
+                      <SelectItem value={ExpenseType.Want}>
+                        {formatExpenseType(ExpenseType.Want)}
+                      </SelectItem>
+                      <SelectItem value={ExpenseType.NotSure}>
+                        {formatExpenseType(ExpenseType.NotSure)}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            <div className="text-sm text-muted-foreground text-center py-2">
+              Additional fields available below
+            </div>
+
+            {/* Advanced Details - Accordion Section */}
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="advanced-details" className="border rounded-lg">
+                <AccordionTrigger className="px-4 py-3 hover:bg-accent/50 rounded-lg cursor-pointer">
+                  <div className="flex items-center gap-2 cursor-pointer">
+                    <span className="font-medium">Advanced Details</span>                    
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-4 pt-4 px-4 pb-2">
+                    <div className="grid grid-cols-1 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="paidBy"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Payment Method</FormLabel>
+                            <FormControl>
+                              <CustomCreatableSelect
+                                isClearable
+                                onChange={(option: any) =>
+                                  field.onChange(option?.value ?? "")
+                                }
+                                value={
+                                  field.value
+                                    ? { label: field.value, value: field.value }
+                                    : null
+                                }
+                                options={getPaidByOptions(records)}
+                                placeholder="Payment method"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="category"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Category</FormLabel>
+                            <FormControl>
+                              <CustomCreatableSelect
+                                isClearable
+                                onChange={(option: any) =>
+                                  field.onChange(option?.value ?? "")
+                                }
+                                value={
+                                  field.value
+                                    ? { label: field.value, value: field.value }
+                                    : null
+                                }
+                                options={getCategoryOptions(records)}
+                                placeholder="Select a category"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="subcategory"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Subcategory</FormLabel>
+                          <FormControl>
+                            <CustomCreatableSelect
+                              isClearable
+                              onChange={(option: any) =>
+                                field.onChange(option?.value ?? "")
+                              }
+                              value={
+                                field.value
+                                  ? { label: field.value, value: field.value }
+                                  : null
+                              }
+                              options={getSubcategoryOptions(
+                                records,
+                                selectedCategory
+                              )}
+                              placeholder="Select a subcategory"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="tags"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tags</FormLabel>
+                          <FormControl>
+                            <CustomCreatableSelect
+                              isMulti
+                              isClearable
+                              onChange={(options: any) =>
+                                field.onChange(
+                                  options
+                                    ? options.map((option: any) => option.value)
+                                    : []
+                                )
+                              }
+                              value={(field.value || []).map((tag) => ({
+                                label: tag,
+                                value: tag,
+                              }))}
+                              options={getTagOptions(records)}
+                              placeholder="Enter tags separated by commas"
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            E.g., "groceries, monthly, essential"
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
 
             <SheetFooter>
               <Button
