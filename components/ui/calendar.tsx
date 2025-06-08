@@ -18,6 +18,7 @@ interface CalendarProps {
   classNames?: React.ComponentProps<typeof DayPicker>["classNames"];
   showOutsideDays?: boolean;
   numberOfMonths?: number;
+  defaultMonth?: Date;
 }
 
 const Calendar: React.FC<CalendarProps> = ({
@@ -29,6 +30,7 @@ const Calendar: React.FC<CalendarProps> = ({
   classNames,
   showOutsideDays = true,
   numberOfMonths = 1,
+  defaultMonth,
   ...props
 }) => {
   const disabledDays = disableFutureDates
@@ -103,6 +105,7 @@ const Calendar: React.FC<CalendarProps> = ({
         selected={value as DateRange | undefined}
         onSelect={handleSelect as SelectRangeEventHandler}
         numberOfMonths={numberOfMonths}
+        defaultMonth={defaultMonth}
         {...commonProps}
       />
     );
@@ -114,6 +117,7 @@ const Calendar: React.FC<CalendarProps> = ({
       selected={value as Date | undefined}
       onSelect={handleSelect as SelectSingleEventHandler}
       numberOfMonths={numberOfMonths}
+      defaultMonth={defaultMonth}
       {...commonProps}
     />
   );

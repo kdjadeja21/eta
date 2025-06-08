@@ -12,18 +12,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useDateRange } from "./date-range-context";
 
 interface DateRangePickerProps {
   className?: string;
-  dateRange: DateRange | undefined;
-  onDateRangeChange: (range: DateRange | undefined) => void;
 }
 
 export function DateRangePicker({
   className,
-  dateRange,
-  onDateRangeChange,
 }: DateRangePickerProps) {
+  const { dateRange, setDateRange } = useDateRange();
   const today = new Date();
 
   const quickRanges = [
@@ -73,22 +71,25 @@ export function DateRangePicker({
             variant={"outline"}
             className={cn(
               "w-full sm:w-[300px] justify-start text-left font-normal hover:bg-accent hover:text-accent-foreground",
-              !dateRange && "text-muted-foreground"
+              !dateRange && "text-muted-foreground",
+              "sm:px-4 px-2"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {dateRange?.from ? (
-              dateRange.to ? (
-                <>
-                  {formatDate(dateRange.from, "LLL dd, y")} -{" "}
-                  {formatDate(dateRange.to, "LLL dd, y")}
-                </>
+            <CalendarIcon className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">
+              {dateRange?.from ? (
+                dateRange.to ? (
+                  <>
+                    {formatDate(dateRange.from, "LLL dd, y")} -{" "}
+                    {formatDate(dateRange.to, "LLL dd, y")}
+                  </>
+                ) : (
+                  formatDate(dateRange.from, "LLL dd, y")
+                )
               ) : (
-                formatDate(dateRange.from, "LLL dd, y")
-              )
-            ) : (
-              <span>Pick a date range</span>
-            )}
+                "Pick a date range"
+              )}
+            </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent
@@ -96,6 +97,23 @@ export function DateRangePicker({
           align="start"
         >
           <div className="p-3 border-b border-border/50">
+            <div className="sm:hidden mb-3">
+              <h4 className="text-sm font-medium text-muted-foreground mb-1">Current Range</h4>
+              <p className="text-sm">
+                {dateRange?.from ? (
+                  dateRange.to ? (
+                    <>
+                      {formatDate(dateRange.from, "LLL dd, y")} -{" "}
+                      {formatDate(dateRange.to, "LLL dd, y")}
+                    </>
+                  ) : (
+                    formatDate(dateRange.from, "LLL dd, y")
+                  )
+                ) : (
+                  "No date range selected"
+                )}
+              </p>
+            </div>
             <h4 className="mb-2 text-sm font-medium text-muted-foreground">Quick Select</h4>
             <div className="grid grid-cols-2 gap-2">
               {quickRanges.map((range) => (
@@ -104,7 +122,7 @@ export function DateRangePicker({
                   variant="outline"
                   size="sm"
                   className="justify-start font-normal hover:bg-accent hover:text-accent-foreground cursor-pointer"
-                  onClick={() => onDateRangeChange(range.range)}
+                  onClick={() => setDateRange(range.range)}
                 >
                   {range.label}
                 </Button>
@@ -115,7 +133,12 @@ export function DateRangePicker({
             <Calendar
               allowRange
               value={dateRange}
-              onChange={(value) => onDateRangeChange(value as DateRange | undefined)}
+              defaultMonth={dateRange?.from || today}
+              onChange={(value) => {
+                if (value && 'from' in value) {
+                  setDateRange(value as DateRange);
+                }
+              }}
               className="p-0 w-full"
               numberOfMonths={1}
             />
