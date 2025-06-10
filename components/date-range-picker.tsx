@@ -3,6 +3,7 @@ import { CalendarIcon } from "lucide-react";
 import { formatDate, startOfMonth } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
 import { addDays, subMonths, startOfWeek, endOfWeek, endOfMonth, startOfYear, endOfYear, subYears } from "date-fns";
+import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ export function DateRangePicker({
   dateRange,
   onDateRangeChange,
 }: DateRangePickerProps) {
+  const [open, setOpen] = useState(false);
   const today = new Date();
 
   const quickRanges = [
@@ -66,7 +68,7 @@ export function DateRangePicker({
 
   return (
     <div className={cn("grid gap-2", className)}>
-      <Popover modal>
+      <Popover modal open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             id="date"
@@ -104,7 +106,10 @@ export function DateRangePicker({
                   variant="outline"
                   size="sm"
                   className="justify-start font-normal hover:bg-accent hover:text-accent-foreground cursor-pointer"
-                  onClick={() => onDateRangeChange(range.range)}
+                  onClick={() => {
+                    onDateRangeChange(range.range);
+                    setOpen(false);
+                  }}
                 >
                   {range.label}
                 </Button>

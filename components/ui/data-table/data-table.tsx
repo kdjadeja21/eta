@@ -99,6 +99,7 @@ export function DataTable<TData>({
 
   const clearFilters = () => {
     setColumnFilters({});
+    setTempFilters({});
     onFilterChange?.({});
   };
 
