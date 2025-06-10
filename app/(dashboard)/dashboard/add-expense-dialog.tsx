@@ -317,6 +317,7 @@ export function AddExpenseDialog({
                             <FormControl>
                               <CustomCreatableSelect
                                 isClearable
+                                menuPlacement="auto"
                                 onChange={(option: any) =>
                                   field.onChange(option?.value ?? "")
                                 }
@@ -343,6 +344,7 @@ export function AddExpenseDialog({
                             <FormControl>
                               <CustomCreatableSelect
                                 isClearable
+                                menuPlacement="auto"
                                 onChange={(option: any) =>
                                   field.onChange(option?.value ?? "")
                                 }
@@ -370,6 +372,7 @@ export function AddExpenseDialog({
                           <FormControl>
                             <CustomCreatableSelect
                               isClearable
+                              menuPlacement="auto"
                               onChange={(option: any) =>
                                 field.onChange(option?.value ?? "")
                               }
@@ -400,6 +403,7 @@ export function AddExpenseDialog({
                             <CustomCreatableSelect
                               isMulti
                               isClearable
+                              menuPlacement="top"
                               onChange={(options: any) =>
                                 field.onChange(
                                   options

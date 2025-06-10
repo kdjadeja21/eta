@@ -74,7 +74,6 @@ const CustomCreatableSelect = (props: any) => {
   return (
     <CreatableSelect
       {...props}
-      menuPlacement="auto"
       styles={customStyles}
       theme={(baseTheme) => ({
         ...baseTheme,
