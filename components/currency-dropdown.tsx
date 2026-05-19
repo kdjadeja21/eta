@@ -9,8 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FormControl } from "@/components/ui/form";
-
 const currencyOptions = [
   { code: "IN", symbol: "₹", name: "INR" },
   { code: "US", symbol: "$", name: "USD" },
@@ -35,11 +33,9 @@ export const CurrencyDropdown = () => {
         value={currency.name}
         onValueChange={(value: string) => handleChange(value)}
       >
-        {/* <FormControl> */}
         <SelectTrigger>
           <SelectValue placeholder="Select payment method" />
         </SelectTrigger>
-        {/* </FormControl> */}
         <SelectContent>
           {currencyOptions.map((option) => (
             <SelectItem key={option.code} value={option.name}>
