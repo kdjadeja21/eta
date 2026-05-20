@@ -175,6 +175,7 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
         onOpenChange={setIsAddOpen}
         onSubmit={handleAddExpense}
         userId={userId}
+        defaultDate={selectedDate}
       />
 
       {/* Edit expense dialog */}

@@ -77,6 +77,7 @@ interface AddExpenseDialogProps {
   onSubmit: (data: FormValues) => Promise<void>;
   expense?: Expense | null;
   userId: string;
+  defaultDate?: Date;
 }
 
 export function AddExpenseDialog({
@@ -85,6 +86,7 @@ export function AddExpenseDialog({
   onSubmit,
   expense,
   userId,
+  defaultDate,
 }: AddExpenseDialogProps) {
   const [records, setRecords] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -122,6 +124,8 @@ export function AddExpenseDialog({
   }, [userId, open, service]);
 
   useEffect(() => {
+    if (!open) return;
+
     if (expense) {
       form.reset({
         date: expense.date,
@@ -135,7 +139,7 @@ export function AddExpenseDialog({
       });
     } else {
       form.reset({
-        date: new Date(),
+        date: defaultDate ?? new Date(),
         amount: 0,
         description: "",
         paidBy: "",
@@ -145,7 +149,7 @@ export function AddExpenseDialog({
         type: ExpenseType.Need,
       });
     }
-  }, [expense, form]);
+  }, [expense, form, open, defaultDate]);
 
   const handleSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
@@ -227,8 +231,8 @@ export function AddExpenseDialog({
                     <FormLabel>Amount</FormLabel>
                     <FormControl>
                       <Input
+                      autoFocus
                         type="number"
-                        step="0.01"
                         placeholder="0.00"
                         {...field}
                         onChange={(e) =>
