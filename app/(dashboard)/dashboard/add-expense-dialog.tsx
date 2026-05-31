@@ -46,7 +46,6 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
-  SheetFooter,
 } from "@/components/ui/sheet";
 import { ExpenseType, formatExpenseType } from "@/lib/types";
 import {
@@ -55,9 +54,16 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useIsMobile } from "@/hooks/use-is-mobile";
+
+const FORM_ID = "add-expense-form";
 
 const formSchema = z.object({
-  amount: z.number()
+  amount: z
+    .number({
+      required_error: "Amount is required",
+      invalid_type_error: "Amount is required",
+    })
     .min(0.01, "Amount must be greater than zero")
     .positive("Amount must be positive"),
   date: z.date(),
@@ -90,12 +96,13 @@ export function AddExpenseDialog({
 }: AddExpenseDialogProps) {
   const [records, setRecords] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isMobile = useIsMobile();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       date: new Date(),
-      amount: 0,
+      amount: undefined,
       description: "",
       paidBy: "",
       category: "",
@@ -105,7 +112,6 @@ export function AddExpenseDialog({
     },
   });
 
-  // Determine which service to use based on userId
   const service = expenseService;
 
   useEffect(() => {
@@ -140,7 +146,7 @@ export function AddExpenseDialog({
     } else {
       form.reset({
         date: defaultDate ?? new Date(),
-        amount: 0,
+        amount: undefined,
         description: "",
         paidBy: "",
         category: "",
@@ -164,27 +170,99 @@ export function AddExpenseDialog({
     }
   };
 
+  const handleCancel = () => {
+    onOpenChange(false);
+    form.reset();
+  };
+
   const selectedCategory = form.watch("category");
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="p-5 overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>{expense ? "Edit Expense" : "Add Expense"}</SheetTitle>
-          <SheetDescription>
+      <SheetContent
+        side={isMobile ? "bottom" : "right"}
+        className={cn(
+          "gap-0 p-0",
+          isMobile
+            ? "max-h-[92dvh] pb-[env(safe-area-inset-bottom)] flex flex-col"
+            : "flex flex-col overflow-y-auto"
+        )}
+      >
+        {/* Mobile drag handle */}
+        {isMobile && (
+          <div className="flex shrink-0 justify-center pb-2 pt-3">
+            <div className="h-1 w-10 rounded-full bg-muted-foreground/25" />
+          </div>
+        )}
+
+        {/* Header */}
+        <SheetHeader
+          className={cn(
+            "shrink-0 px-5",
+            isMobile ? "border-b pb-4 pt-1" : "pt-5 pb-4 pr-10"
+          )}
+        >
+          <SheetTitle className="text-lg">
+            {expense ? "Edit Expense" : "Add Expense"}
+          </SheetTitle>
+          <SheetDescription className="text-sm">
             {expense
               ? "Update the expense details below."
               : "Enter the expense details below."}
           </SheetDescription>
         </SheetHeader>
 
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-4"
-          >
-            {/* Primary Fields - Always Visible */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Scrollable form body */}
+        <div
+          className={cn(
+            "px-5",
+            isMobile ? "flex-1 overflow-y-auto py-5" : "py-4"
+          )}
+        >
+          <Form {...form}>
+            <form
+              id={FORM_ID}
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-4"
+            >
+              {/* Amount — prominent on mobile */}
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Amount</FormLabel>
+                    <FormControl>
+                      <Input
+                        autoFocus={!isMobile}
+                        type="number"
+                        placeholder="0.00"
+                        className={cn(isMobile && "h-12 text-base")}
+                        name={field.name}
+                        ref={field.ref}
+                        onBlur={field.onBlur}
+                        value={
+                          field.value === undefined || Number.isNaN(field.value)
+                            ? ""
+                            : field.value
+                        }
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          if (raw === "") {
+                            field.onChange(undefined);
+                            return;
+                          }
+                          const parsed = parseFloat(raw);
+                          field.onChange(Number.isNaN(parsed) ? undefined : parsed);
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Date */}
               <FormField
                 control={form.control}
                 name="date"
@@ -195,10 +273,11 @@ export function AddExpenseDialog({
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
-                            variant={"outline"}
+                            variant="outline"
                             className={cn(
-                              "pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
+                              "w-full justify-start pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground",
+                              isMobile && "h-12 text-base"
                             )}
                           >
                             {field.value ? (
@@ -210,7 +289,11 @@ export function AddExpenseDialog({
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent
+                        className="w-auto p-0"
+                        align={isMobile ? "center" : "start"}
+                        side={isMobile ? "bottom" : "bottom"}
+                      >
                         <Calendar
                           value={field.value}
                           onChange={field.onChange}
@@ -223,95 +306,79 @@ export function AddExpenseDialog({
                 )}
               />
 
+              {/* Description */}
               <FormField
                 control={form.control}
-                name="amount"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Amount</FormLabel>
+                    <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Input
-                      autoFocus
-                        type="number"
-                        placeholder="0.00"
+                      <Textarea
+                        placeholder="Enter a description"
+                        className={cn(
+                          "resize-none",
+                          isMobile && "text-base min-h-[80px]"
+                        )}
                         {...field}
-                        onChange={(e) =>
-                          field.onChange(parseFloat(e.target.value))
-                        }
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Enter a description"
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              {/* Type */}
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Type</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger
+                          className={cn("w-full", isMobile && "h-12 text-base")}
+                        >
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value={ExpenseType.Need}>
+                          {formatExpenseType(ExpenseType.Need)}
+                        </SelectItem>
+                        <SelectItem value={ExpenseType.Want}>
+                          {formatExpenseType(ExpenseType.Want)}
+                        </SelectItem>
+                        <SelectItem value={ExpenseType.NotSure}>
+                          {formatExpenseType(ExpenseType.NotSure)}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Type</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={ExpenseType.Need}>
-                        {formatExpenseType(ExpenseType.Need)}
-                      </SelectItem>
-                      <SelectItem value={ExpenseType.Want}>
-                        {formatExpenseType(ExpenseType.Want)}
-                      </SelectItem>
-                      <SelectItem value={ExpenseType.NotSure}>
-                        {formatExpenseType(ExpenseType.NotSure)}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="text-sm text-muted-foreground text-center py-2">
-              Additional fields available below
-            </div>
-
-            {/* Advanced Details - Accordion Section */}
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="advanced-details" className="border rounded-lg">
-                <AccordionTrigger className="px-4 py-3 hover:bg-accent/50 rounded-lg cursor-pointer">
-                  <div className="flex items-center gap-2 cursor-pointer">
-                    <span className="font-medium">Advanced Details</span>                    
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-4 pt-4 px-4 pb-2">
-                    <div className="grid grid-cols-1 gap-4">
+              {/* Advanced Details */}
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem
+                  value="advanced-details"
+                  className="border rounded-lg"
+                >
+                  <AccordionTrigger className="px-4 py-3 hover:bg-accent/50 rounded-lg cursor-pointer">
+                    <div className="flex items-center gap-2 cursor-pointer">
+                      <span className="font-medium text-sm">
+                        Advanced Details
+                      </span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-4 pt-4 px-4 pb-2">
                       <FormField
                         control={form.control}
                         name="paidBy"
@@ -327,7 +394,10 @@ export function AddExpenseDialog({
                                 }
                                 value={
                                   field.value
-                                    ? { label: field.value, value: field.value }
+                                    ? {
+                                        label: field.value,
+                                        value: field.value,
+                                      }
                                     : null
                                 }
                                 options={getPaidByOptions(records)}
@@ -354,7 +424,10 @@ export function AddExpenseDialog({
                                 }
                                 value={
                                   field.value
-                                    ? { label: field.value, value: field.value }
+                                    ? {
+                                        label: field.value,
+                                        value: field.value,
+                                      }
                                     : null
                                 }
                                 options={getCategoryOptions(records)}
@@ -365,98 +438,107 @@ export function AddExpenseDialog({
                           </FormItem>
                         )}
                       />
+
+                      <FormField
+                        control={form.control}
+                        name="subcategory"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Subcategory</FormLabel>
+                            <FormControl>
+                              <CustomCreatableSelect
+                                isClearable
+                                menuPlacement="auto"
+                                onChange={(option: any) =>
+                                  field.onChange(option?.value ?? "")
+                                }
+                                value={
+                                  field.value
+                                    ? {
+                                        label: field.value,
+                                        value: field.value,
+                                      }
+                                    : null
+                                }
+                                options={getSubcategoryOptions(
+                                  records,
+                                  selectedCategory
+                                )}
+                                placeholder="Select a subcategory"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="tags"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tags</FormLabel>
+                            <FormControl>
+                              <CustomCreatableSelect
+                                isMulti
+                                isClearable
+                                menuPlacement="top"
+                                onChange={(options: any) =>
+                                  field.onChange(
+                                    options
+                                      ? options.map(
+                                          (option: any) => option.value
+                                        )
+                                      : []
+                                  )
+                                }
+                                value={(field.value || []).map((tag) => ({
+                                  label: tag,
+                                  value: tag,
+                                }))}
+                                options={getTagOptions(records)}
+                                placeholder="Enter tags"
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              E.g., &ldquo;groceries, monthly, essential&rdquo;
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </form>
+          </Form>
+        </div>
 
-                    <FormField
-                      control={form.control}
-                      name="subcategory"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Subcategory</FormLabel>
-                          <FormControl>
-                            <CustomCreatableSelect
-                              isClearable
-                              menuPlacement="auto"
-                              onChange={(option: any) =>
-                                field.onChange(option?.value ?? "")
-                              }
-                              value={
-                                field.value
-                                  ? { label: field.value, value: field.value }
-                                  : null
-                              }
-                              options={getSubcategoryOptions(
-                                records,
-                                selectedCategory
-                              )}
-                              placeholder="Select a subcategory"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="tags"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tags</FormLabel>
-                          <FormControl>
-                            <CustomCreatableSelect
-                              isMulti
-                              isClearable
-                              menuPlacement="top"
-                              onChange={(options: any) =>
-                                field.onChange(
-                                  options
-                                    ? options.map((option: any) => option.value)
-                                    : []
-                                )
-                              }
-                              value={(field.value || []).map((tag) => ({
-                                label: tag,
-                                value: tag,
-                              }))}
-                              options={getTagOptions(records)}
-                              placeholder="Enter tags separated by commas"
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            E.g., "groceries, monthly, essential"
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-
-            <SheetFooter>
-              <Button
-                className="cursor-pointer"
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  onOpenChange(false);
-                  form.reset();
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="cursor-pointer"
-                type="submit"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Saving..." : expense ? "Update" : "Add"}
-              </Button>
-            </SheetFooter>
-          </form>
-        </Form>
+        {/* Footer — always anchored at bottom */}
+        <div
+          className={cn(
+            "shrink-0 border-t px-5",
+            isMobile ? "py-4 flex flex-row gap-3" : "py-4 flex flex-row-reverse gap-3"
+          )}
+        >
+          <Button
+            type="submit"
+            form={FORM_ID}
+            disabled={isSubmitting}
+            className={cn("cursor-pointer", isMobile && "flex-1 h-12 text-base")}
+          >
+            {isSubmitting ? "Saving…" : expense ? "Update" : "Save"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            className={cn("cursor-pointer", isMobile && "flex-1 h-12 text-base")}
+          >
+            Cancel
+          </Button>
+        </div>
       </SheetContent>
     </Sheet>
   );

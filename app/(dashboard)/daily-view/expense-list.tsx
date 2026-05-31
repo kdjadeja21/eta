@@ -1,9 +1,45 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import { format, isToday } from "date-fns";
-import { Receipt } from "lucide-react";
+import { ArrowDownUp, Check, Receipt } from "lucide-react";
 import { ExpenseListItem } from "./expense-list-item";
 import type { Expense } from "@/lib/expense-service";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+
+type SortKey = "createdAt_desc" | "createdAt_asc" | "amount_desc" | "amount_asc";
+
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: "createdAt_desc", label: "Newest first" },
+  { key: "createdAt_asc", label: "Oldest first" },
+  { key: "amount_desc", label: "Amount: high to low" },
+  { key: "amount_asc", label: "Amount: low to high" },
+];
+
+function sortExpenses(expenses: Expense[], sortKey: SortKey): Expense[] {
+  return [...expenses].sort((a, b) => {
+    switch (sortKey) {
+      case "createdAt_desc":
+        return (
+          (b.createdAt ?? b.date).getTime() - (a.createdAt ?? a.date).getTime()
+        );
+      case "createdAt_asc":
+        return (
+          (a.createdAt ?? a.date).getTime() - (b.createdAt ?? b.date).getTime()
+        );
+      case "amount_desc":
+        return b.amount - a.amount;
+      case "amount_asc":
+        return a.amount - b.amount;
+    }
+  });
+}
 
 interface ExpenseListProps {
   expenses: Expense[];
@@ -40,9 +76,18 @@ export function ExpenseList({
   onEdit,
   onDelete,
 }: ExpenseListProps) {
+  const [sortKey, setSortKey] = useState<SortKey>("createdAt_desc");
+
+  const sortedExpenses = useMemo(
+    () => sortExpenses(expenses, sortKey),
+    [expenses, sortKey]
+  );
+
   const transactionLabel = isToday(selectedDate)
     ? `${expenses.length} transaction${expenses.length !== 1 ? "s" : ""} today`
     : `${expenses.length} transaction${expenses.length !== 1 ? "s" : ""}`;
+
+  const currentSortLabel = SORT_OPTIONS.find((o) => o.key === sortKey)?.label;
 
   return (
     <section className="mt-7 sm:mt-8">
@@ -55,9 +100,37 @@ export function ExpenseList({
             {isLoading ? "Loading..." : transactionLabel}
           </p>
         </div>
-        <span className="mt-0.5 shrink-0 rounded-full bg-card px-3 py-1 text-[12px] font-medium text-muted-foreground shadow-sm dark:shadow-none dark:ring-1 dark:ring-border">
-          {format(selectedDate, "MMM d")}
-        </span>
+        <div className="mt-0.5 flex shrink-0 items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 rounded-full border-0 bg-card px-3 text-[12px] font-medium text-muted-foreground shadow-sm hover:bg-card/80 dark:shadow-none dark:ring-1 dark:ring-border"
+              >
+                <ArrowDownUp className="h-3 w-3" />
+                {currentSortLabel}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[180px]">
+              {SORT_OPTIONS.map((option) => (
+                <DropdownMenuItem
+                  key={option.key}
+                  onClick={() => setSortKey(option.key)}
+                  className="flex items-center justify-between gap-3"
+                >
+                  {option.label}
+                  {sortKey === option.key && (
+                    <Check className="h-3.5 w-3.5 text-primary" />
+                  )}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <span className="rounded-full bg-card px-3 py-1 text-[12px] font-medium text-muted-foreground shadow-sm dark:shadow-none dark:ring-1 dark:ring-border">
+            {format(selectedDate, "MMM d")}
+          </span>
+        </div>
       </div>
 
       {isLoading ? (
@@ -76,7 +149,7 @@ export function ExpenseList({
         </div>
       ) : (
         <div className="space-y-2.5 pb-28 sm:space-y-3 sm:pb-24">
-          {expenses.map((expense, index) => (
+          {sortedExpenses.map((expense, index) => (
             <ExpenseListItem
               key={expense.id}
               expense={expense}

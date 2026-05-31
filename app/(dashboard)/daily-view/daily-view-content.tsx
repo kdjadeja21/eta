@@ -100,6 +100,8 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
     setSelectedDate(next);
   };
 
+  const goToToday = () => setSelectedDate(new Date());
+
   const handleAddExpense = async (data: ExpenseFormData) => {
     try {
       const newExpense = {
@@ -156,6 +158,7 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
           canGoNext={canGoNext}
           onPrev={goToPrev}
           onNext={goToNext}
+          onGoToToday={goToToday}
         />
 
         <ExpenseList

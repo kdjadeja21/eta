@@ -18,6 +18,7 @@ interface DailyHeroCardProps {
   canGoNext: boolean;
   onPrev: () => void;
   onNext: () => void;
+  onGoToToday: () => void;
 }
 
 export function DailyHeroCard({
@@ -28,6 +29,7 @@ export function DailyHeroCard({
   canGoNext,
   onPrev,
   onNext,
+  onGoToToday,
 }: DailyHeroCardProps) {
   const { currency } = useCurrency();
 
@@ -86,6 +88,15 @@ export function DailyHeroCard({
         <p className="mt-0.5 text-sm font-semibold text-white sm:text-base">
           {format(selectedDate, "MMMM d, yyyy")}
         </p>
+        {!isToday(selectedDate) && (
+          <button
+            type="button"
+            onClick={onGoToToday}
+            className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-0.5 text-[11px] font-semibold text-white/90 backdrop-blur-sm transition-all hover:bg-white/30 active:scale-95"
+          >
+            Back to Today
+          </button>
+        )}
       </div>
 
       {/* Amount section */}
