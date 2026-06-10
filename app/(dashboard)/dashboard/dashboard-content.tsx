@@ -452,6 +452,7 @@ export function DashboardContent({ userId }: { userId: string }) {
       <StatsCards
         totalExpenses={totalExpenses}
         onHandCash={onHandCash}
+        expenses={expenses}
         userId={userId}
         dateRange={dateRange}
         refreshKey={refreshKey}

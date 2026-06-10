@@ -32,6 +32,7 @@ export function DailyHeroCard({
   onGoToToday,
 }: DailyHeroCardProps) {
   const formatCurrency = useFormattedCurrency();
+  const isExpenseFastDay = !isLoading && totalSpent === 0;
 
   const dayLabel = isToday(selectedDate)
     ? "TODAY"
@@ -41,16 +42,34 @@ export function DailyHeroCard({
     <div
       className={cn(
         "relative overflow-hidden rounded-2xl px-10 py-5 sm:rounded-3xl sm:px-14 sm:py-6",
-        "bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-500",
-        "shadow-[0_16px_48px_-10px_rgba(99,102,241,0.45)]",
-        "dark:bg-gradient-to-br dark:from-slate-900 dark:via-indigo-950 dark:to-violet-950",
-        "dark:shadow-[0_20px_56px_-14px_rgba(30,27,75,0.65)]",
+        isExpenseFastDay
+          ? "bg-gradient-to-br from-primary via-emerald-600 to-teal-600 shadow-[0_16px_48px_-10px_rgba(16,185,129,0.42)] dark:from-slate-900 dark:via-emerald-950 dark:to-teal-950 dark:shadow-[0_20px_56px_-14px_rgba(6,78,59,0.6)]"
+          : "bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-500 shadow-[0_16px_48px_-10px_rgba(99,102,241,0.45)] dark:bg-gradient-to-br dark:from-slate-900 dark:via-indigo-950 dark:to-violet-950 dark:shadow-[0_20px_56px_-14px_rgba(30,27,75,0.65)]",
         "dark:ring-1 dark:ring-white/[0.07]"
       )}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.12),transparent_55%)] dark:bg-[radial-gradient(ellipse_at_top_right,rgba(99,102,241,0.18),transparent_50%)]" />
-      <div className="pointer-events-none absolute -right-8 -top-8 h-36 w-36 rounded-full bg-white/10 blur-3xl dark:bg-indigo-500/15" />
-      <div className="pointer-events-none absolute -bottom-12 -left-8 h-40 w-40 rounded-full bg-indigo-400/20 blur-3xl dark:bg-violet-600/10" />
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.12),transparent_55%)]",
+          isExpenseFastDay
+            ? "dark:bg-[radial-gradient(ellipse_at_top_right,rgba(110,231,183,0.2),transparent_50%)]"
+            : "dark:bg-[radial-gradient(ellipse_at_top_right,rgba(99,102,241,0.18),transparent_50%)]"
+        )}
+      />
+      <div
+        className={cn(
+          "pointer-events-none absolute -right-8 -top-8 h-36 w-36 rounded-full bg-white/10 blur-3xl",
+          isExpenseFastDay ? "dark:bg-primary/15" : "dark:bg-indigo-500/15"
+        )}
+      />
+      <div
+        className={cn(
+          "pointer-events-none absolute -bottom-12 -left-8 h-40 w-40 rounded-full blur-3xl",
+          isExpenseFastDay
+            ? "bg-emerald-300/20 dark:bg-teal-600/10"
+            : "bg-indigo-400/20 dark:bg-violet-600/10"
+        )}
+      />
 
       {/* Prev button — absolute, vertically centered to the card */}
       <button
