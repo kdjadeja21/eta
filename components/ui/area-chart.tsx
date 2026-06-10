@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import {
   AreaChart as RechartsAreaChart,
@@ -10,18 +12,29 @@ import {
   ResponsiveContainer,
   TooltipProps,
 } from "recharts";
+import { useFormattedCurrency } from "@/lib/currency-utils";
 
 interface AreaChartProps {
   data: { name: string; value: number }[];
 }
 
-const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+  formatCurrency,
+}: TooltipProps<number, string> & { formatCurrency: (amount: number) => string }) => {
   if (active && payload && payload.length) {
+    const value =
+      typeof payload[0].value === "number"
+        ? formatCurrency(payload[0].value)
+        : payload[0].value;
+
     return (
       <div className="bg-gray-800 border border-gray-700 p-3 rounded-lg shadow-lg">
         <p className="text-gray-200 font-medium">{label}</p>
         <p className="text-gray-300">
-          Value: <span className="text-purple-400">{payload[0].value}</span>
+          Value: <span className="text-purple-400">{value}</span>
         </p>
       </div>
     );
@@ -30,6 +43,8 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>)
 };
 
 const AreaChart: React.FC<AreaChartProps> = ({ data }) => {
+  const formatCurrency = useFormattedCurrency();
+
   return (
     <div className="w-full h-64">
       {" "}
@@ -41,8 +56,11 @@ const AreaChart: React.FC<AreaChartProps> = ({ data }) => {
         >
           <CartesianGrid strokeDasharray="3 3" className="stroke-gray-700" />
           <XAxis dataKey="name" stroke="#9ca3af" />
-          <YAxis stroke="#9ca3af" />
-          <Tooltip content={<CustomTooltip />} />
+          <YAxis
+            stroke="#9ca3af"
+            tickFormatter={(value) => formatCurrency(Number(value))}
+          />
+          <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} />} />
           <Legend />
           <Area
             type="monotone"

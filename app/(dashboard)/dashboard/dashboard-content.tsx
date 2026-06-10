@@ -43,6 +43,7 @@ import { BulkUploadDialog } from "./bulk-upload-dialog";
 import { ExpensePieChart } from "./widgets/expense-pie-chart";
 import { ExpenseType, formatExpenseType } from "@/lib/types";
 import { useUser } from "@clerk/nextjs";
+import { useFormattedCurrency } from "@/lib/currency-utils";
 import {
   Accordion,
   AccordionContent,
@@ -56,6 +57,7 @@ interface CustomTableMeta {
   onDelete?: (id: string) => void;
   fullName: string;
   dateRange: DateRange;
+  formatCurrency?: (amount: number) => string;
 }
 
 declare module "@tanstack/react-table" {
@@ -87,8 +89,9 @@ export const columns: ExpenseColumn[] = [
   {
     accessorKey: "amount",
     header: "Amount",
-    cell: ({ row }: { row: { original: Expense } }) =>
-      row.original.amount.toFixed(2),
+    cell: ({ row, table }: { row: { original: Expense }; table: any }) =>
+      table.options.meta?.formatCurrency?.(row.original.amount) ??
+      String(row.original.amount),
   },
   {
     accessorKey: "description",
@@ -168,6 +171,7 @@ const isValidType = (v: string): v is ExpenseType =>
   Object.values(ExpenseType).includes(v as ExpenseType);
 
 export function DashboardContent({ userId }: { userId: string }) {
+  const formatCurrency = useFormattedCurrency();
   const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfMonth(new Date()),
     to: new Date(),
@@ -360,6 +364,7 @@ export function DashboardContent({ userId }: { userId: string }) {
     },
     fullName,
     dateRange,
+    formatCurrency,
   };
 
   const confirmDeleteExpense = async () => {

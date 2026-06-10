@@ -17,6 +17,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { formatDate, eachDayOfInterval, isSameDay } from "@/lib/utils";
+import { useFormattedCurrency } from "@/lib/currency-utils";
 
 interface ExpenseChartProps {
   expenses: Expense[];
@@ -24,6 +25,8 @@ interface ExpenseChartProps {
 }
 
 export function ExpenseChart({ expenses, dateRange }: ExpenseChartProps) {
+  const formatCurrency = useFormattedCurrency();
+
   if (!dateRange?.from || !dateRange?.to) {
     return (
       <Card>
@@ -79,7 +82,7 @@ export function ExpenseChart({ expenses, dateRange }: ExpenseChartProps) {
               <XAxis dataKey="date" tick={{ fontSize: 12 }} tickMargin={10} />
               <YAxis
                 tick={{ fontSize: 12 }}
-                tickFormatter={(value) => `$${value}`}
+                tickFormatter={(value) => formatCurrency(Number(value))}
                 width={80}
               />
               <ChartTooltip content={<ChartTooltipContent />} />

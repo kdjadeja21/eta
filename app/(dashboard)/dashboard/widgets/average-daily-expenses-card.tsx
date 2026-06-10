@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart } from "lucide-react";
-import { useFormattedCurrency } from "@/lib/currency-utils";
 import CountUp from "@/components/count-up";
 import type { DateRange } from "react-day-picker";
 
@@ -12,8 +11,6 @@ interface AverageDailyExpensesCardProps {
 }
 
 export function AverageDailyExpensesCard({ totalExpenses, dateRange }: AverageDailyExpensesCardProps) {
-  const formattedAmount = useFormattedCurrency();
-  
   // Calculate number of days in the date range
   const daysDiff = dateRange.from && dateRange.to
     ? Math.ceil(

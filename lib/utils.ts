@@ -267,11 +267,13 @@ export async function exportToExcel({
   fullName,
   dateRange,
   fileName = "records.xlsx",
+  formatCurrency,
 }: {
   data: any[];
   fullName: string;
   dateRange: { from?: Date; to?: Date };
   fileName?: string;
+  formatCurrency?: (amount: number) => string;
 }) {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Records");
@@ -318,6 +320,8 @@ export async function exportToExcel({
           try {
             value = formatDate(new Date(value), "MMM dd, yyyy");
           } catch {}
+        } else if (key === "amount" && typeof value === "number") {
+          value = formatCurrency ? formatCurrency(value) : value;
         } else if (key === "type" && typeof value === "string") {
           value = formatExpenseType(value as ExpenseType);
         }
@@ -383,11 +387,13 @@ export function exportToPDF({
   fullName,
   dateRange,
   fileName = "records.pdf",
+  formatCurrency,
 }: {
   data: any[];
   fullName: string;
   dateRange: { from?: Date; to?: Date };
   fileName?: string;
+  formatCurrency?: (amount: number) => string;
 }) {
   const doc = new jsPDF();
   doc.setFontSize(14);
@@ -410,6 +416,8 @@ export function exportToPDF({
           try {
             value = formatDate(new Date(value), "MMM dd, yyyy");
           } catch {}
+        } else if (key === "amount" && typeof value === "number") {
+          value = formatCurrency ? formatCurrency(value) : value;
         } else if (key === "type" && typeof value === "string") {
           value = formatExpenseType(value as ExpenseType);
         }

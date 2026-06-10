@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Wallet } from "lucide-react";
-import { useFormattedCurrency } from "@/lib/currency-utils";
 import { expenseService } from "@/lib/expense-service";
 import { useEffect, useState } from "react";
 import CountUp from "@/components/count-up";
@@ -32,8 +31,6 @@ interface StatsCardsProps {
  * @returns {JSX.Element} The rendered component
  */
 export function StatsCards({ totalExpenses, onHandCash, userId, dateRange, refreshKey }: StatsCardsProps) {
-  const formattedAmount = useFormattedCurrency();
-
   return (
     <div className="grid gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
       <Card>

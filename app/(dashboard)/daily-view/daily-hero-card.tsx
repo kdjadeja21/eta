@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { format, isToday } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useCurrency } from "@/components/currency-context";
+import { useFormattedCurrency } from "@/lib/currency-utils";
 
 interface DailyHeroCardProps {
   selectedDate: Date;
@@ -31,11 +31,7 @@ export function DailyHeroCard({
   onNext,
   onGoToToday,
 }: DailyHeroCardProps) {
-  const { currency } = useCurrency();
-
-  const formattedAmount = new Intl.NumberFormat("en-IN", {
-    maximumFractionDigits: 0,
-  }).format(totalSpent);
+  const formatCurrency = useFormattedCurrency();
 
   const dayLabel = isToday(selectedDate)
     ? "TODAY"
@@ -108,8 +104,7 @@ export function DailyHeroCard({
           <div className="mx-auto mt-2.5 h-10 w-36 animate-pulse rounded-xl bg-white/15 sm:h-12 sm:w-44" />
         ) : (
           <p className="mt-1.5 text-[36px] font-bold leading-none tracking-tight text-white sm:text-[42px]">
-            {currency.symbol}
-            {formattedAmount}
+            {formatCurrency(totalSpent)}
           </p>
         )}
 

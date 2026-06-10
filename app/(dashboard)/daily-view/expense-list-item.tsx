@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getCategoryIcon } from "@/lib/category-icons";
-import { useCurrency } from "@/components/currency-context";
+import { useFormattedCurrency } from "@/lib/currency-utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,12 +26,8 @@ export function ExpenseListItem({
   onEdit,
   onDelete,
 }: ExpenseListItemProps) {
-  const { currency } = useCurrency();
+  const formatCurrency = useFormattedCurrency();
   const { icon: Icon, bg, color } = getCategoryIcon(expense.category);
-
-  const formattedAmount = new Intl.NumberFormat("en-IN", {
-    maximumFractionDigits: 0,
-  }).format(expense.amount);
 
   const title =
     expense.description?.trim() ||
@@ -76,8 +72,7 @@ export function ExpenseListItem({
       </div>
 
       <p className="shrink-0 text-[15px] font-bold text-card-foreground sm:text-base">
-        {currency.symbol}
-        {formattedAmount}
+        {formatCurrency(expense.amount)}
       </p>
 
       <DropdownMenu>

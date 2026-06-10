@@ -82,6 +82,7 @@ export function DataTable<TData>({
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
+    meta,
     state: {
       sorting,
       globalFilter,
@@ -137,6 +138,7 @@ export function DataTable<TData>({
       fullName: meta?.fullName || "",
       dateRange: meta?.dateRange || {},
       fileName: `statements_${dateRangeStr}.xlsx`,
+      formatCurrency: meta?.formatCurrency,
     });
   };
 
@@ -148,6 +150,7 @@ export function DataTable<TData>({
       fullName: meta?.fullName || "",
       dateRange: meta?.dateRange || {},
       fileName: `statements_${dateRangeStr}.pdf`,
+      formatCurrency: meta?.formatCurrency,
     });
   };
 
