@@ -364,6 +364,37 @@ export function AddExpenseDialog({
                 )}
               />
 
+              {/* Payment Method */}
+              <FormField
+                control={form.control}
+                name="paidBy"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Payment Method</FormLabel>
+                    <FormControl>
+                      <CustomCreatableSelect
+                        isClearable
+                        menuPlacement="auto"
+                        onChange={(option: any) =>
+                          field.onChange(option?.value ?? "")
+                        }
+                        value={
+                          field.value
+                            ? {
+                                label: field.value,
+                                value: field.value,
+                              }
+                            : null
+                        }
+                        options={getPaidByOptions(records)}
+                        placeholder="Payment method"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               {/* Advanced Details */}
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem
@@ -379,36 +410,6 @@ export function AddExpenseDialog({
                   </AccordionTrigger>
                   <AccordionContent>
                     <div className="space-y-4 pt-4 px-4 pb-2">
-                      <FormField
-                        control={form.control}
-                        name="paidBy"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Payment Method</FormLabel>
-                            <FormControl>
-                              <CustomCreatableSelect
-                                isClearable
-                                menuPlacement="auto"
-                                onChange={(option: any) =>
-                                  field.onChange(option?.value ?? "")
-                                }
-                                value={
-                                  field.value
-                                    ? {
-                                        label: field.value,
-                                        value: field.value,
-                                      }
-                                    : null
-                                }
-                                options={getPaidByOptions(records)}
-                                placeholder="Payment method"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
                       <FormField
                         control={form.control}
                         name="category"
