@@ -48,21 +48,10 @@ export function ExpenseListItem({
 
   return (
     <article
-      role="button"
-      tabIndex={0}
-      onClick={() => onEdit(expense)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onEdit(expense);
-        }
-      }}
-      aria-label={`Edit ${title}, ${formatCurrency(expense.amount)}`}
       className={cn(
-        "group relative flex cursor-pointer items-center gap-3.5 overflow-hidden rounded-xl border border-border/60 border-l-[3px] px-4 py-3.5",
-        "shadow-sm transition-[border-color,box-shadow,transform] duration-150 active:scale-[0.99] sm:gap-4 sm:p-4",
+        "group relative flex items-center gap-3.5 overflow-hidden rounded-xl border border-border/60 border-l-[3px] px-4 py-3.5",
+        "shadow-sm transition-[border-color,box-shadow] duration-150 sm:gap-4 sm:p-4",
         "animate-in fade-in slide-in-from-bottom-1 fill-mode-both",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         typeStyle.card,
         typeStyle.accent,
         typeStyle.hover
@@ -114,32 +103,21 @@ export function ExpenseListItem({
           <button
             type="button"
             aria-label="Expense options"
-            onClick={(e) => e.stopPropagation()}
             className="relative ml-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <MoreHorizontal className="h-4 w-4" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="end"
-          className="w-36"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <DropdownMenuContent align="end" className="w-36">
           <DropdownMenuItem
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(expense);
-            }}
+            onClick={() => onEdit(expense)}
             className="cursor-pointer gap-2"
           >
             <Pencil className="h-4 w-4" />
             Edit
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(expense);
-            }}
+            onClick={() => onDelete(expense)}
             className="cursor-pointer gap-2 text-destructive focus:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
