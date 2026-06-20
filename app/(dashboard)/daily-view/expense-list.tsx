@@ -5,6 +5,7 @@ import { format, isToday } from "date-fns";
 import { ArrowDownUp, Check, Receipt } from "lucide-react";
 import { ExpenseListItem } from "./expense-list-item";
 import type { Expense } from "@/lib/expense-service";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,14 +51,24 @@ interface ExpenseListProps {
 }
 
 function ExpenseListSkeleton() {
+  const skeletonAccents = [
+    "border-l-emerald-600/25",
+    "border-l-blue-600/25",
+    "border-l-amber-600/25",
+    "border-l-emerald-600/25",
+  ];
+
   return (
     <div className="space-y-2.5">
       {Array.from({ length: 4 }).map((_, i) => (
         <div
           key={i}
-          className="flex animate-pulse items-center gap-3.5 rounded-[20px] bg-card px-4 py-3.5"
+          className={cn(
+            "flex animate-pulse items-center gap-3.5 rounded-xl border border-border/60 border-l-[3px] bg-card px-4 py-3.5",
+            skeletonAccents[i]
+          )}
         >
-          <div className="h-11 w-11 rounded-full bg-muted" />
+          <div className="h-10 w-10 rounded-lg bg-muted" />
           <div className="flex-1 space-y-2">
             <div className="h-4 w-28 rounded bg-muted" />
             <div className="h-3 w-36 rounded bg-muted" />
