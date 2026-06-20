@@ -113,6 +113,7 @@ export function AddExpenseDialog({
   });
 
   const service = expenseService;
+  const isEditMode = Boolean(expense);
 
   useEffect(() => {
     const fetchRecords = async () => {
@@ -158,6 +159,8 @@ export function AddExpenseDialog({
   }, [expense, form, open, defaultDate]);
 
   const handleSubmit = async (values: FormValues) => {
+    if (isEditMode && !form.formState.isDirty) return;
+
     setIsSubmitting(true);
     try {
       await onSubmit(values);
@@ -176,6 +179,10 @@ export function AddExpenseDialog({
   };
 
   const selectedCategory = form.watch("category");
+  const isSubmitDisabled =
+    isSubmitting || (isEditMode && !form.formState.isDirty);
+  const submitLabel = isEditMode ? "Update" : "Save";
+  const submittingLabel = isEditMode ? "Updating..." : "Saving...";
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -526,10 +533,34 @@ export function AddExpenseDialog({
           <Button
             type="submit"
             form={FORM_ID}
-            disabled={isSubmitting}
-            className={cn("cursor-pointer", isMobile && "flex-1 h-12 text-base")}
+            disabled={isSubmitDisabled}
+            className={cn(
+              "cursor-pointer overflow-hidden",
+              isMobile && "flex-1 h-12 text-base"
+            )}
           >
-            {isSubmitting ? "Saving…" : expense ? "Update" : "Save"}
+            <span className="grid" aria-live="polite">
+              <span
+                className={cn(
+                  "col-start-1 row-start-1 transition-all duration-200 ease-out",
+                  isSubmitting
+                    ? "-translate-y-1 opacity-0"
+                    : "translate-y-0 opacity-100"
+                )}
+              >
+                {submitLabel}
+              </span>
+              <span
+                className={cn(
+                  "col-start-1 row-start-1 transition-all duration-200 ease-out",
+                  isSubmitting
+                    ? "translate-y-0 opacity-100"
+                    : "translate-y-1 opacity-0"
+                )}
+              >
+                {submittingLabel}
+              </span>
+            </span>
           </Button>
           <Button
             type="button"
