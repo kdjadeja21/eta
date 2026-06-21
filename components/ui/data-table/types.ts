@@ -15,6 +15,8 @@ export type DataTableProps<TData> = {
   onView?: (row: TData) => void;
   filters?: FilterOptions[];
   onFilterChange?: (filters: Record<string, string>) => void;
+  onBulkDelete?: (rows: TData[]) => void;
+  bulkDeleteResetKey?: number;
 };
 
 export type DataTablePaginationProps = {

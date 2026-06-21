@@ -10,6 +10,7 @@ import {
   SortingState,
   getFilteredRowModel,
   getPaginationRowModel,
+  RowSelectionState,
 } from "@tanstack/react-table";
 import {
   ChevronUp,
@@ -60,10 +61,13 @@ export function DataTable<TData>({
   onView,
   filters = [],
   onFilterChange,
+  onBulkDelete,
+  bulkDeleteResetKey,
   loading = false, // New prop for loading state
   meta, // Add meta property
 }: DataTableProps<TData> & { loading?: boolean; meta?: any }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [columnFilters, setColumnFilters] = React.useState<
     Record<string, string[]>
@@ -73,18 +77,69 @@ export function DataTable<TData>({
   >({}); // Temporary filters for dialog
   const [isDialogOpen, setIsDialogOpen] = React.useState(false); // State to manage dialog open/close
 
+  React.useEffect(() => {
+    setRowSelection({});
+  }, [bulkDeleteResetKey]);
+
+  const tableColumns = React.useMemo<ColumnDef<TData, any>[]>(() => {
+    if (!onBulkDelete) {
+      return columns;
+    }
+
+    return [
+      {
+        id: "select",
+        header: ({ table }) => (
+          <input
+            type="checkbox"
+            className="h-4 w-4 cursor-pointer rounded border"
+            checked={table.getIsAllPageRowsSelected()}
+            ref={(input) => {
+              if (input) {
+                input.indeterminate =
+                  table.getIsSomePageRowsSelected() &&
+                  !table.getIsAllPageRowsSelected();
+              }
+            }}
+            onChange={(event) =>
+              table.toggleAllPageRowsSelected(event.target.checked)
+            }
+            aria-label="Select all rows on this page"
+          />
+        ),
+        cell: ({ row }) => (
+          <input
+            type="checkbox"
+            className="h-4 w-4 cursor-pointer rounded border"
+            checked={row.getIsSelected()}
+            disabled={!row.getCanSelect()}
+            onChange={(event) => row.toggleSelected(event.target.checked)}
+            aria-label="Select row"
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
+      ...columns,
+    ];
+  }, [columns, onBulkDelete]);
+
   const table = useReactTable({
     data,
-    columns,
+    columns: tableColumns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
+    onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
+    getRowId: (row, index) =>
+      String((row as { id?: string }).id ?? index),
     meta,
     state: {
       sorting,
+      rowSelection,
       globalFilter,
     },
     initialState: {
@@ -93,6 +148,18 @@ export function DataTable<TData>({
       },
     },
   });
+
+  const selectedRows = table
+    .getFilteredSelectedRowModel()
+    .rows.map((row) => row.original);
+
+  const handleBulkDelete = () => {
+    if (!onBulkDelete || selectedRows.length === 0) {
+      return;
+    }
+
+    onBulkDelete(selectedRows);
+  };
 
   const handleFilterChange = (columnKey: string, values: string[]) => {
     setTempFilters((prev) => ({ ...prev, [columnKey]: values }));
@@ -266,6 +333,16 @@ export function DataTable<TData>({
             </Sheet>
           </>
         )}
+        {onBulkDelete && selectedRows.length > 0 && (
+          <Button
+            variant="destructive"
+            className="flex items-center gap-2 cursor-pointer w-full md:w-auto"
+            onClick={handleBulkDelete}
+          >
+            <Trash2 className="h-4 w-4" />
+            <span>Delete selected ({selectedRows.length})</span>
+          </Button>
+        )}
         {/* Download Buttons */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -339,7 +416,7 @@ export function DataTable<TData>({
             {loading ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={tableColumns.length}
                   className="h-24 text-center"
                 >
                   Loading...
@@ -373,7 +450,7 @@ export function DataTable<TData>({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={tableColumns.length}
                   className="h-24 text-center"
                 >
                   No results.

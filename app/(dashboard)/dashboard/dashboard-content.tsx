@@ -185,10 +185,14 @@ export function DashboardContent({ userId }: { userId: string }) {
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
+  const [bulkDeleteExpenseIds, setBulkDeleteExpenseIds] = useState<string[]>(
+    []
+  );
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [bulkDeleteResetKey, setBulkDeleteResetKey] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const service = expenseService;
@@ -359,6 +363,7 @@ export function DashboardContent({ userId }: { userId: string }) {
       setIsAddExpenseOpen(true); // Open the AddExpenseDialog
     },
     onDelete: (id: string) => {
+      setBulkDeleteExpenseIds([]);
       setDeleteExpenseId(id); // Set the ID of the expense to delete
       setIsDeleteDialogOpen(true); // Open the delete confirmation dialog
     },
@@ -367,31 +372,104 @@ export function DashboardContent({ userId }: { userId: string }) {
     formatCurrency,
   };
 
+  const pendingDeleteIds =
+    bulkDeleteExpenseIds.length > 0
+      ? bulkDeleteExpenseIds
+      : deleteExpenseId
+      ? [deleteExpenseId]
+      : [];
+
+  const isBulkDelete = bulkDeleteExpenseIds.length > 0;
+  const pendingDeleteCount = pendingDeleteIds.length;
+
   const confirmDeleteExpense = async () => {
-    if (!deleteExpenseId) return;
+    if (pendingDeleteIds.length === 0) return;
     setIsDeleting(true);
 
-    const loadingToast = showLoadingToast("Deleting expense...", {
-      description: "Please wait while we delete the record",
-    });
+    const loadingToast = showLoadingToast(
+      isBulkDelete ? "Deleting expenses..." : "Deleting expense...",
+      {
+        description:
+          pendingDeleteCount === 1
+            ? "Please wait while we delete the record"
+            : `Please wait while we delete ${pendingDeleteCount} records`,
+      }
+    );
+
+    const idsToDelete = [...pendingDeleteIds];
 
     try {
-      await service.deleteExpense(deleteExpenseId);
-      showDeleteToast("Expense Record deleted successfully");
-      setExpenses((prev) => prev.filter((e) => e.id !== deleteExpenseId));
+      if (idsToDelete.length === 1 && !isBulkDelete) {
+        await service.deleteExpense(idsToDelete[0]);
+      } else {
+        await service.deleteExpenses(idsToDelete);
+      }
+
+      showDeleteToast(
+        idsToDelete.length === 1
+          ? "Expense Record deleted successfully"
+          : `${idsToDelete.length} expense records deleted successfully`
+      );
+      setExpenses((prev) => prev.filter((e) => !idsToDelete.includes(e.id)));
       setRefreshKey((prev) => prev + 1);
+      if (isBulkDelete) {
+        setBulkDeleteResetKey((prev) => prev + 1);
+      }
     } catch (error) {
-      showErrorToast("Error deleting expense");
+      showErrorToast(
+        idsToDelete.length === 1
+          ? "Error deleting expense"
+          : "Error deleting selected expenses"
+      );
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
       setDeleteExpenseId(null);
+      setBulkDeleteExpenseIds([]);
       // Clear the loading toast
       if (loadingToast) {
         toast.dismiss(loadingToast);
       }
     }
   };
+
+  const handleBulkDeleteRequest = (selectedExpenses: Expense[]) => {
+    if (selectedExpenses.length === 0) {
+      return;
+    }
+
+    setDeleteExpenseId(null);
+    setBulkDeleteExpenseIds(selectedExpenses.map((expense) => expense.id));
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteDialogOpenChange = (open: boolean) => {
+    if (isDeleting) {
+      return;
+    }
+
+    setIsDeleteDialogOpen(open);
+
+    if (!open) {
+      setDeleteExpenseId(null);
+      setBulkDeleteExpenseIds([]);
+    }
+  };
+
+  const deleteDialogTitle = isBulkDelete
+    ? "Confirm Bulk Deletion"
+    : "Confirm Deletion";
+  const deleteDialogDescription =
+    pendingDeleteCount > 1
+      ? `Are you sure you want to delete these ${pendingDeleteCount} expenses? This action cannot be undone.`
+      : "Are you sure you want to delete this expense? This action cannot be undone.";
+  const deleteButtonLabel = isDeleting
+    ? pendingDeleteCount > 1
+      ? "Deleting..."
+      : "Deleting..."
+    : pendingDeleteCount > 1
+    ? `Delete ${pendingDeleteCount} expenses`
+    : "Delete";
 
   // Remove the useEffect for chart data and replace with useMemo
   const chartData = useMemo(() => {
@@ -517,6 +595,8 @@ export function DashboardContent({ userId }: { userId: string }) {
         pageSize={10}
         filters={filterOptions}
         onFilterChange={setFilters}
+        onBulkDelete={handleBulkDeleteRequest}
+        bulkDeleteResetKey={bulkDeleteResetKey}
         loading={isLoading}
         meta={tableMeta}
       />
@@ -543,21 +623,20 @@ export function DashboardContent({ userId }: { userId: string }) {
 
       <AlertDialog
         open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
+        onOpenChange={handleDeleteDialogOpenChange}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+            <AlertDialogTitle>{deleteDialogTitle}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this expense? This action cannot
-              be undone.
+              {deleteDialogDescription}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <Button
               className="cursor-pointer"
               variant="outline"
-              onClick={() => setIsDeleteDialogOpen(false)}
+              onClick={() => handleDeleteDialogOpenChange(false)}
               disabled={isDeleting}
             >
               Cancel
@@ -568,7 +647,7 @@ export function DashboardContent({ userId }: { userId: string }) {
               onClick={confirmDeleteExpense}
               disabled={isDeleting}
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              {deleteButtonLabel}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
