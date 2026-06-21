@@ -74,10 +74,15 @@ export function GenerateReportProgress({
       // Reuse an already-started request (Strict Mode remount) rather than
       // firing a second one. The ref persists across the cleanup/remount cycle.
       if (!fetchPromiseRef.current) {
+        // Use the timezone offset for the middle of the target month so DST
+        // changes between now and the report month don't affect the boundaries.
+        const [year, monthNum] = month.split("-").map(Number);
+        const timezoneOffset = new Date(year, monthNum - 1, 15).getTimezoneOffset();
+
         fetchPromiseRef.current = fetch("/api/reports/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ month }),
+          body: JSON.stringify({ month, timezoneOffset }),
         });
       }
       const fetchPromise = fetchPromiseRef.current;
