@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,33 +7,37 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import ExcelJS from "exceljs";
 import { parse, parseISO, isValid, addDays } from "date-fns";
+import {
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle2,
+  FileSpreadsheet,
+  Upload,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const tryParseDate = (value: any): Date | null => {
   if (!value) return null;
 
-  // 1. If it's already a Date
   if (value instanceof Date && isValid(value)) return value;
 
-  // 2. If it's a number, treat as Excel serial date
   if (typeof value === "number") {
-    const excelEpoch = new Date(1899, 11, 30); // Excel's start date
+    const excelEpoch = new Date(1899, 11, 30);
     const date = addDays(excelEpoch, value);
     return isValid(date) ? date : null;
   }
 
-  // 3. If it's a string, try common date formats
   if (typeof value === "string") {
     const trimmed = value.trim();
 
-    // Try ISO 8601 (e.g. 2023-09-22 or 2023-09-22T12:34:56Z)
     let date = parseISO(trimmed);
     if (isValid(date)) return date;
 
-    // Try custom fallback formats
     const formatsToTry = [
       "yyyy-MM-dd",
       "MM/dd/yyyy",
@@ -48,14 +52,116 @@ const tryParseDate = (value: any): Date | null => {
       if (isValid(date)) return date;
     }
 
-    // Try Date constructor as last resort
     date = new Date(trimmed);
     if (isValid(date)) return date;
   }
 
-  // Fallback failed
   return null;
 };
+
+type ParsedRecord = {
+  data: Record<string, any>;
+  errors: string[];
+  rowIndex: number;
+};
+
+function validateRecord(
+  record: Record<string, any>,
+  rowIndex: number
+): ParsedRecord {
+  const errors: string[] = [];
+
+  if (!record.date || !(record.date instanceof Date)) {
+    errors.push("Invalid or missing date");
+  }
+
+  const amount =
+    typeof record.amount === "number"
+      ? record.amount
+      : parseFloat(String(record.amount ?? ""));
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    errors.push("Invalid or missing amount");
+  }
+
+  if (!record.description || String(record.description).trim() === "") {
+    errors.push("Missing description");
+  }
+
+  const type = String(record.type ?? "")
+    .toLowerCase()
+    .trim();
+
+  if (!["need", "want", "not_sure"].includes(type)) {
+    errors.push("Invalid type");
+  }
+
+  if (!record.paidBy || String(record.paidBy).trim() === "") {
+    errors.push("Missing paidBy");
+  }
+
+  return { data: record, errors, rowIndex };
+}
+
+async function parseExcelFile(file: File): Promise<ParsedRecord[]> {
+  const data = await file.arrayBuffer();
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(data);
+  const sheet = workbook.worksheets[0];
+
+  if (!sheet) {
+    throw new Error("No worksheet found in the uploaded file.");
+  }
+
+  const headersRow = sheet.getRow(1);
+  const headers = headersRow.values as (string | undefined)[];
+
+  if (!headers || headers.length === 0) {
+    throw new Error("No headers found in the worksheet.");
+  }
+
+  const normalizedHeaders = headers.map((header) =>
+    typeof header === "string" ? header.toLowerCase().trim() : header
+  );
+
+  return sheet
+    .getSheetValues()
+    .slice(2)
+    .map((row, index) => {
+      if (!row || !Array.isArray(row)) return null;
+
+      const normalizedRecord: Record<string, any> = {};
+      normalizedHeaders.forEach((header, headerIndex) => {
+        if (header && typeof header === "string") {
+          const value = row[headerIndex] ?? null;
+
+          if (header === "tags" && typeof value === "string") {
+            normalizedRecord[header] = value.split(",").map((tag) => tag.trim());
+          } else if (header === "paid by" || header === "paidby") {
+            normalizedRecord.paidBy = value;
+          } else if (header === "type" && typeof value === "string") {
+            normalizedRecord[header] = value.toLowerCase().trim();
+          } else if (header === "amount") {
+            normalizedRecord[header] =
+              typeof value === "number" ? value : parseFloat(String(value ?? ""));
+          } else {
+            normalizedRecord[header] = header.includes("date")
+              ? tryParseDate(value)
+              : value;
+          }
+        }
+      });
+
+      const hasContent = Object.values(normalizedRecord).some(
+        (value) => value !== null && value !== undefined && value !== ""
+      );
+
+      if (!hasContent) return null;
+
+      return validateRecord(normalizedRecord, index + 2);
+    })
+    .filter((record): record is ParsedRecord => record !== null);
+}
 
 interface BulkUploadDialogProps {
   open: boolean;
@@ -68,12 +174,73 @@ export function BulkUploadDialog({
   onOpenChange,
   onSubmit,
 }: BulkUploadDialogProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [step, setStep] = useState<"upload" | "preview">("upload");
   const [file, setFile] = useState<File | null>(null);
+  const [parsedRecords, setParsedRecords] = useState<ParsedRecord[]>([]);
+  const [isParsing, setIsParsing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const totalCount = parsedRecords.length;
+  const errorRecords = parsedRecords.filter((record) => record.errors.length > 0);
+  const validRecords = parsedRecords.filter((record) => record.errors.length === 0);
+  const errorCount = errorRecords.length;
+  const validCount = validRecords.length;
+
+  const resetState = () => {
+    setStep("upload");
+    setFile(null);
+    setParsedRecords([]);
+    setIsParsing(false);
+    setIsSubmitting(false);
+    setIsDragging(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      resetState();
+    }
+    onOpenChange(nextOpen);
+  };
+
+  const processFile = async (selectedFile: File) => {
+    setFile(selectedFile);
+    setIsParsing(true);
+
+    try {
+      const records = await parseExcelFile(selectedFile);
+      setParsedRecords(records);
+      setStep("preview");
+    } catch (error) {
+      console.error(error);
+      showErrorToast("Failed to process the file.");
+      setFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } finally {
+      setIsParsing(false);
+    }
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      setFile(event.target.files[0]);
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) {
+      void processFile(selectedFile);
+    }
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+
+    const droppedFile = event.dataTransfer.files?.[0];
+    if (droppedFile) {
+      void processFile(droppedFile);
     }
   };
 
@@ -81,95 +248,216 @@ export function BulkUploadDialog({
     window.location.href = "/sample-expenses.xlsx";
   };
 
+  const handleBack = () => {
+    setStep("upload");
+    setFile(null);
+    setParsedRecords([]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleSubmit = async () => {
-    if (!file) {
-      showErrorToast("Please upload a file.");
+    if (validCount === 0) {
+      showErrorToast("No valid records to upload.");
       return;
     }
 
     try {
       setIsSubmitting(true);
-      const data = await file.arrayBuffer();
-      const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(data);
-      const sheet = workbook.worksheets[0];
-
-      if (!sheet) {
-        throw new Error("No worksheet found in the uploaded file.");
-      }
-
-      const headersRow = sheet.getRow(1);
-      const headers = headersRow.values as (string | undefined)[];
-      if (!headers || headers.length === 0) {
-        throw new Error("No headers found in the worksheet.");
-      }
-
-      // Normalize headers to lowercase
-      const normalizedHeaders = headers.map((header) =>
-        typeof header === "string" ? header.toLowerCase() : header
+      await onSubmit(validRecords.map((record) => record.data));
+      showSuccessToast(
+        errorCount > 0
+          ? `Uploaded ${validCount} record${validCount === 1 ? "" : "s"}. Skipped ${errorCount} with errors.`
+          : `Uploaded ${validCount} record${validCount === 1 ? "" : "s"} successfully.`
       );
-
-      const jsonData = sheet
-        .getSheetValues()
-        .slice(2)
-        .map((row) => {
-          if (!row || !Array.isArray(row)) return null;
-
-          const normalizedRecord: Record<string, any> = {};
-          normalizedHeaders.forEach((header, index) => {
-            if (header && typeof header === "string") {
-              const value = row[index] || null;
-              if (header === "tags" && typeof value === "string") {
-                normalizedRecord[header] = value
-                  .split(",")
-                  .map((tag) => tag.trim());
-              } else if (header === "paid by" || header === "paidby") {
-                normalizedRecord["paidBy"] = value;
-              } else {
-                normalizedRecord[header] = header.includes("date")
-                  ? tryParseDate(value)
-                  : value;
-              }
-            }
-          });
-          return normalizedRecord;
-        })
-        .filter((record) => record !== null);
-
-      await onSubmit(jsonData);
-      showSuccessToast("File uploaded successfully.");
-      onOpenChange(false);
+      handleOpenChange(false);
     } catch (error) {
       console.error(error);
-      showErrorToast("Failed to process the file.");
+      showErrorToast("Failed to upload records.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const submitLabel =
+    validCount === 0
+      ? "No Valid Records"
+      : errorCount === 0
+        ? `Upload ${validCount} Record${validCount === 1 ? "" : "s"}`
+        : `Upload ${validCount} Valid Record${validCount === 1 ? "" : "s"} (skip ${errorCount})`;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Upload Bulk Records</DialogTitle>
+          <DialogTitle>
+            {step === "upload" ? "Upload Bulk Records" : "Review Upload"}
+          </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <Button onClick={handleDownloadSample} variant="outline">
-            Download Sample File
-          </Button>
-          <Input type="file" accept=".xlsx, .xls" onChange={handleFileChange} />
-        </div>
-        <DialogFooter>
+
+        {step === "upload" ? (
+          <div className="space-y-4">
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
+              onDragOver={(event) => {
+                event.preventDefault();
+                setIsDragging(true);
+              }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleDrop}
+              className={cn(
+                "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-6 py-10 transition-colors",
+                isDragging
+                  ? "border-primary bg-primary/5"
+                  : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50"
+              )}
+            >
+              <Upload className="mb-3 size-10 text-muted-foreground" />
+              <p className="text-sm font-medium">
+                {isParsing ? "Parsing file..." : "Click or drag file to upload"}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Supports .xlsx and .xls files
+              </p>
+              {file && !isParsing && (
+                <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                  <FileSpreadsheet className="size-4" />
+                  <span className="truncate">{file.name}</span>
+                </div>
+              )}
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+
+            <p className="text-center text-sm text-muted-foreground">
+              Need a template?{" "}
+              <button
+                type="button"
+                onClick={handleDownloadSample}
+                className="font-medium text-primary underline-offset-4 hover:underline"
+              >
+                Download sample file
+              </button>
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {file && (
+              <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm">
+                <FileSpreadsheet className="size-4 shrink-0 text-muted-foreground" />
+                <span className="truncate">{file.name}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-3 gap-3">
+              <Card className="gap-0 py-4">
+                <CardContent className="px-4 text-center">
+                  <p className="text-xs text-muted-foreground">Total</p>
+                  <Badge variant="secondary" className="mt-2 text-sm">
+                    {totalCount}
+                  </Badge>
+                </CardContent>
+              </Card>
+
+              <Card className="gap-0 py-4">
+                <CardContent className="px-4 text-center">
+                  <p className="text-xs text-muted-foreground">Valid</p>
+                  <Badge className="mt-2 bg-emerald-600 text-sm text-white hover:bg-emerald-600">
+                    {validCount}
+                  </Badge>
+                </CardContent>
+              </Card>
+
+              <Card className="gap-0 py-4">
+                <CardContent className="px-4 text-center">
+                  <p className="text-xs text-muted-foreground">Errors</p>
+                  <Badge
+                    variant={errorCount > 0 ? "destructive" : "secondary"}
+                    className="mt-2 text-sm"
+                  >
+                    {errorCount}
+                  </Badge>
+                </CardContent>
+              </Card>
+            </div>
+
+            {errorCount > 0 ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-destructive">
+                  <AlertCircle className="size-4" />
+                  <span>
+                    {errorCount} row{errorCount === 1 ? "" : "s"} with errors
+                  </span>
+                </div>
+                <div className="max-h-48 space-y-2 overflow-y-auto rounded-md border p-3">
+                  {errorRecords.map((record) => (
+                    <div
+                      key={record.rowIndex}
+                      className="rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm"
+                    >
+                      <p className="font-medium">Row {record.rowIndex}</p>
+                      <ul className="mt-1 list-inside list-disc text-muted-foreground">
+                        {record.errors.map((error) => (
+                          <li key={error}>{error}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
+                <CheckCircle2 className="size-4 shrink-0" />
+                <span>All records are valid and ready to upload.</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        <DialogFooter className="gap-2 sm:gap-0">
+          {step === "preview" && (
+            <Button
+              variant="outline"
+              onClick={handleBack}
+              disabled={isSubmitting}
+              className="mr-auto"
+            >
+              <ArrowLeft className="size-4" />
+              Back
+            </Button>
+          )}
+
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isSubmitting}
+            onClick={() => handleOpenChange(false)}
+            disabled={isSubmitting || isParsing}
           >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "Uploading..." : "Submit"}
-          </Button>
+
+          {step === "preview" && (
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting || validCount === 0}
+            >
+              {isSubmitting ? "Uploading..." : submitLabel}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
