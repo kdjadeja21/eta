@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import ExcelJS from "exceljs";
-import { parse, parseISO, isValid, addDays } from "date-fns";
+import { parse, isValid, addDays } from "date-fns";
 import {
   AlertCircle,
   ArrowLeft,
@@ -21,23 +21,34 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Normalize a parsed date to noon of the same local calendar day.
+ * This prevents day-boundary shifts caused by timezone offsets when dates
+ * parsed as UTC midnight (e.g. ISO strings) are compared or displayed in
+ * non-UTC timezones. Noon is safely inside any calendar day regardless of DST.
+ */
+const normalizeToLocalNoon = (date: Date): Date =>
+  new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0, 0);
+
 const tryParseDate = (value: any): Date | null => {
   if (!value) return null;
 
-  if (value instanceof Date && isValid(value)) return value;
+  if (value instanceof Date && isValid(value)) return normalizeToLocalNoon(value);
 
+  // Excel serial date number — excelEpoch is constructed with local-time constructor
+  // so addDays already yields a local-midnight Date; normalise to noon for safety.
   if (typeof value === "number") {
     const excelEpoch = new Date(1899, 11, 30);
     const date = addDays(excelEpoch, value);
-    return isValid(date) ? date : null;
+    return isValid(date) ? normalizeToLocalNoon(date) : null;
   }
 
   if (typeof value === "string") {
     const trimmed = value.trim();
 
-    let date = parseISO(trimmed);
-    if (isValid(date)) return date;
-
+    // Try all known formats using date-fns `parse` which interprets the result
+    // in *local* time — avoiding the UTC-midnight offset that parseISO / new Date()
+    // produce for date-only strings (e.g. "2024-01-15" → UTC midnight).
     const formatsToTry = [
       "yyyy-MM-dd",
       "MM/dd/yyyy",
@@ -48,12 +59,14 @@ const tryParseDate = (value: any): Date | null => {
     ];
 
     for (const format of formatsToTry) {
-      date = parse(trimmed, format, new Date());
-      if (isValid(date)) return date;
+      const date = parse(trimmed, format, new Date());
+      if (isValid(date)) return normalizeToLocalNoon(date);
     }
 
-    date = new Date(trimmed);
-    if (isValid(date)) return date;
+    // Last resort: native Date constructor (may interpret ISO strings as UTC).
+    // Normalising to local noon corrects the day for any resulting UTC offset.
+    const date = new Date(trimmed);
+    if (isValid(date)) return normalizeToLocalNoon(date);
   }
 
   return null;
