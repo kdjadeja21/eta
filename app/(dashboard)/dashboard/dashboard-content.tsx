@@ -250,13 +250,16 @@ export function DashboardContent({ userId }: { userId: string }) {
 
   const handleAddExpense = async (data: ExpenseFormData) => {
     try {
-      const newExpense = {
-        ...data,
-        id: crypto.randomUUID(), // Add a temporary ID
-      };
-      await service.addExpense(userId, newExpense);
+      const savedExpense = await service.addExpense(userId, data);
       showSuccessToast("Expense added successfully");
-      setExpenses((prev) => [newExpense, ...prev]);
+      const isInRange =
+        !dateRange.from ||
+        !dateRange.to ||
+        (savedExpense.date >= dateRange.from &&
+          savedExpense.date <= dateRange.to);
+      if (isInRange) {
+        setExpenses((prev) => [savedExpense, ...prev]);
+      }
       setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.error("Error adding expense:", error);
@@ -283,11 +286,17 @@ export function DashboardContent({ userId }: { userId: string }) {
     });
 
     try {
-      await Promise.all(
+      const savedExpenses = await Promise.all(
         data.map((expense) => service.addExpense(userId, expense))
       );
       showSuccessToast("Bulk records added successfully.");
-      setExpenses((prev) => [...data, ...prev]);
+      const inRangeExpenses = savedExpenses.filter((expense) => {
+        if (!dateRange.from || !dateRange.to) return true;
+        return (
+          expense.date >= dateRange.from && expense.date <= dateRange.to
+        );
+      });
+      setExpenses((prev) => [...inRangeExpenses, ...prev]);
       setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.log("Error adding bulk records:", error);
@@ -387,22 +396,14 @@ export function DashboardContent({ userId }: { userId: string }) {
         ? expense.description?.toLowerCase().includes(searchQuery.toLowerCase())
         : true;
 
-      setRefreshKey((prev) => prev + 1);
       return matchesFilters && matchesSearch;
     });
   }, [expenses, filters, searchQuery]);
 
   useEffect(() => {
-    const calculateTotalExpenses = () => {
-      const total = filteredExpenses.reduce(
-        (sum, expense) => sum + expense.amount,
-        0
-      );
-      setTotalExpenses(total);
-    };
-
-    calculateTotalExpenses();
-  }, [filteredExpenses]);
+    const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+    setTotalExpenses(total);
+  }, [expenses]);
 
   const cashWithdrawals = expenses
     .filter((e) => e.category === "Cash Withdrawal")
