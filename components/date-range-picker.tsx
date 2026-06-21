@@ -2,8 +2,17 @@
 import { CalendarIcon } from "lucide-react";
 import { formatDate, startOfMonth } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
-import { addDays, subMonths, startOfWeek, endOfWeek, endOfMonth, startOfYear, endOfYear, subYears } from "date-fns";
-import { useState } from "react";
+import {
+  subMonths,
+  startOfWeek,
+  endOfWeek,
+  endOfMonth,
+  startOfYear,
+  endOfYear,
+  subYears,
+  isSameDay,
+} from "date-fns";
+import { useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,51 +29,67 @@ interface DateRangePickerProps {
   onDateRangeChange: (range: DateRange | undefined) => void;
 }
 
+function isSameDateRange(
+  current: DateRange | undefined,
+  preset: DateRange
+): boolean {
+  if (!current?.from || !current?.to || !preset.from || !preset.to) {
+    return false;
+  }
+
+  return (
+    isSameDay(current.from, preset.from) && isSameDay(current.to, preset.to)
+  );
+}
+
 export function DateRangePicker({
   className,
   dateRange,
   onDateRangeChange,
 }: DateRangePickerProps) {
   const [open, setOpen] = useState(false);
-  const today = new Date();
+  const today = useMemo(() => new Date(), []);
 
-  const quickRanges = [
-    {
-      label: "This Week",
-      range: {
-        from: startOfWeek(today),
-        to: endOfWeek(today),
+  const quickRanges = useMemo(
+    () => [
+      {
+        label: "This Week",
+        range: {
+          from: startOfWeek(today),
+          to: endOfWeek(today),
+        },
       },
-    },
-    {
-      label: "This Month",
-      range: {
-        from: startOfMonth(today),
-        to: today,
+      {
+        label: "This Month",
+        range: {
+          from: startOfMonth(today),
+          to: today,
+        },
       },
-    },
-    {
-      label: "Last Month",
-      range: {
-        from: startOfMonth(subMonths(today, 1)),
-        to: endOfMonth(subMonths(today, 1)),
+      {
+        label: "Last Month",
+        range: {
+          from: startOfMonth(subMonths(today, 1)),
+          to: endOfMonth(subMonths(today, 1)),
+        },
       },
-    },
-    {
-      label: "This Year",
-      range: {
-        from: startOfYear(today),
-        to: endOfYear(today),
+      {
+        label: "This Year",
+        range: {
+          from: startOfYear(today),
+          to: endOfYear(today),
+        },
       },
-    },
-    {
-      label: "Last Year",
-      range: {
-        from: startOfYear(subYears(today, 1)),
-        to: endOfYear(subYears(today, 1)),
+      {
+        label: "Last Year",
+        range: {
+          from: startOfYear(subYears(today, 1)),
+          to: endOfYear(subYears(today, 1)),
+        },
       },
-    },
-  ];
+    ],
+    [today]
+  );
 
   return (
     <div className={cn("grid gap-2", className)}>
@@ -78,7 +103,7 @@ export function DateRangePicker({
               !dateRange && "text-muted-foreground"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
+            <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
             {dateRange?.from ? (
               dateRange.to ? (
                 <>
@@ -100,20 +125,29 @@ export function DateRangePicker({
           <div className="p-3 border-b border-border/50">
             <h4 className="mb-2 text-sm font-medium text-muted-foreground">Quick Select</h4>
             <div className="grid grid-cols-2 gap-2">
-              {quickRanges.map((range) => (
-                <Button
-                  key={range.label}
-                  variant="outline"
-                  size="sm"
-                  className="justify-start font-normal hover:bg-accent hover:text-accent-foreground cursor-pointer"
-                  onClick={() => {
-                    onDateRangeChange(range.range);
-                    setOpen(false);
-                  }}
-                >
-                  {range.label}
-                </Button>
-              ))}
+              {quickRanges.map((range) => {
+                const isActive = isSameDateRange(dateRange, range.range);
+
+                return (
+                  <Button
+                    key={range.label}
+                    variant={isActive ? "default" : "outline"}
+                    size="sm"
+                    className={cn(
+                      "justify-start font-normal cursor-pointer",
+                      !isActive &&
+                        "hover:bg-accent hover:text-accent-foreground"
+                    )}
+                    aria-pressed={isActive}
+                    onClick={() => {
+                      onDateRangeChange(range.range);
+                      setOpen(false);
+                    }}
+                  >
+                    {range.label}
+                  </Button>
+                );
+              })}
             </div>
           </div>
           <div className="p-3">

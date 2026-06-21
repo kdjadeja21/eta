@@ -12,7 +12,12 @@ import {
   type Expense,
   ExpenseFormData,
 } from "@/lib/expense-service";
-import { startOfMonth, formatDate, cn } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
+import {
+  getDefaultDateRange,
+  loadStoredDateRange,
+  storeDateRange,
+} from "@/lib/dashboard-date-range-storage";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { PencilIcon, TrashIcon } from "lucide-react";
@@ -172,10 +177,8 @@ const isValidType = (v: string): v is ExpenseType =>
 
 export function DashboardContent({ userId }: { userId: string }) {
   const formatCurrency = useFormattedCurrency();
-  const [dateRange, setDateRange] = useState<DateRange>({
-    from: startOfMonth(new Date()),
-    to: new Date(),
-  });
+  const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange);
+  const [isDateRangeReady, setIsDateRangeReady] = useState(false);
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -185,10 +188,14 @@ export function DashboardContent({ userId }: { userId: string }) {
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
+  const [bulkDeleteExpenseIds, setBulkDeleteExpenseIds] = useState<string[]>(
+    []
+  );
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [bulkDeleteResetKey, setBulkDeleteResetKey] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const service = expenseService;
@@ -196,6 +203,26 @@ export function DashboardContent({ userId }: { userId: string }) {
   const fullName = user?.fullName || "";
 
   useEffect(() => {
+    const storedDateRange = loadStoredDateRange(userId);
+    if (storedDateRange) {
+      setDateRange(storedDateRange);
+    }
+    setIsDateRangeReady(true);
+  }, [userId]);
+
+  useEffect(() => {
+    if (!isDateRangeReady) {
+      return;
+    }
+
+    storeDateRange(userId, dateRange);
+  }, [userId, dateRange, isDateRangeReady]);
+
+  useEffect(() => {
+    if (!isDateRangeReady) {
+      return;
+    }
+
     const fetchExpenses = async () => {
       setRefreshKey((prev) => prev + 1);
       setIsLoading(true);
@@ -219,7 +246,7 @@ export function DashboardContent({ userId }: { userId: string }) {
     };
 
     fetchExpenses();
-  }, [userId, dateRange, service]);
+  }, [userId, dateRange, service, isDateRangeReady]);
 
   const handleAddExpense = async (data: ExpenseFormData) => {
     try {
@@ -272,6 +299,18 @@ export function DashboardContent({ userId }: { userId: string }) {
     }
   };
 
+  const amountBounds = useMemo(() => {
+    if (expenses.length === 0) {
+      return { min: 0, max: 0 };
+    }
+
+    const amounts = expenses.map((expense) => expense.amount);
+    return {
+      min: Math.min(...amounts),
+      max: Math.max(...amounts),
+    };
+  }, [expenses]);
+
   const filterOptions = [
     {
       columnKey: "paidBy",
@@ -308,11 +347,34 @@ export function DashboardContent({ userId }: { userId: string }) {
         isValidType(v)
       ),
     },
+    {
+      columnKey: "amount",
+      label: "Amount Range",
+      type: "range" as const,
+      rangeMin: amountBounds.min,
+      rangeMax: amountBounds.max,
+    },
   ];
 
   const filteredExpenses = useMemo(() => {
     return expenses.filter((expense) => {
       const matchesFilters = Object.entries(filters).every(([key, value]) => {
+        if (key === "amount") {
+          const [minValue, maxValue] = value.split(",");
+          const min = minValue ? Number(minValue) : undefined;
+          const max = maxValue ? Number(maxValue) : undefined;
+
+          if (min !== undefined && !Number.isNaN(min) && expense.amount < min) {
+            return false;
+          }
+
+          if (max !== undefined && !Number.isNaN(max) && expense.amount > max) {
+            return false;
+          }
+
+          return true;
+        }
+
         const field = expense[key as keyof Expense];
         const selectedValues = value.split(",");
         if (Array.isArray(field)) {
@@ -359,6 +421,7 @@ export function DashboardContent({ userId }: { userId: string }) {
       setIsAddExpenseOpen(true); // Open the AddExpenseDialog
     },
     onDelete: (id: string) => {
+      setBulkDeleteExpenseIds([]);
       setDeleteExpenseId(id); // Set the ID of the expense to delete
       setIsDeleteDialogOpen(true); // Open the delete confirmation dialog
     },
@@ -367,31 +430,104 @@ export function DashboardContent({ userId }: { userId: string }) {
     formatCurrency,
   };
 
+  const pendingDeleteIds =
+    bulkDeleteExpenseIds.length > 0
+      ? bulkDeleteExpenseIds
+      : deleteExpenseId
+      ? [deleteExpenseId]
+      : [];
+
+  const isBulkDelete = bulkDeleteExpenseIds.length > 0;
+  const pendingDeleteCount = pendingDeleteIds.length;
+
   const confirmDeleteExpense = async () => {
-    if (!deleteExpenseId) return;
+    if (pendingDeleteIds.length === 0) return;
     setIsDeleting(true);
 
-    const loadingToast = showLoadingToast("Deleting expense...", {
-      description: "Please wait while we delete the record",
-    });
+    const loadingToast = showLoadingToast(
+      isBulkDelete ? "Deleting expenses..." : "Deleting expense...",
+      {
+        description:
+          pendingDeleteCount === 1
+            ? "Please wait while we delete the record"
+            : `Please wait while we delete ${pendingDeleteCount} records`,
+      }
+    );
+
+    const idsToDelete = [...pendingDeleteIds];
 
     try {
-      await service.deleteExpense(deleteExpenseId);
-      showDeleteToast("Expense Record deleted successfully");
-      setExpenses((prev) => prev.filter((e) => e.id !== deleteExpenseId));
+      if (idsToDelete.length === 1 && !isBulkDelete) {
+        await service.deleteExpense(idsToDelete[0]);
+      } else {
+        await service.deleteExpenses(idsToDelete);
+      }
+
+      showDeleteToast(
+        idsToDelete.length === 1
+          ? "Expense Record deleted successfully"
+          : `${idsToDelete.length} expense records deleted successfully`
+      );
+      setExpenses((prev) => prev.filter((e) => !idsToDelete.includes(e.id)));
       setRefreshKey((prev) => prev + 1);
+      if (isBulkDelete) {
+        setBulkDeleteResetKey((prev) => prev + 1);
+      }
     } catch (error) {
-      showErrorToast("Error deleting expense");
+      showErrorToast(
+        idsToDelete.length === 1
+          ? "Error deleting expense"
+          : "Error deleting selected expenses"
+      );
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
       setDeleteExpenseId(null);
+      setBulkDeleteExpenseIds([]);
       // Clear the loading toast
       if (loadingToast) {
         toast.dismiss(loadingToast);
       }
     }
   };
+
+  const handleBulkDeleteRequest = (selectedExpenses: Expense[]) => {
+    if (selectedExpenses.length === 0) {
+      return;
+    }
+
+    setDeleteExpenseId(null);
+    setBulkDeleteExpenseIds(selectedExpenses.map((expense) => expense.id));
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteDialogOpenChange = (open: boolean) => {
+    if (isDeleting) {
+      return;
+    }
+
+    setIsDeleteDialogOpen(open);
+
+    if (!open) {
+      setDeleteExpenseId(null);
+      setBulkDeleteExpenseIds([]);
+    }
+  };
+
+  const deleteDialogTitle = isBulkDelete
+    ? "Confirm Bulk Deletion"
+    : "Confirm Deletion";
+  const deleteDialogDescription =
+    pendingDeleteCount > 1
+      ? `Are you sure you want to delete these ${pendingDeleteCount} expenses? This action cannot be undone.`
+      : "Are you sure you want to delete this expense? This action cannot be undone.";
+  const deleteButtonLabel = isDeleting
+    ? pendingDeleteCount > 1
+      ? "Deleting..."
+      : "Deleting..."
+    : pendingDeleteCount > 1
+    ? `Delete ${pendingDeleteCount} expenses`
+    : "Delete";
 
   // Remove the useEffect for chart data and replace with useMemo
   const chartData = useMemo(() => {
@@ -517,6 +653,8 @@ export function DashboardContent({ userId }: { userId: string }) {
         pageSize={10}
         filters={filterOptions}
         onFilterChange={setFilters}
+        onBulkDelete={handleBulkDeleteRequest}
+        bulkDeleteResetKey={bulkDeleteResetKey}
         loading={isLoading}
         meta={tableMeta}
       />
@@ -543,21 +681,20 @@ export function DashboardContent({ userId }: { userId: string }) {
 
       <AlertDialog
         open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
+        onOpenChange={handleDeleteDialogOpenChange}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+            <AlertDialogTitle>{deleteDialogTitle}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this expense? This action cannot
-              be undone.
+              {deleteDialogDescription}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <Button
               className="cursor-pointer"
               variant="outline"
-              onClick={() => setIsDeleteDialogOpen(false)}
+              onClick={() => handleDeleteDialogOpenChange(false)}
               disabled={isDeleting}
             >
               Cancel
@@ -568,7 +705,7 @@ export function DashboardContent({ userId }: { userId: string }) {
               onClick={confirmDeleteExpense}
               disabled={isDeleting}
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              {deleteButtonLabel}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

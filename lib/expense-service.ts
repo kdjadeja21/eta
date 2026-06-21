@@ -12,6 +12,7 @@ import {
   Timestamp,
   type DocumentData,
   getDoc,
+  writeBatch,
 } from "firebase/firestore";
 import { ExpenseType } from "./types";
 
@@ -106,6 +107,22 @@ export const expenseService = {
   async deleteExpense(id: string) {
     const expenseRef = doc(db, "expenses", id);
     await deleteDoc(expenseRef);
+  },
+
+  async deleteExpenses(ids: string[]) {
+    if (ids.length === 0) {
+      return;
+    }
+
+    const batchSize = 500;
+    for (let i = 0; i < ids.length; i += batchSize) {
+      const batch = writeBatch(db);
+      ids.slice(i, i + batchSize).forEach((id) => {
+        batch.delete(doc(db, "expenses", id));
+      });
+
+      await batch.commit();
+    }
   },
 
   async getCategories(userId: string) {

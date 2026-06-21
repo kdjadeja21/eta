@@ -10,6 +10,7 @@ import {
   SortingState,
   getFilteredRowModel,
   getPaginationRowModel,
+  RowSelectionState,
 } from "@tanstack/react-table";
 import {
   ChevronUp,
@@ -60,10 +61,13 @@ export function DataTable<TData>({
   onView,
   filters = [],
   onFilterChange,
+  onBulkDelete,
+  bulkDeleteResetKey,
   loading = false, // New prop for loading state
   meta, // Add meta property
 }: DataTableProps<TData> & { loading?: boolean; meta?: any }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [columnFilters, setColumnFilters] = React.useState<
     Record<string, string[]>
@@ -73,18 +77,69 @@ export function DataTable<TData>({
   >({}); // Temporary filters for dialog
   const [isDialogOpen, setIsDialogOpen] = React.useState(false); // State to manage dialog open/close
 
+  React.useEffect(() => {
+    setRowSelection({});
+  }, [bulkDeleteResetKey]);
+
+  const tableColumns = React.useMemo<ColumnDef<TData, any>[]>(() => {
+    if (!onBulkDelete) {
+      return columns;
+    }
+
+    return [
+      {
+        id: "select",
+        header: ({ table }) => (
+          <input
+            type="checkbox"
+            className="h-4 w-4 cursor-pointer rounded border"
+            checked={table.getIsAllPageRowsSelected()}
+            ref={(input) => {
+              if (input) {
+                input.indeterminate =
+                  table.getIsSomePageRowsSelected() &&
+                  !table.getIsAllPageRowsSelected();
+              }
+            }}
+            onChange={(event) =>
+              table.toggleAllPageRowsSelected(event.target.checked)
+            }
+            aria-label="Select all rows on this page"
+          />
+        ),
+        cell: ({ row }) => (
+          <input
+            type="checkbox"
+            className="h-4 w-4 cursor-pointer rounded border"
+            checked={row.getIsSelected()}
+            disabled={!row.getCanSelect()}
+            onChange={(event) => row.toggleSelected(event.target.checked)}
+            aria-label="Select row"
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
+      ...columns,
+    ];
+  }, [columns, onBulkDelete]);
+
   const table = useReactTable({
     data,
-    columns,
+    columns: tableColumns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
+    onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
+    getRowId: (row, index) =>
+      String((row as { id?: string }).id ?? index),
     meta,
     state: {
       sorting,
+      rowSelection,
       globalFilter,
     },
     initialState: {
@@ -93,6 +148,18 @@ export function DataTable<TData>({
       },
     },
   });
+
+  const selectedRows = table
+    .getFilteredSelectedRowModel()
+    .rows.map((row) => row.original);
+
+  const handleBulkDelete = () => {
+    if (!onBulkDelete || selectedRows.length === 0) {
+      return;
+    }
+
+    onBulkDelete(selectedRows);
+  };
 
   const handleFilterChange = (columnKey: string, values: string[]) => {
     setTempFilters((prev) => ({ ...prev, [columnKey]: values }));
@@ -104,11 +171,24 @@ export function DataTable<TData>({
     onFilterChange?.({});
   };
 
+  const isFilterActive = (columnKey: string, values: string[]) => {
+    const filterDef = filters.find((filter) => filter.columnKey === columnKey);
+    if (filterDef?.type === "range") {
+      return values.some((value) => value !== "");
+    }
+    return values.length > 0;
+  };
+
   const applyFilters = () => {
-    setColumnFilters(tempFilters);
+    const activeFilters = Object.fromEntries(
+      Object.entries(tempFilters).filter(([key, val]) =>
+        isFilterActive(key, val)
+      )
+    );
+    setColumnFilters(activeFilters);
     onFilterChange?.(
       Object.fromEntries(
-        Object.entries(tempFilters).map(([key, val]) => [key, val.join(",")])
+        Object.entries(activeFilters).map(([key, val]) => [key, val.join(",")])
       )
     );
     setIsDialogOpen(false); // Close the dialog
@@ -202,7 +282,15 @@ export function DataTable<TData>({
                 <span>Clear Filters</span>
               </Button>
             </div>
-            <Sheet open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Sheet
+              open={isDialogOpen}
+              onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (open) {
+                  setTempFilters(columnFilters);
+                }
+              }}
+            >
               <SheetContent side="right" className="p-5 overflow-y-auto">
                 <SheetHeader>
                   <SheetTitle>Filters</SheetTitle>
@@ -213,33 +301,76 @@ export function DataTable<TData>({
                       <label className="block text-sm font-medium text-foreground mb-1">
                         {`Filter by ${filter.label}`}
                       </label>
-                      <CustomSelect
-                        isMulti
-                        options={filter.options.map((option) => ({
-                          value: option,
-                          label:
-                            filter.columnKey === "type"
-                              ? formatExpenseType(option as ExpenseType)
-                              : option,
-                        }))}
-                        value={(tempFilters[filter.columnKey] || []).map(
-                          (value) => ({
-                            value,
+                      {filter.type === "range" ? (
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            placeholder={`Min${
+                              filter.rangeMin !== undefined
+                                ? ` (${filter.rangeMin})`
+                                : ""
+                            }`}
+                            value={tempFilters[filter.columnKey]?.[0] ?? ""}
+                            onChange={(event) => {
+                              const max =
+                                tempFilters[filter.columnKey]?.[1] ?? "";
+                              handleFilterChange(filter.columnKey, [
+                                event.target.value,
+                                max,
+                              ]);
+                            }}
+                            min={filter.rangeMin}
+                            max={filter.rangeMax}
+                          />
+                          <Input
+                            type="number"
+                            placeholder={`Max${
+                              filter.rangeMax !== undefined
+                                ? ` (${filter.rangeMax})`
+                                : ""
+                            }`}
+                            value={tempFilters[filter.columnKey]?.[1] ?? ""}
+                            onChange={(event) => {
+                              const min =
+                                tempFilters[filter.columnKey]?.[0] ?? "";
+                              handleFilterChange(filter.columnKey, [
+                                min,
+                                event.target.value,
+                              ]);
+                            }}
+                            min={filter.rangeMin}
+                            max={filter.rangeMax}
+                          />
+                        </div>
+                      ) : (
+                        <CustomSelect
+                          isMulti
+                          options={(filter.options ?? []).map((option) => ({
+                            value: option,
                             label:
                               filter.columnKey === "type"
-                                ? formatExpenseType(value as ExpenseType)
-                                : value,
-                          })
-                        )}
-                        onChange={(selectedOptions: any[]) => {
-                          const values = selectedOptions.map(
-                            (option: any) => option.value
-                          );
-                          handleFilterChange(filter.columnKey, values);
-                        }}
-                        className="basic-multi-select"
-                        classNamePrefix="select"
-                      />
+                                ? formatExpenseType(option as ExpenseType)
+                                : option,
+                          }))}
+                          value={(tempFilters[filter.columnKey] || []).map(
+                            (value) => ({
+                              value,
+                              label:
+                                filter.columnKey === "type"
+                                  ? formatExpenseType(value as ExpenseType)
+                                  : value,
+                            })
+                          )}
+                          onChange={(selectedOptions: any[]) => {
+                            const values = selectedOptions.map(
+                              (option: any) => option.value
+                            );
+                            handleFilterChange(filter.columnKey, values);
+                          }}
+                          className="basic-multi-select"
+                          classNamePrefix="select"
+                        />
+                      )}
                     </div>
                   ))}
                   <div className="flex justify-end gap-4">
@@ -265,6 +396,16 @@ export function DataTable<TData>({
               </SheetContent>
             </Sheet>
           </>
+        )}
+        {onBulkDelete && selectedRows.length > 0 && (
+          <Button
+            variant="destructive"
+            className="flex items-center gap-2 cursor-pointer w-full md:w-auto"
+            onClick={handleBulkDelete}
+          >
+            <Trash2 className="h-4 w-4" />
+            <span>Delete selected ({selectedRows.length})</span>
+          </Button>
         )}
         {/* Download Buttons */}
         <DropdownMenu>
@@ -339,7 +480,7 @@ export function DataTable<TData>({
             {loading ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={tableColumns.length}
                   className="h-24 text-center"
                 >
                   Loading...
@@ -373,7 +514,7 @@ export function DataTable<TData>({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={tableColumns.length}
                   className="h-24 text-center"
                 >
                   No results.

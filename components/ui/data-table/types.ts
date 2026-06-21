@@ -3,7 +3,10 @@ import { ColumnDef } from "@tanstack/react-table";
 export type FilterOptions = {
   columnKey: string;
   label: string;
-  options: string[];
+  options?: string[];
+  type?: "select" | "range";
+  rangeMin?: number;
+  rangeMax?: number;
 };
 
 export type DataTableProps<TData> = {
@@ -15,6 +18,8 @@ export type DataTableProps<TData> = {
   onView?: (row: TData) => void;
   filters?: FilterOptions[];
   onFilterChange?: (filters: Record<string, string>) => void;
+  onBulkDelete?: (rows: TData[]) => void;
+  bulkDeleteResetKey?: number;
 };
 
 export type DataTablePaginationProps = {
