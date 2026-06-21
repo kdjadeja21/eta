@@ -4,6 +4,7 @@ const publicRoutes = createRouteMatcher([
   "/",
   "/sign-in",
   "/sign-up",
+  "/api/version",
   "/((?!.+\\.[\\w]+$|_next).*)", // exclude static files and _next
 ]);
 
