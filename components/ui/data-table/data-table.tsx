@@ -171,11 +171,24 @@ export function DataTable<TData>({
     onFilterChange?.({});
   };
 
+  const isFilterActive = (columnKey: string, values: string[]) => {
+    const filterDef = filters.find((filter) => filter.columnKey === columnKey);
+    if (filterDef?.type === "range") {
+      return values.some((value) => value !== "");
+    }
+    return values.length > 0;
+  };
+
   const applyFilters = () => {
-    setColumnFilters(tempFilters);
+    const activeFilters = Object.fromEntries(
+      Object.entries(tempFilters).filter(([key, val]) =>
+        isFilterActive(key, val)
+      )
+    );
+    setColumnFilters(activeFilters);
     onFilterChange?.(
       Object.fromEntries(
-        Object.entries(tempFilters).map(([key, val]) => [key, val.join(",")])
+        Object.entries(activeFilters).map(([key, val]) => [key, val.join(",")])
       )
     );
     setIsDialogOpen(false); // Close the dialog
@@ -269,7 +282,15 @@ export function DataTable<TData>({
                 <span>Clear Filters</span>
               </Button>
             </div>
-            <Sheet open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Sheet
+              open={isDialogOpen}
+              onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (open) {
+                  setTempFilters(columnFilters);
+                }
+              }}
+            >
               <SheetContent side="right" className="p-5 overflow-y-auto">
                 <SheetHeader>
                   <SheetTitle>Filters</SheetTitle>
@@ -280,33 +301,76 @@ export function DataTable<TData>({
                       <label className="block text-sm font-medium text-foreground mb-1">
                         {`Filter by ${filter.label}`}
                       </label>
-                      <CustomSelect
-                        isMulti
-                        options={filter.options.map((option) => ({
-                          value: option,
-                          label:
-                            filter.columnKey === "type"
-                              ? formatExpenseType(option as ExpenseType)
-                              : option,
-                        }))}
-                        value={(tempFilters[filter.columnKey] || []).map(
-                          (value) => ({
-                            value,
+                      {filter.type === "range" ? (
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            placeholder={`Min${
+                              filter.rangeMin !== undefined
+                                ? ` (${filter.rangeMin})`
+                                : ""
+                            }`}
+                            value={tempFilters[filter.columnKey]?.[0] ?? ""}
+                            onChange={(event) => {
+                              const max =
+                                tempFilters[filter.columnKey]?.[1] ?? "";
+                              handleFilterChange(filter.columnKey, [
+                                event.target.value,
+                                max,
+                              ]);
+                            }}
+                            min={filter.rangeMin}
+                            max={filter.rangeMax}
+                          />
+                          <Input
+                            type="number"
+                            placeholder={`Max${
+                              filter.rangeMax !== undefined
+                                ? ` (${filter.rangeMax})`
+                                : ""
+                            }`}
+                            value={tempFilters[filter.columnKey]?.[1] ?? ""}
+                            onChange={(event) => {
+                              const min =
+                                tempFilters[filter.columnKey]?.[0] ?? "";
+                              handleFilterChange(filter.columnKey, [
+                                min,
+                                event.target.value,
+                              ]);
+                            }}
+                            min={filter.rangeMin}
+                            max={filter.rangeMax}
+                          />
+                        </div>
+                      ) : (
+                        <CustomSelect
+                          isMulti
+                          options={(filter.options ?? []).map((option) => ({
+                            value: option,
                             label:
                               filter.columnKey === "type"
-                                ? formatExpenseType(value as ExpenseType)
-                                : value,
-                          })
-                        )}
-                        onChange={(selectedOptions: any[]) => {
-                          const values = selectedOptions.map(
-                            (option: any) => option.value
-                          );
-                          handleFilterChange(filter.columnKey, values);
-                        }}
-                        className="basic-multi-select"
-                        classNamePrefix="select"
-                      />
+                                ? formatExpenseType(option as ExpenseType)
+                                : option,
+                          }))}
+                          value={(tempFilters[filter.columnKey] || []).map(
+                            (value) => ({
+                              value,
+                              label:
+                                filter.columnKey === "type"
+                                  ? formatExpenseType(value as ExpenseType)
+                                  : value,
+                            })
+                          )}
+                          onChange={(selectedOptions: any[]) => {
+                            const values = selectedOptions.map(
+                              (option: any) => option.value
+                            );
+                            handleFilterChange(filter.columnKey, values);
+                          }}
+                          className="basic-multi-select"
+                          classNamePrefix="select"
+                        />
+                      )}
                     </div>
                   ))}
                   <div className="flex justify-end gap-4">

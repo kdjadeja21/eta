@@ -12,7 +12,12 @@ import {
   type Expense,
   ExpenseFormData,
 } from "@/lib/expense-service";
-import { startOfMonth, formatDate, cn } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
+import {
+  getDefaultDateRange,
+  loadStoredDateRange,
+  storeDateRange,
+} from "@/lib/dashboard-date-range-storage";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { PencilIcon, TrashIcon } from "lucide-react";
@@ -172,10 +177,8 @@ const isValidType = (v: string): v is ExpenseType =>
 
 export function DashboardContent({ userId }: { userId: string }) {
   const formatCurrency = useFormattedCurrency();
-  const [dateRange, setDateRange] = useState<DateRange>({
-    from: startOfMonth(new Date()),
-    to: new Date(),
-  });
+  const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange);
+  const [isDateRangeReady, setIsDateRangeReady] = useState(false);
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -200,6 +203,26 @@ export function DashboardContent({ userId }: { userId: string }) {
   const fullName = user?.fullName || "";
 
   useEffect(() => {
+    const storedDateRange = loadStoredDateRange(userId);
+    if (storedDateRange) {
+      setDateRange(storedDateRange);
+    }
+    setIsDateRangeReady(true);
+  }, [userId]);
+
+  useEffect(() => {
+    if (!isDateRangeReady) {
+      return;
+    }
+
+    storeDateRange(userId, dateRange);
+  }, [userId, dateRange, isDateRangeReady]);
+
+  useEffect(() => {
+    if (!isDateRangeReady) {
+      return;
+    }
+
     const fetchExpenses = async () => {
       setRefreshKey((prev) => prev + 1);
       setIsLoading(true);
@@ -223,7 +246,7 @@ export function DashboardContent({ userId }: { userId: string }) {
     };
 
     fetchExpenses();
-  }, [userId, dateRange, service]);
+  }, [userId, dateRange, service, isDateRangeReady]);
 
   const handleAddExpense = async (data: ExpenseFormData) => {
     try {
@@ -276,6 +299,18 @@ export function DashboardContent({ userId }: { userId: string }) {
     }
   };
 
+  const amountBounds = useMemo(() => {
+    if (expenses.length === 0) {
+      return { min: 0, max: 0 };
+    }
+
+    const amounts = expenses.map((expense) => expense.amount);
+    return {
+      min: Math.min(...amounts),
+      max: Math.max(...amounts),
+    };
+  }, [expenses]);
+
   const filterOptions = [
     {
       columnKey: "paidBy",
@@ -312,11 +347,34 @@ export function DashboardContent({ userId }: { userId: string }) {
         isValidType(v)
       ),
     },
+    {
+      columnKey: "amount",
+      label: "Amount Range",
+      type: "range" as const,
+      rangeMin: amountBounds.min,
+      rangeMax: amountBounds.max,
+    },
   ];
 
   const filteredExpenses = useMemo(() => {
     return expenses.filter((expense) => {
       const matchesFilters = Object.entries(filters).every(([key, value]) => {
+        if (key === "amount") {
+          const [minValue, maxValue] = value.split(",");
+          const min = minValue ? Number(minValue) : undefined;
+          const max = maxValue ? Number(maxValue) : undefined;
+
+          if (min !== undefined && !Number.isNaN(min) && expense.amount < min) {
+            return false;
+          }
+
+          if (max !== undefined && !Number.isNaN(max) && expense.amount > max) {
+            return false;
+          }
+
+          return true;
+        }
+
         const field = expense[key as keyof Expense];
         const selectedValues = value.split(",");
         if (Array.isArray(field)) {

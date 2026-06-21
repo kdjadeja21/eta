@@ -3,7 +3,10 @@ import { ColumnDef } from "@tanstack/react-table";
 export type FilterOptions = {
   columnKey: string;
   label: string;
-  options: string[];
+  options?: string[];
+  type?: "select" | "range";
+  rangeMin?: number;
+  rangeMax?: number;
 };
 
 export type DataTableProps<TData> = {
