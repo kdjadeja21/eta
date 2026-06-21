@@ -170,6 +170,22 @@ export const columns: ExpenseColumn[] = [
 const isValidType = (v: string): v is ExpenseType =>
   Object.values(ExpenseType).includes(v as ExpenseType);
 
+const matchesAmountRange = (amount: number, value: string) => {
+  const [minValue = "", maxValue = ""] = value.split("-");
+  const min = minValue.trim() ? Number(minValue) : null;
+  const max = maxValue.trim() ? Number(maxValue) : null;
+
+  if (min !== null && !Number.isNaN(min) && amount < min) {
+    return false;
+  }
+
+  if (max !== null && !Number.isNaN(max) && amount > max) {
+    return false;
+  }
+
+  return true;
+};
+
 export function DashboardContent({ userId }: { userId: string }) {
   const formatCurrency = useFormattedCurrency();
   const [dateRange, setDateRange] = useState<DateRange>({
@@ -308,11 +324,20 @@ export function DashboardContent({ userId }: { userId: string }) {
         isValidType(v)
       ),
     },
+    {
+      columnKey: "amount",
+      label: "Amount",
+      type: "range" as const,
+    },
   ];
 
   const filteredExpenses = useMemo(() => {
     return expenses.filter((expense) => {
       const matchesFilters = Object.entries(filters).every(([key, value]) => {
+        if (key === "amount") {
+          return matchesAmountRange(expense.amount, value);
+        }
+
         const field = expense[key as keyof Expense];
         const selectedValues = value.split(",");
         if (Array.isArray(field)) {

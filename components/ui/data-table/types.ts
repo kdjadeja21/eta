@@ -1,9 +1,23 @@
 import { ColumnDef } from "@tanstack/react-table";
 
-export type FilterOptions = {
+export type SelectFilterOptions = {
   columnKey: string;
   label: string;
+  type?: "select";
   options: string[];
+};
+
+export type RangeFilterOptions = {
+  columnKey: string;
+  label: string;
+  type: "range";
+};
+
+export type FilterOptions = SelectFilterOptions | RangeFilterOptions;
+
+export type RangeFilterValue = {
+  min: string;
+  max: string;
 };
 
 export type DataTableProps<TData> = {

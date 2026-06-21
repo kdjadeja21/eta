@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { DataTablePagination } from "./data-table-pagination";
-import { DataTableProps } from "./types";
+import { DataTableProps, RangeFilterValue } from "./types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -71,7 +71,31 @@ export function DataTable<TData>({
   const [tempFilters, setTempFilters] = React.useState<
     Record<string, string[]>
   >({}); // Temporary filters for dialog
+  const [rangeFilters, setRangeFilters] = React.useState<
+    Record<string, RangeFilterValue>
+  >({});
+  const [tempRangeFilters, setTempRangeFilters] = React.useState<
+    Record<string, RangeFilterValue>
+  >({});
   const [isDialogOpen, setIsDialogOpen] = React.useState(false); // State to manage dialog open/close
+
+  const hasActiveFilters =
+    Object.keys(columnFilters).length > 0 ||
+    Object.values(rangeFilters).some(({ min, max }) => min || max);
+
+  const formatRangeFilterValue = ({ min, max }: RangeFilterValue) => {
+    if (!min && !max) {
+      return "";
+    }
+
+    return `${min}-${max}`;
+  };
+
+  const openFilterDialog = () => {
+    setTempFilters(columnFilters);
+    setTempRangeFilters(rangeFilters);
+    setIsDialogOpen(true);
+  };
 
   const table = useReactTable({
     data,
@@ -98,19 +122,50 @@ export function DataTable<TData>({
     setTempFilters((prev) => ({ ...prev, [columnKey]: values }));
   };
 
+  const handleRangeFilterChange = (
+    columnKey: string,
+    field: keyof RangeFilterValue,
+    value: string
+  ) => {
+    setTempRangeFilters((prev) => ({
+      ...prev,
+      [columnKey]: {
+        min: field === "min" ? value : prev[columnKey]?.min ?? "",
+        max: field === "max" ? value : prev[columnKey]?.max ?? "",
+      },
+    }));
+  };
+
   const clearFilters = () => {
     setColumnFilters({});
+    setRangeFilters({});
     setTempFilters({});
+    setTempRangeFilters({});
     onFilterChange?.({});
   };
 
   const applyFilters = () => {
-    setColumnFilters(tempFilters);
-    onFilterChange?.(
-      Object.fromEntries(
-        Object.entries(tempFilters).map(([key, val]) => [key, val.join(",")])
+    const nextRangeFilters = Object.fromEntries(
+      Object.entries(tempRangeFilters).filter(
+        ([, value]) => value.min || value.max
       )
     );
+
+    setColumnFilters(tempFilters);
+    setRangeFilters(nextRangeFilters);
+    onFilterChange?.({
+      ...Object.fromEntries(
+        Object.entries(tempFilters)
+          .filter(([, values]) => values.length > 0)
+          .map(([key, values]) => [key, values.join(",")])
+      ),
+      ...Object.fromEntries(
+        Object.entries(nextRangeFilters).map(([key, value]) => [
+          key,
+          formatRangeFilterValue(value),
+        ])
+      ),
+    });
     setIsDialogOpen(false); // Close the dialog
   };
 
@@ -179,9 +234,9 @@ export function DataTable<TData>({
             <div className="flex w-full gap-4 md:w-auto">
               <Button
                 variant="outline"
-                onClick={() => setIsDialogOpen(true)}
+                onClick={openFilterDialog}
                 className={
-                  Object.keys(columnFilters).length > 0
+                  hasActiveFilters
                     ? "flex items-center gap-2 cursor-pointer w-2/3 md:w-auto"
                     : "flex items-center gap-2 cursor-pointer w-full md:w-auto"
                 }
@@ -193,7 +248,7 @@ export function DataTable<TData>({
                 variant="outline"
                 onClick={clearFilters}
                 className={
-                  Object.keys(columnFilters).length > 0
+                  hasActiveFilters
                     ? "flex items-center gap-2 cursor-pointer w-1/3.5 md:w-auto"
                     : "hidden"
                 }
@@ -213,33 +268,80 @@ export function DataTable<TData>({
                       <label className="block text-sm font-medium text-foreground mb-1">
                         {`Filter by ${filter.label}`}
                       </label>
-                      <CustomSelect
-                        isMulti
-                        options={filter.options.map((option) => ({
-                          value: option,
-                          label:
-                            filter.columnKey === "type"
-                              ? formatExpenseType(option as ExpenseType)
-                              : option,
-                        }))}
-                        value={(tempFilters[filter.columnKey] || []).map(
-                          (value) => ({
-                            value,
+                      {filter.type === "range" ? (
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="mb-1 block text-xs text-muted-foreground">
+                              Min amount
+                            </label>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="any"
+                              placeholder="Min"
+                              value={
+                                tempRangeFilters[filter.columnKey]?.min ?? ""
+                              }
+                              onChange={(event) =>
+                                handleRangeFilterChange(
+                                  filter.columnKey,
+                                  "min",
+                                  event.target.value
+                                )
+                              }
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs text-muted-foreground">
+                              Max amount
+                            </label>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="any"
+                              placeholder="Max"
+                              value={
+                                tempRangeFilters[filter.columnKey]?.max ?? ""
+                              }
+                              onChange={(event) =>
+                                handleRangeFilterChange(
+                                  filter.columnKey,
+                                  "max",
+                                  event.target.value
+                                )
+                              }
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <CustomSelect
+                          isMulti
+                          options={filter.options.map((option) => ({
+                            value: option,
                             label:
                               filter.columnKey === "type"
-                                ? formatExpenseType(value as ExpenseType)
-                                : value,
-                          })
-                        )}
-                        onChange={(selectedOptions: any[]) => {
-                          const values = selectedOptions.map(
-                            (option: any) => option.value
-                          );
-                          handleFilterChange(filter.columnKey, values);
-                        }}
-                        className="basic-multi-select"
-                        classNamePrefix="select"
-                      />
+                                ? formatExpenseType(option as ExpenseType)
+                                : option,
+                          }))}
+                          value={(tempFilters[filter.columnKey] || []).map(
+                            (value) => ({
+                              value,
+                              label:
+                                filter.columnKey === "type"
+                                  ? formatExpenseType(value as ExpenseType)
+                                  : value,
+                            })
+                          )}
+                          onChange={(selectedOptions: any[]) => {
+                            const values = selectedOptions.map(
+                              (option: any) => option.value
+                            );
+                            handleFilterChange(filter.columnKey, values);
+                          }}
+                          className="basic-multi-select"
+                          classNamePrefix="select"
+                        />
+                      )}
                     </div>
                   ))}
                   <div className="flex justify-end gap-4">
@@ -248,6 +350,7 @@ export function DataTable<TData>({
                       variant="outline"
                       onClick={() => {
                         setTempFilters(columnFilters);
+                        setTempRangeFilters(rangeFilters);
                         setIsDialogOpen(false); // Close the sheet
                       }}
                     >
