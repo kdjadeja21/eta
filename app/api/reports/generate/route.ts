@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { expenseService } from "@/lib/expense-service";
 import { reportService } from "@/lib/report-service";
 import { categorizeExpenses } from "@/lib/ai-categorizer";
-import { format } from "date-fns";
+import { format, getDaysInMonth, differenceInCalendarDays, startOfMonth } from "date-fns";
 import {
   getMonthDateRange,
   isCurrentMonth,
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { month } = body as { month: string };
+    const { month, timezoneOffset } = body as { month: string; timezoneOffset?: number };
 
     if (!month || !/^\d{4}-\d{2}$/.test(month)) {
       return NextResponse.json(
@@ -31,6 +31,16 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Validate timezone offset: must be a finite number in the range [-840, 840].
+    // Default to 0 (UTC) if not provided or invalid.
+    const safeOffset =
+      typeof timezoneOffset === "number" &&
+      Number.isFinite(timezoneOffset) &&
+      timezoneOffset >= -840 &&
+      timezoneOffset <= 840
+        ? timezoneOffset
+        : 0;
 
     const existing = await reportService.getReportByMonth(userId, month);
     const regeneratingCurrentMonth = isCurrentMonth(month);
@@ -42,7 +52,7 @@ export async function POST(req: NextRequest) {
     // For the current month: fall through and let createReport (setDoc) overwrite
     // the existing document atomically — no separate delete needed.
 
-    const { monthStart, monthEnd, monthLabel } = getMonthDateRange(month);
+    const { monthStart, monthEnd, monthLabel, refDate } = getMonthDateRange(month, new Date(), safeOffset);
 
     const expenses = await expenseService.getExpenses(
       userId,
@@ -95,7 +105,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const summary = computeSummary(expenses, monthStart, monthEnd);
+    const summary = computeSummary(expenses, monthStart, monthEnd, refDate, month);
 
     const reportId = await reportService.createReport({
       userId,
@@ -121,14 +131,19 @@ export async function POST(req: NextRequest) {
 
 function computeSummary(
   expenses: Awaited<ReturnType<typeof expenseService.getExpenses>>,
-  monthStart: Date,
-  monthEnd: Date
+  _monthStart: Date,
+  _monthEnd: Date,
+  refDate: Date,
+  month: string,
 ): ReportSummary {
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
   const transactionCount = expenses.length;
 
-  const daysInMonth =
-    (monthEnd.getTime() - monthStart.getTime()) / (1000 * 60 * 60 * 24) + 1;
+  // For completed months use the actual calendar day count; for the current
+  // (in-progress) month use the number of days elapsed so far.
+  const daysInMonth = isCurrentMonth(month)
+    ? differenceInCalendarDays(new Date(), startOfMonth(refDate)) + 1
+    : getDaysInMonth(refDate);
   const avgDaily = transactionCount > 0 ? totalSpent / daysInMonth : 0;
 
   const largest = expenses.reduce(
