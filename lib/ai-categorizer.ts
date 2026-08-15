@@ -1,5 +1,8 @@
 import "server-only";
-import { Agent } from "@cursor/sdk";
+import { mkdirSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { Agent, JsonlLocalAgentStore } from "@cursor/sdk";
 
 export interface UncategorizedRecord {
   id: string;
@@ -70,10 +73,22 @@ REQUIRED JSON FORMAT (respond with this exact structure):
   "insights": "<2-3 sentence spending insight for ${monthLabel}>"
 }`;
 
+  const apiKey = process.env.CURSOR_API_KEY?.trim();
+  if (!apiKey) {
+    throw new Error(
+      "CURSOR_API_KEY is not set. Add it to the server environment to enable AI categorization."
+    );
+  }
+
+  // Vercel/Lambda HOME is not writable; keep the SDK agent store in /tmp.
+  const agentRoot = path.join(os.tmpdir(), "cursor-sdk-agent-store");
+  mkdirSync(agentRoot, { recursive: true });
+  const store = new JsonlLocalAgentStore(agentRoot);
+
   const result = await Agent.prompt(prompt, {
-    apiKey: process.env.CURSOR_API_KEY!,
+    apiKey,
     model: { id: "composer-2.5" },
-    local: { cwd: process.cwd() },
+    local: { cwd: agentRoot, store },
   });
 
   if (!result.result) {
