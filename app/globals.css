@@ -32,6 +32,8 @@
 
 :root {
   --radius: 0.625rem;
+  /* Chrome mobile first-paint overlap; updated by visual-viewport.ts */
+  --vv-offset-bottom: 0px;
 
   --background: #f8fafc;
   --foreground: #0f172a;
@@ -96,8 +98,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    @apply min-h-dvh;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply min-h-dvh bg-background text-foreground;
   }
 }
 
