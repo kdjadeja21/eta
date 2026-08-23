@@ -21,7 +21,7 @@ export default async function DashboardLayout({
 
   return (
     <CurrencyProvider>
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-dvh flex-col">
         <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
           <Link
             href="/daily-view"
@@ -37,7 +37,7 @@ export default async function DashboardLayout({
             <UserButton />
           </div>
         </header>
-        <main className="flex-1 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
+        <main className="flex-1 pb-[calc(4rem+env(safe-area-inset-bottom)+var(--vv-offset-bottom))] md:pb-0">
           {children}
         </main>
         <MobileBottomNav />

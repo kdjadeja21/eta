@@ -48,7 +48,7 @@ export function MobileBottomNav() {
   return (
     <nav
       aria-label="Main navigation"
-      className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden"
+      className="fixed inset-x-0 bottom-[var(--vv-offset-bottom)] z-50 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden"
     >
       <div className="mx-auto flex h-16 max-w-lg items-stretch">
         {navItems.map(({ href, label, icon: Icon }) => {
