@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { format, isToday } from "date-fns";
+import { isToday } from "date-fns";
 import { ArrowDownUp, Check, Receipt } from "lucide-react";
 import { ExpenseListItem } from "./expense-list-item";
 import type { Expense } from "@/lib/expense-service";
-import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,22 +50,12 @@ interface ExpenseListProps {
 }
 
 function ExpenseListSkeleton() {
-  const skeletonAccents = [
-    "border-l-emerald-600/25",
-    "border-l-blue-600/25",
-    "border-l-amber-600/25",
-    "border-l-emerald-600/25",
-  ];
-
   return (
     <div className="space-y-2.5">
       {Array.from({ length: 4 }).map((_, i) => (
         <div
           key={i}
-          className={cn(
-            "flex animate-pulse items-center gap-3.5 rounded-xl border border-border/60 border-l-[3px] bg-card px-4 py-3.5",
-            skeletonAccents[i]
-          )}
+          className="flex animate-pulse items-center gap-3.5 rounded-xl border border-border bg-card px-4 py-3.5"
         >
           <div className="h-10 w-10 rounded-lg bg-muted" />
           <div className="flex-1 space-y-2">
@@ -102,54 +91,49 @@ export function ExpenseList({
 
   return (
     <section className="mt-7 sm:mt-8">
-      <div className="mb-4 flex items-start justify-between gap-3">
+      <div className="mb-4 flex items-end justify-between gap-3">
         <div>
-          <h2 className="text-[22px] font-bold leading-tight text-foreground sm:text-xl">
+          <h2 className="text-lg font-semibold leading-tight tracking-tight text-foreground sm:text-xl">
             Expenses
           </h2>
-          <p className="mt-1 text-[13px] text-muted-foreground sm:text-sm">
-            {isLoading ? "Loading..." : transactionLabel}
+          <p className="mt-0.5 text-[13px] text-muted-foreground sm:text-sm">
+            {isLoading ? "Loading…" : transactionLabel}
           </p>
         </div>
-        <div className="mt-0.5 flex shrink-0 items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 gap-1.5 rounded-full border-0 bg-card px-3 text-[12px] font-medium text-muted-foreground shadow-sm hover:bg-card/80 dark:shadow-none dark:ring-1 dark:ring-border"
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 shrink-0 gap-1.5 rounded-full px-3.5 text-xs font-medium text-muted-foreground"
+            >
+              <ArrowDownUp className="h-3.5 w-3.5" />
+              {currentSortLabel}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[180px]">
+            {SORT_OPTIONS.map((option) => (
+              <DropdownMenuItem
+                key={option.key}
+                onClick={() => setSortKey(option.key)}
+                className="flex items-center justify-between gap-3"
               >
-                <ArrowDownUp className="h-3 w-3" />
-                {currentSortLabel}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[180px]">
-              {SORT_OPTIONS.map((option) => (
-                <DropdownMenuItem
-                  key={option.key}
-                  onClick={() => setSortKey(option.key)}
-                  className="flex items-center justify-between gap-3"
-                >
-                  {option.label}
-                  {sortKey === option.key && (
-                    <Check className="h-3.5 w-3.5 text-primary" />
-                  )}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <span className="rounded-full bg-card px-3 py-1 text-[12px] font-medium text-muted-foreground shadow-sm dark:shadow-none dark:ring-1 dark:ring-border">
-            {format(selectedDate, "MMM d")}
-          </span>
-        </div>
+                {option.label}
+                {sortKey === option.key && (
+                  <Check className="h-3.5 w-3.5 text-primary" />
+                )}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {isLoading ? (
         <ExpenseListSkeleton />
       ) : expenses.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-[20px] bg-card px-6 py-16 text-center shadow-[0_1px_8px_rgba(15,23,42,0.07)] dark:shadow-none dark:ring-1 dark:ring-border">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
-            <Receipt className="h-7 w-7 text-muted-foreground" />
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-input bg-card px-6 py-16 text-center">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-secondary">
+            <Receipt className="h-6 w-6 text-primary" />
           </div>
           <p className="font-semibold text-foreground">No expenses yet</p>
           <p className="mt-1 max-w-xs text-sm text-muted-foreground">
