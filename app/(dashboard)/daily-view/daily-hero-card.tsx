@@ -46,7 +46,7 @@ export function DailyHeroCard({
           type="button"
           onClick={onPrev}
           aria-label="Previous day"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:bg-accent"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
@@ -66,7 +66,7 @@ export function DailyHeroCard({
           disabled={!canGoNext}
           aria-label="Next day"
           className={cn(
-            "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:bg-accent",
+            "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
             !canGoNext &&
               "cursor-not-allowed opacity-35 hover:bg-transparent hover:text-muted-foreground",
           )}
@@ -112,7 +112,7 @@ export function DailyHeroCard({
             <button
               type="button"
               onClick={onGoToToday}
-              className="inline-flex min-h-7 items-center rounded-full border border-border px-3 py-1 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+              className="inline-flex min-h-7 items-center rounded-full border border-border px-3 py-1 text-xs font-semibold text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
             >
               Back to today
             </button>

@@ -19,6 +19,7 @@ export function DailyViewFab({ onClick, className }: DailyViewFabProps) {
         "bg-primary px-0 text-[15px] font-semibold text-primary-foreground",
         "shadow-lg shadow-primary/25",
         "transition-transform active:scale-[0.97] sm:px-6 sm:text-base",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         className,
       )}
     >

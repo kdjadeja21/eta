@@ -105,7 +105,7 @@ export function ExpenseList({
             <Button
               variant="outline"
               size="sm"
-              className="h-9 shrink-0 gap-1.5 rounded-full px-3.5 text-xs font-medium text-muted-foreground"
+              className="h-10 shrink-0 gap-1.5 rounded-full px-3.5 text-xs font-medium text-muted-foreground sm:h-9"
             >
               <ArrowDownUp className="h-3.5 w-3.5" />
               {currentSortLabel}

@@ -82,6 +82,7 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
       setTrendPercent(calcTrendPercent(dayTotal, yesterdayTotal));
     } catch (error) {
       console.error("Error fetching daily expenses:", error);
+      showErrorToast("Failed to load expenses for this day");
     } finally {
       setIsLoading(false);
     }

@@ -79,8 +79,9 @@ export function CategoryBreakdownChart({ categories, totalSpent }: CategoryBreak
             <div className="flex rounded-md border overflow-hidden text-xs">
               <button
                 onClick={() => setMetric("amount")}
+                aria-label="Show amounts"
                 className={cn(
-                  "px-2 py-1 cursor-pointer transition-colors",
+                  "min-h-8 min-w-8 px-2 py-1 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
                   metric === "amount" ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                 )}
               >
@@ -88,8 +89,9 @@ export function CategoryBreakdownChart({ categories, totalSpent }: CategoryBreak
               </button>
               <button
                 onClick={() => setMetric("pct")}
+                aria-label="Show percentages"
                 className={cn(
-                  "px-2 py-1 cursor-pointer transition-colors",
+                  "min-h-8 min-w-8 px-2 py-1 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
                   metric === "pct" ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                 )}
               >
@@ -100,8 +102,9 @@ export function CategoryBreakdownChart({ categories, totalSpent }: CategoryBreak
             <div className="flex rounded-md border overflow-hidden">
               <button
                 onClick={() => setViewMode("donut")}
+                aria-label="Donut view"
                 className={cn(
-                  "p-1 cursor-pointer transition-colors",
+                  "flex min-h-8 min-w-8 items-center justify-center p-1 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
                   viewMode === "donut" ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                 )}
               >
@@ -109,8 +112,9 @@ export function CategoryBreakdownChart({ categories, totalSpent }: CategoryBreak
               </button>
               <button
                 onClick={() => setViewMode("bar")}
+                aria-label="Bar view"
                 className={cn(
-                  "p-1 cursor-pointer transition-colors",
+                  "flex min-h-8 min-w-8 items-center justify-center p-1 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
                   viewMode === "bar" ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                 )}
               >
