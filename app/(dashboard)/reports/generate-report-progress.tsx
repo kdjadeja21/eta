@@ -152,10 +152,12 @@ export function GenerateReportProgress({
       : ALL_STAGE_LABELS[stageIndex];
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm flex items-center justify-center">
+    <div className="fixed inset-0 z-50 bg-background/95 flex items-center justify-center">
       <div className="w-full max-w-md mx-4 space-y-6">
         <div className="text-center space-y-1">
-          <h2 className="text-2xl font-bold">Generating Report</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Generating Report
+          </h2>
           <p className="text-muted-foreground text-sm">
             Analysing your expenses for{" "}
             <span className="font-medium text-foreground">
@@ -169,12 +171,12 @@ export function GenerateReportProgress({
             <span
               className={cn(
                 "font-medium transition-colors duration-300",
-                isDone ? "text-emerald-500" : "text-foreground"
+                isDone ? "text-primary" : "text-foreground"
               )}
             >
               {currentLabel}
             </span>
-            <span className="text-muted-foreground tabular-nums">
+            <span className="font-money text-muted-foreground">
               {isWaiting ? "…" : `${Math.round(progress)}%`}
             </span>
           </div>
@@ -182,21 +184,14 @@ export function GenerateReportProgress({
           {/* Progress bar */}
           <div className="relative h-2.5 rounded-full bg-muted overflow-hidden">
             {isWaiting ? (
-              /* Indeterminate sliding bar while waiting for server */
-              <div className="absolute inset-y-0 w-2/5 rounded-full bg-gradient-to-r from-primary/60 via-primary to-primary/60 animate-indeterminate" />
+              /* Indeterminate pulse while waiting for server */
+              <div className="absolute inset-0 rounded-full bg-primary/60 animate-pulse" />
             ) : (
               /* Determinate fill — rAF drives width, no CSS transition conflict */
               <div
-                className={cn(
-                  "absolute inset-y-0 left-0 rounded-full overflow-hidden",
-                  isDone ? "bg-emerald-500" : "bg-primary"
-                )}
+                className="absolute inset-y-0 left-0 rounded-full bg-primary"
                 style={{ width: `${progress}%` }}
-              >
-                {!isDone && (
-                  <div className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/25 to-transparent animate-shimmer" />
-                )}
-              </div>
+              />
             )}
           </div>
         </div>
@@ -215,7 +210,7 @@ export function GenerateReportProgress({
                 key={label}
                 className={cn(
                   "flex items-center gap-3 text-sm transition-all duration-300",
-                  isCompleted && "text-emerald-500",
+                  isCompleted && "text-primary",
                   isCurrent && "text-foreground font-medium",
                   !isCompleted && !isCurrent && "text-muted-foreground/40"
                 )}

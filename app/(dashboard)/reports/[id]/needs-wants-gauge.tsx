@@ -22,15 +22,15 @@ interface NeedsWantsGaugeProps {
 }
 
 const TYPE_COLORS = {
-  need: "#22c55e",
-  want: "#3b82f6",
-  not_sure: "#f59e0b",
+  need: "var(--chart-1)",
+  want: "var(--chart-3)",
+  not_sure: "var(--chart-5)",
 };
 
 const VERDICT_STYLES: Record<NeedsWantsVerdict["tone"], string> = {
-  positive: "bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/20",
-  neutral: "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/20",
-  warning: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20",
+  positive: "border-primary/35 text-primary",
+  neutral: "border-border text-muted-foreground",
+  warning: "border-destructive/35 text-destructive",
 };
 
 export function NeedsWantsGauge({ byType, verdict }: NeedsWantsGaugeProps) {
@@ -109,7 +109,7 @@ export function NeedsWantsGauge({ byType, verdict }: NeedsWantsGaugeProps) {
           </ResponsiveContainer>
           {/* Center label */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <p className="text-2xl font-black">{verdict.needsPct}%</p>
+            <p className="font-money text-2xl font-semibold">{verdict.needsPct}%</p>
             <p className="text-xs text-muted-foreground">Needs</p>
           </div>
         </div>

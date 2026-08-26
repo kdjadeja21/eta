@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { FileBarChart2, ArrowRight, Sparkles, Calendar, Trash2 } from "lucide-react";
+import { FileText, ArrowRight, Calendar, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -92,31 +92,25 @@ export function ReportsContent({ userId }: ReportsContentProps) {
         />
       )}
 
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-3">
-          <FileBarChart2 className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">Monthly Reports</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">
-              AI-powered insights into your monthly spending
-            </p>
-          </div>
-        </div>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          Monthly Reports
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          Monthly statements of your spending
+        </p>
       </div>
 
-      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-background">
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Sparkles className="h-5 w-5 text-primary" />
-            Generate New Report
-          </CardTitle>
+          <CardTitle className="text-lg">Generate New Report</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Select a completed month and generate a full analysis. Expenses
-            without a category will be automatically classified by AI in one
-            batch call. Reports are cached — regenerating the same month
-            instantly returns the existing report.
+            Select a completed month and generate a full statement.
+            Uncategorized expenses are classified automatically. Reports are
+            cached — regenerating the same month instantly returns the
+            existing report.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
@@ -146,7 +140,7 @@ export function ReportsContent({ userId }: ReportsContentProps) {
                 disabled={isGenerating}
                 className="cursor-pointer gap-2"
               >
-                <Sparkles className="h-4 w-4" />
+                <FileText className="h-4 w-4" />
                 Generate Report
               </Button>
             )}
@@ -176,13 +170,14 @@ export function ReportsContent({ userId }: ReportsContentProps) {
             ))}
           </div>
         ) : pastReports.length === 0 ? (
-          <Card className="border-dashed">
+          <Card className="border-dashed border-input">
             <CardContent className="flex flex-col items-center justify-center py-12 gap-3 text-center">
-              <FileBarChart2 className="h-10 w-10 text-muted-foreground/40" />
-              <p className="text-muted-foreground">No reports yet.</p>
-              <p className="text-sm text-muted-foreground/70">
-                Generate your first report above to get AI-powered spending
-                insights.
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-secondary">
+                <FileText className="h-6 w-6 text-primary" />
+              </div>
+              <p className="font-semibold text-foreground">No reports yet</p>
+              <p className="text-sm text-muted-foreground">
+                Generate your first monthly statement above.
               </p>
             </CardContent>
           </Card>
@@ -191,7 +186,7 @@ export function ReportsContent({ userId }: ReportsContentProps) {
             {pastReports.map((report) => (
               <Card
                 key={report.id}
-                className="hover:border-primary/50 hover:shadow-md transition-all duration-200 h-full group"
+                className="hover:border-primary/50 transition-colors duration-200 h-full"
               >
                 <CardContent className="p-5 space-y-3">
                   <div className="flex items-start justify-between">
@@ -205,7 +200,7 @@ export function ReportsContent({ userId }: ReportsContentProps) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
                         onClick={(e) => {
                           e.preventDefault();
                           setDeleteTarget(report);
@@ -223,13 +218,13 @@ export function ReportsContent({ userId }: ReportsContentProps) {
                     <div className="flex justify-between text-sm pt-1 border-t">
                       <div>
                         <p className="text-muted-foreground text-xs">Total Spent</p>
-                        <p className="font-semibold">
+                        <p className="font-money font-semibold">
                           {formatCurrency(report.summary.totalSpent)}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="text-muted-foreground text-xs">Transactions</p>
-                        <p className="font-semibold">
+                        <p className="font-money font-semibold">
                           {report.summary.transactionCount}
                         </p>
                       </div>

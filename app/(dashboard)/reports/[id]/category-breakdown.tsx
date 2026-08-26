@@ -22,8 +22,11 @@ import type { CategoryBreakdown } from "@/lib/report-service";
 import { cn } from "@/lib/utils";
 
 const COLORS = [
-  "#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8",
-  "#82CA9D", "#FFC658", "#FF6B6B", "#4ECDC4", "#45B7D1",
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
 ];
 
 interface CategoryBreakdownProps {

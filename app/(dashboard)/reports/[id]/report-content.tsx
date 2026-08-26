@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { ArrowLeft, CreditCard, Lightbulb, Sparkles, TrendingUp, BarChart3, ShoppingBag, Trash2 } from "lucide-react";
+import { ArrowLeft, CreditCard, Lightbulb, TrendingUp, BarChart3, ShoppingBag, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,8 +51,11 @@ import { DownloadPdfButton } from "./download-pdf-button";
 import { cn } from "@/lib/utils";
 
 const CHART_COLORS = [
-  "#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8",
-  "#82CA9D", "#FFC658", "#FF6B6B", "#4ECDC4", "#45B7D1",
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
 ];
 
 interface ReportContentProps {
@@ -290,7 +293,7 @@ function StatCardsRow({
               <p className="text-sm text-muted-foreground">{c.title}</p>
               {c.icon}
             </div>
-            <p className="text-2xl font-bold mt-1">{c.value}</p>
+            <p className="font-money text-2xl font-semibold mt-1">{c.value}</p>
             {c.subtitle && (
               <p className="text-xs text-muted-foreground mt-0.5 truncate">{c.subtitle}</p>
             )}
@@ -324,13 +327,7 @@ function DailyChart({
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={dailyTotals} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="reportDailyGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#0088FE" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#0088FE" stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis
                 dataKey="date"
                 tick={{ fontSize: 10 }}
@@ -355,9 +352,10 @@ function DailyChart({
               <Area
                 type="monotone"
                 dataKey="amount"
-                stroke="#0088FE"
+                stroke="var(--chart-1)"
                 strokeWidth={2}
-                fill="url(#reportDailyGrad)"
+                fill="var(--chart-1)"
+                fillOpacity={0.18}
                 dot={false}
                 activeDot={{ r: 5 }}
                 isAnimationActive={inView}
@@ -396,7 +394,7 @@ function WeekdayCard({
         <div className="h-52">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weekdays} margin={{ top: 0, right: 8, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" className="opacity-20" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="day" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => formatCurrency(v)} width={68} />
               <Tooltip
@@ -404,11 +402,11 @@ function WeekdayCard({
                 contentStyle={{ fontSize: 12, borderRadius: 8 }}
               />
               <Bar dataKey="amount" radius={[4, 4, 0, 0]} isAnimationActive={inView} animationDuration={700}>
-                {weekdays.map((entry, i) => (
+                {weekdays.map((entry) => (
                   <Cell
                     key={entry.day}
-                    fill={CHART_COLORS[i % CHART_COLORS.length]}
-                    opacity={entry.amount === maxAmount ? 1 : 0.7}
+                    fill="var(--chart-1)"
+                    opacity={entry.amount === maxAmount ? 1 : 0.45}
                   />
                 ))}
               </Bar>
@@ -483,7 +481,7 @@ function AiInsightsCard({ insights }: { insights: string }) {
     <Card
       ref={ref}
       className={cn(
-        "border-primary/20 bg-gradient-to-br from-primary/5 to-background",
+        "border-primary/30",
         "transition-all duration-500",
         inView ? "reveal-up" : "opacity-0"
       )}
@@ -491,8 +489,7 @@ function AiInsightsCard({ insights }: { insights: string }) {
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
           <Lightbulb className="h-5 w-5 text-primary" />
-          AI Insights
-          <Sparkles className="h-3.5 w-3.5 text-primary/60 ml-auto" />
+          Monthly Insights
         </CardTitle>
       </CardHeader>
       <CardContent>

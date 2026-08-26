@@ -15,15 +15,15 @@ interface ComparisonSectionProps {
 }
 
 function TrendIcon({ trend, className }: { trend: Trend; className?: string }) {
-  if (trend === "up") return <TrendingUp className={cn("h-4 w-4 text-red-500", className)} />;
-  if (trend === "down") return <TrendingDown className={cn("h-4 w-4 text-green-500", className)} />;
+  if (trend === "up") return <TrendingUp className={cn("h-4 w-4 text-destructive", className)} />;
+  if (trend === "down") return <TrendingDown className={cn("h-4 w-4 text-primary", className)} />;
   return <Minus className={cn("h-4 w-4 text-muted-foreground", className)} />;
 }
 
 function deltaColor(trend: Trend, inverted = false): string {
   if (trend === "flat") return "text-muted-foreground";
   const isGood = inverted ? trend === "up" : trend === "down";
-  return isGood ? "text-green-500" : "text-red-500";
+  return isGood ? "text-primary" : "text-destructive";
 }
 
 export function ComparisonSection({
@@ -55,7 +55,7 @@ export function ComparisonSection({
             <p className="text-xs text-muted-foreground mb-1">Total Spend Change</p>
             <div className="flex items-center gap-2">
               <TrendIcon trend={comparison.trend} className="h-5 w-5" />
-              <span className={cn("text-2xl font-black", deltaColor(comparison.trend))}>
+              <span className={cn("font-money text-2xl font-semibold", deltaColor(comparison.trend))}>
                 {comparison.trend === "flat" ? "—" : (comparison.trend === "up" ? "+" : "−")}{absTotalPct.toFixed(1)}%
               </span>
             </div>
@@ -66,9 +66,9 @@ export function ComparisonSection({
           </div>
           <div className="text-right">
             <p className="text-xs text-muted-foreground">{previousReport.monthLabel}</p>
-            <p className="font-semibold">{formatCurrency(previousReport.summary.totalSpent)}</p>
+            <p className="font-money font-semibold">{formatCurrency(previousReport.summary.totalSpent)}</p>
             <p className="text-xs text-muted-foreground mt-1">{currentReport.monthLabel}</p>
-            <p className="font-bold">{formatCurrency(currentReport.summary.totalSpent)}</p>
+            <p className="font-money font-semibold">{formatCurrency(currentReport.summary.totalSpent)}</p>
           </div>
         </div>
 
@@ -81,7 +81,7 @@ export function ComparisonSection({
                 trend={comparison.needsDeltaPct > 1 ? "up" : comparison.needsDeltaPct < -1 ? "down" : "flat"}
                 className="h-4 w-4"
               />
-              <span className={cn("font-bold", comparison.needsDeltaPct > 1 ? "text-green-500" : comparison.needsDeltaPct < -1 ? "text-red-500" : "text-muted-foreground")}>
+              <span className={cn("font-money font-semibold", comparison.needsDeltaPct > 1 ? "text-primary" : comparison.needsDeltaPct < -1 ? "text-destructive" : "text-muted-foreground")}>
                 {comparison.needsDeltaPct > 0 ? "+" : ""}{comparison.needsDeltaPct.toFixed(1)}pp
               </span>
             </div>
@@ -94,7 +94,7 @@ export function ComparisonSection({
                 trend={comparison.wantsDeltaPct > 1 ? "up" : comparison.wantsDeltaPct < -1 ? "down" : "flat"}
                 className="h-4 w-4"
               />
-              <span className={cn("font-bold", comparison.wantsDeltaPct > 1 ? "text-red-500" : comparison.wantsDeltaPct < -1 ? "text-green-500" : "text-muted-foreground")}>
+              <span className={cn("font-money font-semibold", comparison.wantsDeltaPct > 1 ? "text-destructive" : comparison.wantsDeltaPct < -1 ? "text-primary" : "text-muted-foreground")}>
                 {comparison.wantsDeltaPct > 0 ? "+" : ""}{comparison.wantsDeltaPct.toFixed(1)}pp
               </span>
             </div>
@@ -125,7 +125,7 @@ export function ComparisonSection({
                 <span className="text-muted-foreground text-xs">
                   {ct.previousAmount > 0 ? formatCurrency(ct.previousAmount) : "—"}
                 </span>
-                <span className="font-semibold">{formatCurrency(ct.currentAmount)}</span>
+                <span className="font-money font-semibold">{formatCurrency(ct.currentAmount)}</span>
                 {ct.trend !== "flat" && ct.trend !== "new" && (
                   <span className={cn("text-xs font-semibold w-14 text-right", deltaColor(ct.trend))}>
                     {ct.deltaPct > 0 ? "+" : ""}{ct.deltaPct.toFixed(0)}%
