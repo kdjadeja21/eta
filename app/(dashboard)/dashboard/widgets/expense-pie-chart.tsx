@@ -42,12 +42,13 @@ function ExpensePieTooltip({
   formatCurrency,
 }: {
   active?: boolean;
-  payload?: Array<{ payload: PieTooltipPayload }>;
+  payload?: ReadonlyArray<{ payload?: PieTooltipPayload }>;
   visibleData: Array<PieTooltipPayload>;
   formatCurrency: (amount: number) => string;
 }) {
   if (active && payload && payload.length) {
-    const data = payload[0].payload;
+    const data = payload[0]?.payload;
+    if (!data) return null;
     const total = visibleData.reduce((s, i) => s + i.value, 0);
     const percentage = total > 0 ? ((data.value / total) * 100).toFixed(1) : "0";
     return (
@@ -187,9 +188,10 @@ export function ExpensePieChart({
                     })}
                   </Pie>
                   <Tooltip
-                    content={(props) => (
+                    content={({ active, payload }) => (
                       <ExpensePieTooltip
-                        {...props}
+                        active={active}
+                        payload={payload}
                         visibleData={visibleData}
                         formatCurrency={formattedAmount}
                       />

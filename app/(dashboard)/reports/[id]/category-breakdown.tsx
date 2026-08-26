@@ -45,11 +45,12 @@ function CategoryBreakdownTooltip({
   formatCurrency,
 }: {
   active?: boolean;
-  payload?: Array<{ payload: CategoryTooltipPayload }>;
+  payload?: ReadonlyArray<{ payload?: CategoryTooltipPayload }>;
   formatCurrency: (amount: number) => string;
 }) {
   if (!active || !payload?.length) return null;
-  const d = payload[0].payload;
+  const d = payload[0]?.payload;
+  if (!d) return null;
   return (
     <div className="bg-background border rounded-lg p-2.5 shadow text-xs space-y-1">
       <p className="font-semibold text-sm">{d.name}</p>
@@ -161,9 +162,10 @@ export function CategoryBreakdownChart({ categories, totalSpent }: CategoryBreak
                     ))}
                   </Pie>
                   <Tooltip
-                    content={(props) => (
+                    content={({ active, payload }) => (
                       <CategoryBreakdownTooltip
-                        {...props}
+                        active={active}
+                        payload={payload}
                         formatCurrency={formatCurrency}
                       />
                     )}
@@ -218,9 +220,10 @@ export function CategoryBreakdownChart({ categories, totalSpent }: CategoryBreak
                   width={110}
                 />
                 <Tooltip
-                  content={(props) => (
+                  content={({ active, payload }) => (
                     <CategoryBreakdownTooltip
-                      {...props}
+                      active={active}
+                      payload={payload}
                       formatCurrency={formatCurrency}
                     />
                   )}

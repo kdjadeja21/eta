@@ -46,12 +46,13 @@ function NeedsWantsTooltip({
   formatCurrency,
 }: {
   active?: boolean;
-  payload?: Array<{ payload: NeedsWantsTooltipPayload }>;
+  payload?: ReadonlyArray<{ payload?: NeedsWantsTooltipPayload }>;
   total: number;
   formatCurrency: (amount: number) => string;
 }) {
   if (active && payload?.length) {
-    const d = payload[0].payload;
+    const d = payload[0]?.payload;
+    if (!d) return null;
     const pct = total > 0 ? ((d.value / total) * 100).toFixed(1) : "0";
     return (
       <div className="bg-background border rounded-lg p-2 shadow text-xs">
@@ -121,9 +122,10 @@ export function NeedsWantsGauge({ byType, verdict }: NeedsWantsGaugeProps) {
                 ))}
               </Pie>
               <Tooltip
-                content={(props) => (
+                content={({ active, payload }) => (
                   <NeedsWantsTooltip
-                    {...props}
+                    active={active}
+                    payload={payload}
                     total={total}
                     formatCurrency={formatCurrency}
                   />
