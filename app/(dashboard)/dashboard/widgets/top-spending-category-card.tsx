@@ -63,10 +63,10 @@ export function TopSpendingCategoryCard({ userId, dateRange, refreshKey }: TopSp
         <PieChart className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">
+        <div className="truncate text-2xl font-semibold tracking-tight">
           {topCategory.category || "No data"}
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="font-money text-xs text-muted-foreground">
           {formattedAmount(topCategory.amount)}
         </p>
       </CardContent>

@@ -60,13 +60,8 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
+            <Toaster position="top-right" richColors visibleToasts={3} />
           </ThemeProvider>
-          <Toaster
-            position="top-right"
-            richColors
-            visibleToasts={3}
-            theme="light"
-          />
           <AuthToast />
         </body>
       </html>

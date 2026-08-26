@@ -51,7 +51,7 @@ export function DownloadPdfButton({
       {state === "generating" ? (
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : state === "done" ? (
-        <FileText className="h-4 w-4 text-green-500" />
+        <FileText className="h-4 w-4 text-primary" />
       ) : (
         <Download className="h-4 w-4" />
       )}

@@ -1,9 +1,6 @@
 import { SignIn } from "@clerk/nextjs";
+import { clerkAppearance } from "../../clerk-appearance";
 
 export default function Page() {
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <SignIn />
-    </div>
-  );
+  return <SignIn appearance={clerkAppearance} />;
 }

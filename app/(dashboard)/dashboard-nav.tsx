@@ -2,38 +2,40 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, LayoutDashboard, FileBarChart2 } from "lucide-react";
+import { CalendarDays, LayoutDashboard, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/daily-view", label: "Daily View", icon: CalendarDays },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/reports", label: "Reports", icon: FileBarChart2 },
+  { href: "/reports", label: "Reports", icon: FileText },
 ] as const;
 
 function isActiveRoute(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function DashboardNav() {
+export function SideRailNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="hidden items-center gap-1 md:flex">
-      {navItems.map(({ href, label }) => {
+    <nav aria-label="Main navigation" className="flex flex-col gap-1">
+      {navItems.map(({ href, label, icon: Icon }) => {
         const isActive = isActiveRoute(pathname, href);
 
         return (
           <Link
             key={href}
             href={href}
+            aria-current={isActive ? "page" : undefined}
             className={cn(
-              "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
               isActive
-                ? "bg-accent text-accent-foreground"
-                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                ? "bg-primary font-semibold text-primary-foreground"
+                : "font-medium text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
           >
+            <Icon className="h-[18px] w-[18px]" aria-hidden />
             {label}
           </Link>
         );
@@ -48,9 +50,9 @@ export function MobileBottomNav() {
   return (
     <nav
       aria-label="Main navigation"
-      className="fixed inset-x-0 bottom-[var(--vv-offset-bottom)] z-50 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden"
+      className="fixed inset-x-0 bottom-[var(--vv-offset-bottom)] z-50 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
     >
-      <div className="mx-auto flex h-16 max-w-lg items-stretch">
+      <div className="mx-auto flex h-16 max-w-lg items-stretch px-2">
         {navItems.map(({ href, label, icon: Icon }) => {
           const isActive = isActiveRoute(pathname, href);
 
@@ -58,17 +60,18 @@ export function MobileBottomNav() {
             <Link
               key={href}
               href={href}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-1 rounded-lg text-[11px] font-medium transition-colors",
+                "my-1.5 flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-xs transition-colors",
                 isActive
-                  ? "text-primary"
-                  : "text-muted-foreground active:bg-muted/50",
+                  ? "bg-secondary font-semibold text-primary"
+                  : "font-medium text-muted-foreground active:bg-accent",
               )}
             >
               <Icon
                 className={cn(
                   "h-5 w-5",
-                  isActive ? "stroke-[2.5px]" : "stroke-[2px]",
+                  isActive ? "stroke-[2.25px]" : "stroke-[1.75px]",
                 )}
                 aria-hidden
               />

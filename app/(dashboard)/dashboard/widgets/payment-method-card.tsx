@@ -70,10 +70,10 @@ export function PaymentMethodCard({ userId, dateRange, refreshKey }: PaymentMeth
         <CreditCard className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">
+        <div className="truncate text-2xl font-semibold tracking-tight">
           {topPaymentMethod.method || "No data"}
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="font-money text-xs text-muted-foreground">
           {formattedAmount(topPaymentMethod.amount)}
         </p>
       </CardContent>

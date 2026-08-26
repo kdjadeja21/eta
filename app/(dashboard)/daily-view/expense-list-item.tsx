@@ -49,41 +49,32 @@ export function ExpenseListItem({
   return (
     <article
       className={cn(
-        "group relative flex items-center gap-3.5 overflow-hidden rounded-xl border border-border/60 border-l-[3px] px-4 py-3.5",
-        "shadow-sm transition-[border-color,box-shadow] duration-150 sm:gap-4 sm:p-4",
+        "group flex items-center gap-3.5 rounded-xl border border-border bg-card px-4 py-3.5",
+        "transition-colors sm:gap-4 sm:p-4 sm:hover:border-input",
         "animate-in fade-in slide-in-from-bottom-1 fill-mode-both",
-        typeStyle.card,
-        typeStyle.accent,
-        typeStyle.hover
       )}
       style={{ animationDelay: `${index * 40}ms`, animationDuration: "300ms" }}
     >
       <div
-        aria-hidden
         className={cn(
-          "pointer-events-none absolute inset-0 opacity-80 transition-opacity duration-150 group-hover:opacity-100",
-          typeStyle.tint
-        )}
-      />
-
-      <div
-        className={cn(
-          "relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg sm:h-11 sm:w-11",
-          bg
+          "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg sm:h-11 sm:w-11",
+          bg,
         )}
       >
-        <Icon className={cn("h-[17px] w-[17px] sm:h-[18px] sm:w-[18px]", color)} />
+        <Icon
+          className={cn("h-[17px] w-[17px] sm:h-[18px] sm:w-[18px]", color)}
+        />
       </div>
 
-      <div className="relative min-w-0 flex-1">
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="truncate text-[15px] font-medium leading-tight text-foreground sm:text-base">
             {title}
           </p>
           <span
             className={cn(
-              "shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-medium tracking-wide",
-              typeStyle.badge
+              "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide",
+              typeStyle.badge,
             )}
           >
             {formatExpenseType(expense.type)}
@@ -94,7 +85,7 @@ export function ExpenseListItem({
         </p>
       </div>
 
-      <p className="relative shrink-0 text-[15px] font-semibold tabular-nums text-foreground sm:text-base">
+      <p className="font-money shrink-0 text-[15px] font-semibold text-foreground sm:text-base">
         {formatCurrency(expense.amount)}
       </p>
 
@@ -103,7 +94,7 @@ export function ExpenseListItem({
           <button
             type="button"
             aria-label="Expense options"
-            className="relative ml-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="-my-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
           >
             <MoreHorizontal className="h-4 w-4" />
           </button>

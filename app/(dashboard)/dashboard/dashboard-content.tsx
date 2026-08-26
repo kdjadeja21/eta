@@ -47,6 +47,7 @@ import { Card } from "@/components/ui/card";
 import { BulkUploadDialog } from "./bulk-upload-dialog";
 import { ExpensePieChart } from "./widgets/expense-pie-chart";
 import { ExpenseType, formatExpenseType } from "@/lib/types";
+import { getExpenseTypeStyle } from "@/lib/expense-type-styles";
 import { useUser } from "@clerk/nextjs";
 import { useFormattedCurrency } from "@/lib/currency-utils";
 import {
@@ -69,19 +70,6 @@ declare module "@tanstack/react-table" {
   interface TableMeta<TData> extends CustomTableMeta {}
 }
 
-const getTypeColor = (type: ExpenseType) => {
-  switch (type) {
-    case ExpenseType.Need:
-      return "bg-green-500 hover:bg-green-600";
-    case ExpenseType.Want:
-      return "bg-blue-500 hover:bg-blue-600";
-    case ExpenseType.NotSure:
-      return "bg-yellow-500 hover:bg-yellow-600";
-    default:
-      return "bg-gray-500 hover:bg-gray-600";
-  }
-};
-
 export type ExpenseColumn = ColumnDef<Expense>;
 
 export const columns: ExpenseColumn[] = [
@@ -94,9 +82,12 @@ export const columns: ExpenseColumn[] = [
   {
     accessorKey: "amount",
     header: "Amount",
-    cell: ({ row, table }: { row: { original: Expense }; table: any }) =>
-      table.options.meta?.formatCurrency?.(row.original.amount) ??
-      String(row.original.amount),
+    cell: ({ row, table }: { row: { original: Expense }; table: any }) => (
+      <span className="font-money font-medium">
+        {table.options.meta?.formatCurrency?.(row.original.amount) ??
+          String(row.original.amount)}
+      </span>
+    ),
   },
   {
     accessorKey: "description",
@@ -132,14 +123,14 @@ export const columns: ExpenseColumn[] = [
     accessorKey: "type",
     header: "Type",
     cell: ({ row }: { row: { original: Expense } }) => (
-      <Badge
+      <span
         className={cn(
-          "text-white dark:text-black",
-          getTypeColor(row.original.type)
+          "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+          getExpenseTypeStyle(row.original.type).badge
         )}
       >
         {formatExpenseType(row.original.type)}
-      </Badge>
+      </span>
     ),
   },
   {
@@ -547,32 +538,34 @@ export function DashboardContent({ userId }: { userId: string }) {
   }, [filteredExpenses]);
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <div className="container mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          Dashboard
+        </h1>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
           <DateRangePicker
             dateRange={dateRange}
             onDateRangeChange={(range) => range && setDateRange(range)}
             className="cursor-pointer w-full sm:w-auto"
           />
-          <div className="flex gap-4 w-full sm:w-auto">
+          <div className="flex gap-3 w-full sm:w-auto">
             <Button
-              className="w-1/2 sm:w-auto cursor-pointer"
+              className="min-h-11 w-1/2 sm:w-auto cursor-pointer sm:min-h-9"
               onClick={() => {
                 setEditingExpense(null);
                 setIsAddExpenseOpen(true);
               }}
             >
-              <PlusIcon className="mr-2 h-4 w-4" />
+              <PlusIcon className="h-4 w-4" />
               Add Expense
             </Button>
             <Button
-              className="w-2/4.5 sm:w-auto cursor-pointer"
+              variant="outline"
+              className="min-h-11 w-1/2 sm:w-auto cursor-pointer sm:min-h-9"
               onClick={() => setIsBulkUploadOpen(true)}
             >
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Upload Bulk Records
+              Bulk Upload
             </Button>
           </div>
           <AddCashDialog
@@ -636,7 +629,7 @@ export function DashboardContent({ userId }: { userId: string }) {
       {/* Desktop View with Grid */}
       <div className="hidden md:grid gap-4 md:grid-cols-2">
         <Card>
-          <h2 className="text-xl font-bold m-4">Daily Expenses</h2>
+          <h2 className="m-4 mb-0 text-sm font-medium">Daily Expenses</h2>
           <AreaChart data={chartData} />
         </Card>
 

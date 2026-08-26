@@ -244,7 +244,7 @@ export function AddExpenseDialog({
                         autoFocus={!isMobile}
                         type="number"
                         placeholder="0.00"
-                        className={cn(isMobile && "h-12 text-base")}
+                        className="font-money h-12 text-lg font-semibold"
                         name={field.name}
                         ref={field.ref}
                         onBlur={field.onBlur}

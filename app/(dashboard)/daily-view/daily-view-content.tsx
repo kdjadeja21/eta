@@ -82,6 +82,7 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
       setTrendPercent(calcTrendPercent(dayTotal, yesterdayTotal));
     } catch (error) {
       console.error("Error fetching daily expenses:", error);
+      showErrorToast("Failed to load expenses for this day");
     } finally {
       setIsLoading(false);
     }
@@ -148,7 +149,7 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
   };
 
   return (
-    <div className="min-h-dvh bg-muted">
+    <div className="min-h-dvh">
       <div className="mx-auto w-full max-w-lg px-4 pb-4 pt-4 sm:max-w-2xl sm:px-6 sm:py-8 sm:pb-6">
         <DailyHeroCard
           selectedDate={selectedDate}

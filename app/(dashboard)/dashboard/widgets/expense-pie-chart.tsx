@@ -22,7 +22,6 @@ import {
   Tooltip,
 } from "recharts";
 import type { DateRange } from "react-day-picker";
-import { useTheme } from "next-themes";
 
 /**
  * Props for the ExpensePieChart component
@@ -44,25 +43,15 @@ interface ExpensePieChartProps {
 type FieldType = "paidBy" | "category" | "subcategory" | "tags" | "type";
 
 /**
- * Array of colors for pie chart segments
+ * Segment colors — a single sage tint scale (Lumen).
  * @constant {string[]}
  */
 const COLORS = [
-  "#0088FE",
-  "#00C49F",
-  "#FFBB28",
-  "#FF8042",
-  "#8884D8",
-  "#82CA9D",
-  "#FFC658",
-  "#FF6B6B",
-  "#4ECDC4",
-  "#45B7D1",
-  "#96CEB4",
-  "#FFEEAD",
-  "#D4A5A5",
-  "#9B59B6",
-  "#3498DB",
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
 ];
 
 /**
@@ -76,7 +65,6 @@ export function ExpensePieChart({
   refreshKey,
 }: ExpensePieChartProps) {
   const formattedAmount = useFormattedCurrency();
-  const { theme } = useTheme();
   const [selectedField, setSelectedField] = useState<FieldType>("type");
   const [chartData, setChartData] = useState<
     Array<{ name: string; value: number }>

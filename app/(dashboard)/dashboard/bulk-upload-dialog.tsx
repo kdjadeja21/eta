@@ -390,9 +390,7 @@ export function BulkUploadDialog({
               <Card className="gap-0 py-4">
                 <CardContent className="px-4 text-center">
                   <p className="text-xs text-muted-foreground">Valid</p>
-                  <Badge className="mt-2 bg-emerald-600 text-sm text-white hover:bg-emerald-600">
-                    {validCount}
-                  </Badge>
+                  <Badge className="mt-2 text-sm">{validCount}</Badge>
                 </CardContent>
               </Card>
 
@@ -434,8 +432,8 @@ export function BulkUploadDialog({
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
-                <CheckCircle2 className="size-4 shrink-0" />
+              <div className="flex items-center gap-2 rounded-md border border-primary/30 bg-secondary px-3 py-2 text-sm text-secondary-foreground">
+                <CheckCircle2 className="size-4 shrink-0 text-primary" />
                 <span>All records are valid and ready to upload.</span>
               </div>
             )}

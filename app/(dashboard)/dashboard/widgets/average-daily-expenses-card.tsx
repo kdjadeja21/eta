@@ -28,7 +28,7 @@ export function AverageDailyExpensesCard({ totalExpenses, dateRange }: AverageDa
         <BarChart className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">
+        <div className="font-money text-2xl font-semibold">
           <CountUp end={averageDailyExpenses} duration={300} />
         </div>
         <p className="text-xs text-muted-foreground">
