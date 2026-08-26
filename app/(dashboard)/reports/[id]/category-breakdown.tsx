@@ -32,6 +32,33 @@ interface CategoryBreakdownProps {
 type ViewMode = "donut" | "bar";
 type Metric = "amount" | "pct";
 
+type CategoryTooltipPayload = {
+  name: string;
+  value: number;
+  rawAmount: number;
+  pct: number;
+};
+
+function CategoryBreakdownTooltip({
+  active,
+  payload,
+  formatCurrency,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload: CategoryTooltipPayload }>;
+  formatCurrency: (amount: number) => string;
+}) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="bg-background border rounded-lg p-2.5 shadow text-xs space-y-1">
+      <p className="font-semibold text-sm">{d.name}</p>
+      <p>{formatCurrency(d.rawAmount)}</p>
+      <p className="text-muted-foreground">{d.pct.toFixed(1)}% of total</p>
+    </div>
+  );
+}
+
 export function CategoryBreakdownChart({ categories, totalSpent }: CategoryBreakdownProps) {
   const [ref, inView] = useInView<HTMLDivElement>();
   const [viewMode, setViewMode] = useState<ViewMode>("donut");
@@ -48,18 +75,6 @@ export function CategoryBreakdownChart({ categories, totalSpent }: CategoryBreak
     pct: c.percentage,
     color: COLORS[i % COLORS.length],
   }));
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (!active || !payload?.length) return null;
-    const d = payload[0].payload;
-    return (
-      <div className="bg-background border rounded-lg p-2.5 shadow text-xs space-y-1">
-        <p className="font-semibold text-sm">{d.name}</p>
-        <p>{formatCurrency(d.rawAmount)}</p>
-        <p className="text-muted-foreground">{d.pct.toFixed(1)}% of total</p>
-      </div>
-    );
-  };
 
   return (
     <Card ref={ref}>
@@ -145,7 +160,14 @@ export function CategoryBreakdownChart({ categories, totalSpent }: CategoryBreak
                       />
                     ))}
                   </Pie>
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip
+                    content={(props) => (
+                      <CategoryBreakdownTooltip
+                        {...props}
+                        formatCurrency={formatCurrency}
+                      />
+                    )}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -195,7 +217,14 @@ export function CategoryBreakdownChart({ categories, totalSpent }: CategoryBreak
                   tick={{ fontSize: 11 }}
                   width={110}
                 />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip
+                  content={(props) => (
+                    <CategoryBreakdownTooltip
+                      {...props}
+                      formatCurrency={formatCurrency}
+                    />
+                  )}
+                />
                 <Bar
                   dataKey="value"
                   radius={[0, 6, 6, 0]}

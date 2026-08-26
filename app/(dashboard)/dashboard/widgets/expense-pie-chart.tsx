@@ -30,6 +30,37 @@ interface ExpensePieChartProps {
 
 type FieldType = "paidBy" | "category" | "subcategory" | "tags" | "type";
 
+type PieTooltipPayload = {
+  name: string;
+  value: number;
+};
+
+function ExpensePieTooltip({
+  active,
+  payload,
+  visibleData,
+  formatCurrency,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload: PieTooltipPayload }>;
+  visibleData: Array<PieTooltipPayload>;
+  formatCurrency: (amount: number) => string;
+}) {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    const total = visibleData.reduce((s, i) => s + i.value, 0);
+    const percentage = total > 0 ? ((data.value / total) * 100).toFixed(1) : "0";
+    return (
+      <div className="rounded-md border border-border bg-card px-3 py-2 shadow-sm">
+        <p className="text-ui font-medium">{data.name}</p>
+        <p className="text-money-sm">{formatCurrency(data.value)}</p>
+        <p className="text-meta">{percentage}%</p>
+      </div>
+    );
+  }
+  return null;
+}
+
 export function ExpensePieChart({
   userId,
   dateRange,
@@ -94,22 +125,6 @@ export function ExpensePieChart({
 
   const colors = chartInkWithAccent(chartData.length, 0);
 
-  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: { name: string; value: number } }> }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      const total = visibleData.reduce((s, i) => s + i.value, 0);
-      const percentage = total > 0 ? ((data.value / total) * 100).toFixed(1) : "0";
-      return (
-        <div className="rounded-md border border-border bg-card px-3 py-2 shadow-sm">
-          <p className="text-ui font-medium">{data.name}</p>
-          <p className="text-money-sm">{formattedAmount(data.value)}</p>
-          <p className="text-meta">{percentage}%</p>
-        </div>
-      );
-    }
-    return null;
-  };
-
   const handleLegendClick = (name: string) => {
     setHiddenSegments((prev) => {
       const newSet = new Set(prev);
@@ -171,7 +186,15 @@ export function ExpensePieChart({
                       );
                     })}
                   </Pie>
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip
+                    content={(props) => (
+                      <ExpensePieTooltip
+                        {...props}
+                        visibleData={visibleData}
+                        formatCurrency={formattedAmount}
+                      />
+                    )}
+                  />
                 </RechartsPieChart>
               </ResponsiveContainer>
             </div>

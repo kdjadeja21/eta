@@ -99,7 +99,8 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
   }, [selectedDate, userId]);
 
   useEffect(() => {
-    fetchDayData();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async client fetch on selected day change
+    void fetchDayData();
   }, [fetchDayData]);
 
   const goToPrev = () => setSelectedDate((prev) => subDays(prev, 1));

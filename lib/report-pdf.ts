@@ -26,7 +26,6 @@ function s(text: string): string {
     out = out.split(sym).join(rep);
   }
   // 2. Strip anything outside Latin-1 (emojis, arrows, ✦, etc.)
-  // eslint-disable-next-line no-control-regex
   out = out.replace(/[^\x00-\xFF]/g, "");
   // 3. Collapse any double spaces that may result
   out = out.replace(/  +/g, " ").trim();

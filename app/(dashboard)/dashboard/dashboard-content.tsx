@@ -162,8 +162,10 @@ const isValidType = (v: string): v is ExpenseType =>
 
 export function DashboardContent({ userId }: { userId: string }) {
   const formatCurrency = useFormattedCurrency();
-  const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange);
-  const [isDateRangeReady, setIsDateRangeReady] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange>(
+    () => loadStoredDateRange(userId) ?? getDefaultDateRange()
+  );
+  const [isDateRangeReady] = useState(true);
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -175,7 +177,6 @@ export function DashboardContent({ userId }: { userId: string }) {
   const [bulkDeleteExpenseIds, setBulkDeleteExpenseIds] = useState<string[]>(
     []
   );
-  const [totalExpenses, setTotalExpenses] = useState(0);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
@@ -192,14 +193,6 @@ export function DashboardContent({ userId }: { userId: string }) {
   };
 
   useRegisterAddExpense(openAddExpense);
-
-  useEffect(() => {
-    const storedDateRange = loadStoredDateRange(userId);
-    if (storedDateRange) {
-      setDateRange(storedDateRange);
-    }
-    setIsDateRangeReady(true);
-  }, [userId]);
 
   useEffect(() => {
     if (!isDateRangeReady) {
@@ -423,10 +416,10 @@ export function DashboardContent({ userId }: { userId: string }) {
     });
   };
 
-  useEffect(() => {
-    const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-    setTotalExpenses(total);
-  }, [expenses]);
+  const totalExpenses = useMemo(
+    () => expenses.reduce((sum, expense) => sum + expense.amount, 0),
+    [expenses]
+  );
 
   const cashWithdrawals = expenses
     .filter((e) => e.category === "Cash Withdrawal")

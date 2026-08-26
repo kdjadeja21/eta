@@ -48,7 +48,10 @@ export function useAddExpense() {
 export function useRegisterAddExpense(handler: AddExpenseHandler) {
   const { registerAddHandler } = useAddExpense();
   const handlerRef = useRef(handler);
-  handlerRef.current = handler;
+
+  useEffect(() => {
+    handlerRef.current = handler;
+  });
 
   useEffect(() => {
     registerAddHandler(() => handlerRef.current());

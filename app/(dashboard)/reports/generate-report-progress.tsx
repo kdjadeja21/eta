@@ -38,8 +38,11 @@ export function GenerateReportProgress({
 
   const onDoneRef = useRef(onDone);
   const onErrorRef = useRef(onError);
-  onDoneRef.current = onDone;
-  onErrorRef.current = onError;
+
+  useEffect(() => {
+    onDoneRef.current = onDone;
+    onErrorRef.current = onError;
+  }, [onDone, onError]);
 
   const fetchPromiseRef = useRef<Promise<Response> | null>(null);
 
@@ -132,7 +135,6 @@ export function GenerateReportProgress({
     return () => {
       cancelled = true;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [month]);
 
   const currentLabel = isDone
@@ -224,7 +226,7 @@ export function GenerateReportProgress({
             <p className="mt-1">{error}</p>
             <button
               type="button"
-              onClick={onErrorRef.current}
+              onClick={() => onErrorRef.current()}
               className="mt-3 underline underline-offset-2"
             >
               Go back
