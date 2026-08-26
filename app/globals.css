@@ -24,75 +24,95 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/*
+ * Lumen — calm sage.
+ * One accent (sage green). Everything else is ink on calm paper.
+ * Solid surfaces, hairline borders, no gradients, no glass.
+ */
 :root {
-  --radius: 0.625rem;
+  --radius: 0.75rem;
   /* Chrome mobile first-paint overlap; updated by visual-viewport.ts */
   --vv-offset-bottom: 0px;
 
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #f3f5f0;
+  --foreground: #1b241e;
 
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #1b241e;
 
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
+  --popover-foreground: #1b241e;
 
-  --primary: #10b981;
-  --primary-foreground: #ffffff;
+  --primary: #3e5c47;
+  --primary-foreground: #f6f8f4;
 
-  --secondary: #f59e0b;
-  --secondary-foreground: #1e293b;
+  --secondary: #e6ece4;
+  --secondary-foreground: #2a3a2f;
 
-  --accent: #ef4444;
-  --accent-foreground: #ffffff;
+  --accent: #eaefe8;
+  --accent-foreground: #1b241e;
 
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
+  --muted: #edf0ea;
+  --muted-foreground: #5b6a5f;
 
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #10b981;
+  --border: #dee4da;
+  --input: #d3dbce;
+  --ring: #3e5c47;
 
-  --destructive: #ef4444;
+  --destructive: #a83c2c;
+
+  --chart-1: #3e5c47;
+  --chart-2: #6a8a72;
+  --chart-3: #93ac99;
+  --chart-4: #b9cabd;
+  --chart-5: #d9e2da;
 }
-
 
 .dark {
-  --background: #0f172a;
-  --foreground: #f8fafc;
+  --background: #111511;
+  --foreground: #e8ece6;
 
-  --card: #1e293b;
-  --card-foreground: #f8fafc;
+  --card: #191f19;
+  --card-foreground: #e8ece6;
 
-  --popover: #1e293b;
-  --popover-foreground: #f8fafc;
+  --popover: #191f19;
+  --popover-foreground: #e8ece6;
 
-  --primary: #6ee7b7;
-  --primary-foreground: #0f172a;
+  --primary: #a9c4ae;
+  --primary-foreground: #14211a;
 
-  --secondary: #fbbf24;
-  --secondary-foreground: #1e293b;
+  --secondary: #232b24;
+  --secondary-foreground: #d4ddd2;
 
-  --accent: #f87171;
-  --accent-foreground: #1e293b;
+  --accent: #222a23;
+  --accent-foreground: #e8ece6;
 
-  --muted: #1e293b;
-  --muted-foreground: #cbd5e1;
+  --muted: #1d231d;
+  --muted-foreground: #9aa799;
 
-  --border: #334155;
-  --input: #334155;
-  --ring: #6ee7b7;
+  --border: #2a322b;
+  --input: #333d34;
+  --ring: #a9c4ae;
 
-  --destructive: #f87171;
+  --destructive: #d97862;
+
+  --chart-1: #a9c4ae;
+  --chart-2: #86a48c;
+  --chart-3: #67856d;
+  --chart-4: #4c6653;
+  --chart-5: #35493b;
 }
-
 
 @layer base {
   * {
@@ -102,8 +122,15 @@
     @apply min-h-dvh;
   }
   body {
-    @apply min-h-dvh bg-background text-foreground;
+    @apply min-h-dvh bg-background text-foreground antialiased;
   }
+}
+
+/* Money is always set in mono with tabular figures */
+.font-money {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 /* Add styles for active dropdown menu item */
@@ -127,12 +154,6 @@
   to   { opacity: 1; }
 }
 
-@keyframes gradient-pan {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
 @keyframes bar-grow {
   from { transform: scaleX(0); }
   to   { transform: scaleX(1); }
@@ -152,3 +173,17 @@
 .stagger-4 { animation-delay: 240ms; }
 .stagger-5 { animation-delay: 300ms; }
 .stagger-6 { animation-delay: 360ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-up,
+  .reveal-fade {
+    animation: none;
+  }
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

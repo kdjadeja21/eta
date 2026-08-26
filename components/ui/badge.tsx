@@ -43,7 +43,4 @@ function Badge({
   );
 }
 
-// Updated to use the new theme naming conventions for colors
-<span className="bg-accent text-accent-foreground">{/* Example usage */}</span>;
-
 export { Badge, badgeVariants };
