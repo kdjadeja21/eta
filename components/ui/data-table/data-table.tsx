@@ -63,9 +63,14 @@ export function DataTable<TData>({
   onFilterChange,
   onBulkDelete,
   bulkDeleteResetKey,
-  loading = false, // New prop for loading state
-  meta, // Add meta property
-}: DataTableProps<TData> & { loading?: boolean; meta?: any }) {
+  loading = false,
+  meta,
+  hideExportControls = false,
+}: DataTableProps<TData> & {
+  loading?: boolean;
+  meta?: any;
+  hideExportControls?: boolean;
+}) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [globalFilter, setGlobalFilter] = React.useState("");
@@ -407,33 +412,34 @@ export function DataTable<TData>({
             <span>Delete selected ({selectedRows.length})</span>
           </Button>
         )}
-        {/* Download Buttons */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className="flex items-center gap-2 cursor-pointer w-full md:w-auto md:ml-auto"
-            >
-              <ArrowDownWideNarrow className="h-4 w-4" />
-              <span>Download Statement</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem
-              className="cursor-pointer"
-              onClick={handleDownloadExcel}
-            >
-              Download as Excel
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="cursor-pointer"
-              onClick={handleDownloadPDF}
-            >
-              Download as PDF
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {!hideExportControls && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 cursor-pointer w-full md:w-auto md:ml-auto"
+              >
+                <ArrowDownWideNarrow className="h-4 w-4" />
+                <span>Download Statement</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={handleDownloadExcel}
+              >
+                Download as Excel
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={handleDownloadPDF}
+              >
+                Download as PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
       <div className="rounded-md border">
         <Table>

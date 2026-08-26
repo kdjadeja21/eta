@@ -2,7 +2,6 @@ import "server-only";
 import { mkdirSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { Agent, JsonlLocalAgentStore } from "@cursor/sdk";
 
 export interface UncategorizedRecord {
   id: string;
@@ -83,6 +82,8 @@ REQUIRED JSON FORMAT (respond with this exact structure):
   // Vercel/Lambda HOME is not writable; keep the SDK agent store in /tmp.
   const agentRoot = path.join(os.tmpdir(), "cursor-sdk-agent-store");
   mkdirSync(agentRoot, { recursive: true });
+
+  const { Agent, JsonlLocalAgentStore } = await import("@cursor/sdk");
   const store = new JsonlLocalAgentStore(agentRoot);
 
   const result = await Agent.prompt(prompt, {

@@ -20,11 +20,9 @@ import { useInView } from "@/hooks/use-in-view";
 import { useFormattedCurrency } from "@/lib/currency-utils";
 import type { CategoryBreakdown } from "@/lib/report-service";
 import { cn } from "@/lib/utils";
+import { chartInkWithAccent, CHART_ACCENT } from "@/lib/chart-colors";
 
-const COLORS = [
-  "#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8",
-  "#82CA9D", "#FFC658", "#FF6B6B", "#4ECDC4", "#45B7D1",
-];
+const COLORS = chartInkWithAccent(10, 0);
 
 interface CategoryBreakdownProps {
   categories: CategoryBreakdown[];
@@ -33,6 +31,34 @@ interface CategoryBreakdownProps {
 
 type ViewMode = "donut" | "bar";
 type Metric = "amount" | "pct";
+
+type CategoryTooltipPayload = {
+  name: string;
+  value: number;
+  rawAmount: number;
+  pct: number;
+};
+
+function CategoryBreakdownTooltip({
+  active,
+  payload,
+  formatCurrency,
+}: {
+  active?: boolean;
+  payload?: ReadonlyArray<{ payload?: CategoryTooltipPayload }>;
+  formatCurrency: (amount: number) => string;
+}) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0]?.payload;
+  if (!d) return null;
+  return (
+    <div className="bg-background border rounded-lg p-2.5 shadow text-xs space-y-1">
+      <p className="font-semibold text-sm">{d.name}</p>
+      <p>{formatCurrency(d.rawAmount)}</p>
+      <p className="text-muted-foreground">{d.pct.toFixed(1)}% of total</p>
+    </div>
+  );
+}
 
 export function CategoryBreakdownChart({ categories, totalSpent }: CategoryBreakdownProps) {
   const [ref, inView] = useInView<HTMLDivElement>();
@@ -50,18 +76,6 @@ export function CategoryBreakdownChart({ categories, totalSpent }: CategoryBreak
     pct: c.percentage,
     color: COLORS[i % COLORS.length],
   }));
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (!active || !payload?.length) return null;
-    const d = payload[0].payload;
-    return (
-      <div className="bg-background border rounded-lg p-2.5 shadow text-xs space-y-1">
-        <p className="font-semibold text-sm">{d.name}</p>
-        <p>{formatCurrency(d.rawAmount)}</p>
-        <p className="text-muted-foreground">{d.pct.toFixed(1)}% of total</p>
-      </div>
-    );
-  };
 
   return (
     <Card ref={ref}>
@@ -147,7 +161,15 @@ export function CategoryBreakdownChart({ categories, totalSpent }: CategoryBreak
                       />
                     ))}
                   </Pie>
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip
+                    content={({ active, payload }) => (
+                      <CategoryBreakdownTooltip
+                        active={active}
+                        payload={payload}
+                        formatCurrency={formatCurrency}
+                      />
+                    )}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -197,7 +219,15 @@ export function CategoryBreakdownChart({ categories, totalSpent }: CategoryBreak
                   tick={{ fontSize: 11 }}
                   width={110}
                 />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip
+                  content={({ active, payload }) => (
+                    <CategoryBreakdownTooltip
+                      active={active}
+                      payload={payload}
+                      formatCurrency={formatCurrency}
+                    />
+                  )}
+                />
                 <Bar
                   dataKey="value"
                   radius={[0, 6, 6, 0]}

@@ -1,18 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+function subscribeToMobileQuery(breakpoint: number, callback: () => void) {
+  const mql = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
+  mql.addEventListener("change", callback);
+  return () => mql.removeEventListener("change", callback);
+}
+
+function getMobileSnapshot(breakpoint: number) {
+  return window.matchMedia(`(max-width: ${breakpoint - 1}px)`).matches;
+}
+
+function getMobileServerSnapshot() {
+  return false;
+}
 
 export function useIsMobile(breakpoint = 768) {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
-    setIsMobile(mql.matches);
-
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mql.addEventListener("change", handler);
-    return () => mql.removeEventListener("change", handler);
-  }, [breakpoint]);
-
-  return isMobile;
+  return useSyncExternalStore(
+    (callback) => subscribeToMobileQuery(breakpoint, callback),
+    () => getMobileSnapshot(breakpoint),
+    getMobileServerSnapshot
+  );
 }

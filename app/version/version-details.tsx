@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -8,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Clock, Globe, Info, Tag } from "lucide-react";
+import { Clock, Globe, Tag } from "lucide-react";
 
 type VersionDetailsProps = {
   version: string;
@@ -18,7 +17,6 @@ type VersionDetailsProps = {
 
 function formatUtcDate(isoString: string) {
   const date = new Date(isoString);
-
   return new Intl.DateTimeFormat("en-US", {
     timeZone: "UTC",
     weekday: "long",
@@ -34,7 +32,6 @@ function formatUtcDate(isoString: string) {
 
 function formatLocalDate(isoString: string) {
   const date = new Date(isoString);
-
   return new Intl.DateTimeFormat(undefined, {
     weekday: "long",
     year: "numeric",
@@ -59,65 +56,50 @@ export function VersionDetails({
   const localTimezone = getLocalTimezoneLabel();
 
   return (
-    <Card className="w-full max-w-lg">
+    <Card className="w-full max-w-md rounded-md border-border shadow-none">
       <CardHeader className="text-center">
-        <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-primary/10">
-          <Info className="size-6 text-primary" />
-        </div>
-        <CardTitle className="text-2xl">Application Version</CardTitle>
-        <CardDescription>
-          Deployment details for the Expense Tracker app
-        </CardDescription>
+        <CardTitle className="text-title">Version</CardTitle>
+        <CardDescription className="text-meta">Build and deploy details</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <div className="flex flex-col items-center gap-2 rounded-lg border bg-muted/30 px-4 py-6">
-          <p className="text-sm text-muted-foreground">Current Version</p>
-          <Badge className="px-4 py-1.5 text-base font-semibold">{version}</Badge>
+        <div className="flex flex-col items-center gap-2 rounded-md border border-border bg-muted/40 px-4 py-6">
+          <p className="text-meta">Current</p>
+          <p className="font-mono-version text-2xl tracking-tight text-foreground">{version}</p>
         </div>
 
-        <dl className="space-y-4">
-          <div className="flex gap-3 rounded-lg border p-4">
-            <Clock className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
-            <div className="space-y-1">
-              <dt className="text-sm font-medium">Last Deployed (UTC)</dt>
-              <dd className="text-sm text-muted-foreground">
-                {formatUtcDate(lastUpdated)}
-              </dd>
+        <dl className="space-y-3 text-ui">
+          <div className="flex gap-3 rounded-md border border-border p-4">
+            <Clock className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+            <div>
+              <dt className="font-medium">Deployed (UTC)</dt>
+              <dd className="text-meta mt-0.5">{formatUtcDate(lastUpdated)}</dd>
             </div>
           </div>
 
-          <div className="flex gap-3 rounded-lg border p-4">
-            <Globe className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
-            <div className="space-y-1">
-              <dt className="text-sm font-medium">
-                Last Deployed ({localTimezone})
-              </dt>
-              <dd className="text-sm text-muted-foreground">
-                {formatLocalDate(lastUpdated)}
-              </dd>
+          <div className="flex gap-3 rounded-md border border-border p-4">
+            <Globe className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+            <div>
+              <dt className="font-medium">Deployed ({localTimezone})</dt>
+              <dd className="text-meta mt-0.5">{formatLocalDate(lastUpdated)}</dd>
             </div>
           </div>
 
-          <div className="flex gap-3 rounded-lg border p-4">
-            <Tag className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
-            <div className="space-y-1">
-              <dt className="text-sm font-medium">Stored Timezone</dt>
-              <dd className="text-sm text-muted-foreground">{timezone}</dd>
+          <div className="flex gap-3 rounded-md border border-border p-4">
+            <Tag className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+            <div>
+              <dt className="font-medium">Stored timezone</dt>
+              <dd className="font-mono-version text-meta mt-0.5">{timezone}</dd>
             </div>
           </div>
         </dl>
 
-        <div className="rounded-lg border border-dashed bg-muted/20 px-4 py-3">
-          <p className="text-xs text-muted-foreground">
-            This page is updated automatically on every production build.
-            The JSON API is available at{" "}
-            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">
-              /api/version
-            </code>
-            .
-          </p>
-        </div>
+        <p className="text-meta border-t border-border pt-4">
+          JSON at{" "}
+          <code className="font-mono-version rounded bg-muted px-1 py-0.5 text-[11px]">
+            /api/version
+          </code>
+        </p>
       </CardContent>
     </Card>
   );

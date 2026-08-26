@@ -33,6 +33,38 @@ const VERDICT_STYLES: Record<NeedsWantsVerdict["tone"], string> = {
   warning: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20",
 };
 
+type NeedsWantsTooltipPayload = {
+  name: string;
+  value: number;
+  key: string;
+};
+
+function NeedsWantsTooltip({
+  active,
+  payload,
+  total,
+  formatCurrency,
+}: {
+  active?: boolean;
+  payload?: ReadonlyArray<{ payload?: NeedsWantsTooltipPayload }>;
+  total: number;
+  formatCurrency: (amount: number) => string;
+}) {
+  if (active && payload?.length) {
+    const d = payload[0]?.payload;
+    if (!d) return null;
+    const pct = total > 0 ? ((d.value / total) * 100).toFixed(1) : "0";
+    return (
+      <div className="bg-background border rounded-lg p-2 shadow text-xs">
+        <p className="font-medium">{d.name}</p>
+        <p>{formatCurrency(d.value)}</p>
+        <p className="text-muted-foreground">{pct}%</p>
+      </div>
+    );
+  }
+  return null;
+}
+
 export function NeedsWantsGauge({ byType, verdict }: NeedsWantsGaugeProps) {
   const [ref, inView] = useInView<HTMLDivElement>();
   const formatCurrency = useFormattedCurrency();
@@ -44,21 +76,6 @@ export function NeedsWantsGauge({ byType, verdict }: NeedsWantsGaugeProps) {
   ].filter((d) => d.value > 0);
 
   const total = byType.need + byType.want + byType.not_sure;
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload?.length) {
-      const d = payload[0].payload;
-      const pct = total > 0 ? ((d.value / total) * 100).toFixed(1) : "0";
-      return (
-        <div className="bg-background border rounded-lg p-2 shadow text-xs">
-          <p className="font-medium">{d.name}</p>
-          <p>{formatCurrency(d.value)}</p>
-          <p className="text-muted-foreground">{pct}%</p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <Card className="h-full" ref={ref}>
@@ -104,7 +121,16 @@ export function NeedsWantsGauge({ byType, verdict }: NeedsWantsGaugeProps) {
                   />
                 ))}
               </Pie>
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip
+                content={({ active, payload }) => (
+                  <NeedsWantsTooltip
+                    active={active}
+                    payload={payload}
+                    total={total}
+                    formatCurrency={formatCurrency}
+                  />
+                )}
+              />
             </PieChart>
           </ResponsiveContainer>
           {/* Center label */}

@@ -2,15 +2,10 @@
 
 import Select from "react-select";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 
 const CustomSelect = (props: any) => {
-  const { theme } = useTheme(); // 'light', 'dark', or 'system'
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    setIsDark(theme === "dark");
-  }, [theme]);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   const customStyles = {
     control: (base: any) => ({

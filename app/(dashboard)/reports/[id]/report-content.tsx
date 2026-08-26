@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { ArrowLeft, CreditCard, Lightbulb, Sparkles, TrendingUp, BarChart3, ShoppingBag, Trash2 } from "lucide-react";
+import { ArrowLeft, CreditCard, Lightbulb, TrendingUp, BarChart3, ShoppingBag, Trash2, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,10 +49,13 @@ import { CategoryBreakdownChart } from "./category-breakdown";
 import { ComparisonSection } from "./comparison-section";
 import { DownloadPdfButton } from "./download-pdf-button";
 import { cn } from "@/lib/utils";
+import { CHART_ACCENT, CHART_INK } from "@/lib/chart-colors";
 
 const CHART_COLORS = [
-  "#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8",
-  "#82CA9D", "#FFC658", "#FF6B6B", "#4ECDC4", "#45B7D1",
+  CHART_INK[70],
+  CHART_INK[40],
+  CHART_INK[20],
+  CHART_ACCENT,
 ];
 
 interface ReportContentProps {
@@ -136,37 +139,24 @@ export function ReportContent({ reportId, userId }: ReportContentProps) {
   const weekdays = weekdayBreakdown(summary.dailyTotals);
 
   return (
-    <div className="pb-20">
-      {/* Back nav + actions */}
-      <div className="container mx-auto px-4 pt-4">
-        <div className="flex items-center justify-between mb-4">
-          <Link href="/reports">
-            <Button variant="ghost" size="sm" className="gap-2 cursor-pointer">
-              <ArrowLeft className="h-4 w-4" />
-              All Reports
-            </Button>
-          </Link>
-          <div className="flex items-center gap-2">
-            <DownloadPdfButton report={report} prevReport={prevReport} />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowDeleteDialog(true)}
-              className="gap-2 cursor-pointer text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete
-            </Button>
-          </div>
-        </div>
+    <div className="mx-auto max-w-4xl px-4 pb-20 pt-6 md:px-8">
+      <div className="mb-6 flex items-center justify-between">
+        <Link href="/reports">
+          <Button variant="ghost" size="sm" className="gap-2">
+            <ArrowLeft className="size-4" />
+            Reports
+          </Button>
+        </Link>
+        <ReportOverflowMenu
+          report={report}
+          prevReport={prevReport}
+          onDelete={() => setShowDeleteDialog(true)}
+        />
       </div>
 
-      {/* ── Hero ── */}
-      <div className="container mx-auto px-4">
-        <ReportHero report={report} comparison={comparison} />
-      </div>
+      <ReportHero report={report} comparison={comparison} />
 
-      <div className="container mx-auto px-4 mt-8 space-y-8">
+      <div className="mt-10 space-y-10">
 
         {/* ── Highlight chips ── */}
         <InsightHighlights highlights={highlights} />
@@ -326,11 +316,11 @@ function DailyChart({
             <AreaChart data={dailyTotals} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="reportDailyGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#0088FE" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#0088FE" stopOpacity={0.02} />
+                  <stop offset="5%" stopColor={CHART_INK[40]} stopOpacity={0.5} />
+                  <stop offset="95%" stopColor={CHART_INK[20]} stopOpacity={0.05} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
+              <CartesianGrid strokeDasharray="3 3" stroke={CHART_INK[20]} vertical={false} />
               <XAxis
                 dataKey="date"
                 tick={{ fontSize: 10 }}
@@ -355,7 +345,7 @@ function DailyChart({
               <Area
                 type="monotone"
                 dataKey="amount"
-                stroke="#0088FE"
+                stroke={CHART_ACCENT}
                 strokeWidth={2}
                 fill="url(#reportDailyGrad)"
                 dot={false}
@@ -483,22 +473,45 @@ function AiInsightsCard({ insights }: { insights: string }) {
     <Card
       ref={ref}
       className={cn(
-        "border-primary/20 bg-gradient-to-br from-primary/5 to-background",
-        "transition-all duration-500",
+        "rounded-md border-border shadow-none",
         inView ? "reveal-up" : "opacity-0"
       )}
     >
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Lightbulb className="h-5 w-5 text-primary" />
-          AI Insights
-          <Sparkles className="h-3.5 w-3.5 text-primary/60 ml-auto" />
+        <CardTitle className="flex items-center gap-2 text-section">
+          <Lightbulb className="size-5 text-muted-foreground" />
+          Notes
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-sm leading-relaxed">{insights}</p>
+        <p className="text-body leading-relaxed text-muted-foreground">{insights}</p>
       </CardContent>
     </Card>
+  );
+}
+
+function ReportOverflowMenu({
+  report,
+  prevReport,
+  onDelete,
+}: {
+  report: Report;
+  prevReport: Report | null;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <DownloadPdfButton report={report} prevReport={prevReport} />
+      <Button
+        variant="outline"
+        size="icon"
+        className="size-11"
+        onClick={onDelete}
+        aria-label="Delete report"
+      >
+        <MoreHorizontal className="size-4" />
+      </Button>
+    </div>
   );
 }
 

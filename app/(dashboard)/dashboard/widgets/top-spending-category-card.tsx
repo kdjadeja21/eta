@@ -1,33 +1,27 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart } from "lucide-react";
 import { useFormattedCurrency } from "@/lib/currency-utils";
 import { useEffect, useState } from "react";
 import { expenseService } from "@/lib/expense-service";
 import type { DateRange } from "react-day-picker";
 
-/**
- * Props for the TopSpendingCategoryCard component
- * @interface TopSpendingCategoryCardProps
- * @property {string} userId - The ID of the current user
- * @property {DateRange} dateRange - The selected date range for filtering
- * @property {number} [refreshKey] - Optional key to force refresh of the component
- */
 interface TopSpendingCategoryCardProps {
   userId: string;
   dateRange: DateRange;
   refreshKey?: number;
 }
 
-/**
- * TopSpendingCategoryCard component displays the category with the highest spending
- * @param {TopSpendingCategoryCardProps} props - The component props
- * @returns {JSX.Element} The rendered component
- */
-export function TopSpendingCategoryCard({ userId, dateRange, refreshKey }: TopSpendingCategoryCardProps) {
+export function TopSpendingCategoryCard({
+  userId,
+  dateRange,
+  refreshKey,
+}: TopSpendingCategoryCardProps) {
   const formattedAmount = useFormattedCurrency();
-  const [topCategory, setTopCategory] = useState<{ category: string; amount: number }>({ category: "", amount: 0 });
+  const [topCategory, setTopCategory] = useState<{ category: string; amount: number }>({
+    category: "",
+    amount: 0,
+  });
 
   useEffect(() => {
     const fetchTopCategory = async () => {
@@ -40,9 +34,8 @@ export function TopSpendingCategoryCard({ userId, dateRange, refreshKey }: TopSp
           dateRange.to
         );
 
-        // Find the category with the highest amount
         const topCategoryEntry = Object.entries(expensesByCategory).reduce(
-          (max, [category, amount]) => 
+          (max, [category, amount]) =>
             amount > max.amount ? { category, amount } : max,
           { category: "", amount: 0 }
         );
@@ -57,19 +50,18 @@ export function TopSpendingCategoryCard({ userId, dateRange, refreshKey }: TopSp
   }, [userId, dateRange, refreshKey]);
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">Top Spending Category</CardTitle>
-        <PieChart className="h-4 w-4 text-muted-foreground" />
+    <Card className="rounded-md border-border shadow-none">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-ui font-medium text-muted-foreground">
+          Top category
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">
-          {topCategory.category || "No data"}
-        </div>
-        <p className="text-xs text-muted-foreground">
-          {formattedAmount(topCategory.amount)}
+        <p className="text-body font-medium truncate">
+          {topCategory.category || "—"}
         </p>
+        <p className="text-money-sm mt-1">{formattedAmount(topCategory.amount)}</p>
       </CardContent>
     </Card>
   );
-} 
+}

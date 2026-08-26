@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -8,20 +8,29 @@ import { AuthToast } from "@/components/auth-toast";
 import { VisualViewportOffset } from "@/components/visual-viewport-offset";
 import { VISUAL_VIEWPORT_INLINE_SCRIPT } from "@/lib/visual-viewport";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const fraunces = Fraunces({
+  variable: "--font-display",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const ibmPlexSans = IBM_Plex_Sans({
+  variable: "--font-ui",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["400"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Expense Tracker App",
-  description:
-    "Track your expenses, manage budgets, and gain insights into your spending with our intuitive expense tracker.",
+  title: "ETA",
+  description: "Track spending with honest numbers on paper.",
 };
 
 export const viewport: Viewport = {
@@ -51,22 +60,18 @@ export default function RootLayout({
           />
         </head>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          className={`${fraunces.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable} antialiased`}
         >
           <VisualViewportOffset />
           <ThemeProvider
             attribute="class"
-            defaultTheme="dark"
+            defaultTheme="light"
+            enableSystem
             disableTransitionOnChange
           >
             {children}
           </ThemeProvider>
-          <Toaster
-            position="top-right"
-            richColors
-            visibleToasts={3}
-            theme="light"
-          />
+          <Toaster position="top-right" richColors visibleToasts={3} />
           <AuthToast />
         </body>
       </html>

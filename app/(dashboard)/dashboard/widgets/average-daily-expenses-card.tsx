@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart } from "lucide-react";
 import CountUp from "@/components/count-up";
 import type { DateRange } from "react-day-picker";
 
@@ -10,31 +9,32 @@ interface AverageDailyExpensesCardProps {
   dateRange: DateRange;
 }
 
-export function AverageDailyExpensesCard({ totalExpenses, dateRange }: AverageDailyExpensesCardProps) {
-  // Calculate number of days in the date range
-  const daysDiff = dateRange.from && dateRange.to
-    ? Math.ceil(
-        (dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24)
-      ) + 1
-    : 1;
-  
-  // Calculate average daily expenses
+export function AverageDailyExpensesCard({
+  totalExpenses,
+  dateRange,
+}: AverageDailyExpensesCardProps) {
+  const daysDiff =
+    dateRange.from && dateRange.to
+      ? Math.ceil(
+          (dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24)
+        ) + 1
+      : 1;
+
   const averageDailyExpenses = totalExpenses / daysDiff;
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">Average Daily Expenses</CardTitle>
-        <BarChart className="h-4 w-4 text-muted-foreground" />
+    <Card className="rounded-md border-border shadow-none">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-ui font-medium text-muted-foreground">
+          Daily average
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">
+        <p className="text-money-md text-foreground">
           <CountUp end={averageDailyExpenses} duration={300} />
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Per day average for the period
         </p>
+        <p className="text-meta mt-1">Per day in period</p>
       </CardContent>
     </Card>
   );
-} 
+}
