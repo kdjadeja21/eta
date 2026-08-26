@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Expense } from "@/lib/expense-service";
 import { eachDayOfInterval, formatDate } from "@/lib/utils";
-import { Leaf } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 
 interface ExpenseFastCardProps {
@@ -14,18 +13,17 @@ export function ExpenseFastCard({ expenses, dateRange }: ExpenseFastCardProps) {
   const dayLabel = fastDays === 1 ? "day" : "days";
 
   return (
-    <Card className="border-primary/20 bg-gradient-to-br from-primary/10 via-emerald-50 to-teal-50 dark:border-primary/20 dark:from-primary/10 dark:via-emerald-950/30 dark:to-slate-900/40">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">Expense Fast</CardTitle>
-        <Leaf className="h-4 w-4 text-primary" />
+    <Card className="rounded-md border-border shadow-none">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-ui font-medium text-muted-foreground">
+          Zero-spend days
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-primary">
+        <p className="text-money-md text-foreground">
           {fastDays} {dayLabel}
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Zero-spend days in selected range
         </p>
+        <p className="text-meta mt-1">In selected range</p>
       </CardContent>
     </Card>
   );

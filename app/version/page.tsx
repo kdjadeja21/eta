@@ -5,25 +5,21 @@ import versionData from "@/lib/version.json";
 import { VersionDetails } from "./version-details";
 
 export const metadata: Metadata = {
-  title: "Version | Expense Tracker",
+  title: "Version | ETA",
   description: "Application version and deployment information",
 };
 
 export default function VersionPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <header className="flex h-16 items-center justify-between border-b px-4 md:px-6">
-        <Link
-          href="/daily-view"
-          className="flex items-center gap-2 font-semibold transition-opacity hover:opacity-80"
-        >
-          <span className="text-xl">💰</span>
-          <span>Expense Tracker</span>
+    <div className="flex min-h-dvh flex-col bg-background">
+      <header className="flex h-14 items-center justify-between border-b border-border px-6">
+        <Link href="/daily-view" className="font-display text-xl tracking-tight">
+          ETA
         </Link>
         <ModeToggle />
       </header>
 
-      <main className="flex flex-1 items-center justify-center p-4 md:p-8">
+      <main className="flex flex-1 items-center justify-center p-6 md:p-10">
         <VersionDetails
           version={versionData.version}
           lastUpdated={versionData.lastUpdated}

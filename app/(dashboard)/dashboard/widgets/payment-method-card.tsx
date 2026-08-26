@@ -1,33 +1,27 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CreditCard } from "lucide-react";
 import { useFormattedCurrency } from "@/lib/currency-utils";
 import { useEffect, useState } from "react";
 import { expenseService } from "@/lib/expense-service";
 import type { DateRange } from "react-day-picker";
 
-/**
- * Props for the PaymentMethodCard component
- * @interface PaymentMethodCardProps
- * @property {string} userId - The ID of the current user
- * @property {DateRange} dateRange - The selected date range for filtering
- * @property {number} [refreshKey] - Optional key to force refresh of the component
- */
 interface PaymentMethodCardProps {
   userId: string;
   dateRange: DateRange;
   refreshKey?: number;
 }
 
-/**
- * PaymentMethodCard component displays the payment method with the highest spending
- * @param {PaymentMethodCardProps} props - The component props
- * @returns {JSX.Element} The rendered component
- */
-export function PaymentMethodCard({ userId, dateRange, refreshKey }: PaymentMethodCardProps) {
+export function PaymentMethodCard({
+  userId,
+  dateRange,
+  refreshKey,
+}: PaymentMethodCardProps) {
   const formattedAmount = useFormattedCurrency();
-  const [topPaymentMethod, setTopPaymentMethod] = useState<{ method: string; amount: number }>({ method: "", amount: 0 });
+  const [topPaymentMethod, setTopPaymentMethod] = useState<{
+    method: string;
+    amount: number;
+  }>({ method: "", amount: 0 });
 
   useEffect(() => {
     const fetchTopPaymentMethod = async () => {
@@ -40,16 +34,17 @@ export function PaymentMethodCard({ userId, dateRange, refreshKey }: PaymentMeth
           dateRange.to
         );
 
-        // Aggregate expenses by payment method
-        const paymentMethods = expenses.reduce((acc, expense) => {
-          const method = expense.paidBy;
-          acc[method] = (acc[method] || 0) + expense.amount;
-          return acc;
-        }, {} as Record<string, number>);
+        const paymentMethods = expenses.reduce(
+          (acc, expense) => {
+            const method = expense.paidBy;
+            acc[method] = (acc[method] || 0) + expense.amount;
+            return acc;
+          },
+          {} as Record<string, number>
+        );
 
-        // Find the payment method with the highest amount
         const topMethodEntry = Object.entries(paymentMethods).reduce(
-          (max, [method, amount]) => 
+          (max, [method, amount]) =>
             amount > max.amount ? { method, amount } : max,
           { method: "", amount: 0 }
         );
@@ -64,19 +59,18 @@ export function PaymentMethodCard({ userId, dateRange, refreshKey }: PaymentMeth
   }, [userId, dateRange, refreshKey]);
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">Top Payment Method</CardTitle>
-        <CreditCard className="h-4 w-4 text-muted-foreground" />
+    <Card className="rounded-md border-border shadow-none">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-ui font-medium text-muted-foreground">
+          Top payment
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">
-          {topPaymentMethod.method || "No data"}
-        </div>
-        <p className="text-xs text-muted-foreground">
-          {formattedAmount(topPaymentMethod.amount)}
+        <p className="text-body font-medium truncate">
+          {topPaymentMethod.method || "—"}
         </p>
+        <p className="text-money-sm mt-1">{formattedAmount(topPaymentMethod.amount)}</p>
       </CardContent>
     </Card>
   );
-} 
+}

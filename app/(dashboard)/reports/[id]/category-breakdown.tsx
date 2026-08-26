@@ -20,11 +20,9 @@ import { useInView } from "@/hooks/use-in-view";
 import { useFormattedCurrency } from "@/lib/currency-utils";
 import type { CategoryBreakdown } from "@/lib/report-service";
 import { cn } from "@/lib/utils";
+import { chartInkWithAccent, CHART_ACCENT } from "@/lib/chart-colors";
 
-const COLORS = [
-  "#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8",
-  "#82CA9D", "#FFC658", "#FF6B6B", "#4ECDC4", "#45B7D1",
-];
+const COLORS = chartInkWithAccent(10, 0);
 
 interface CategoryBreakdownProps {
   categories: CategoryBreakdown[];

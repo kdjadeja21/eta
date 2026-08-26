@@ -5,14 +5,13 @@ import type { DateRange } from "react-day-picker";
 import { DateRangePicker } from "@/components/date-range-picker";
 import { StatsCards } from "./stats-cards";
 import { Button } from "@/components/ui/button";
-import { PlusIcon } from "lucide-react";
 import { AddExpenseDialog } from "./add-expense-dialog";
 import {
   expenseService,
   type Expense,
   ExpenseFormData,
 } from "@/lib/expense-service";
-import { formatDate, cn } from "@/lib/utils";
+import { formatDate, cn, exportToExcel, exportToPDF } from "@/lib/utils";
 import {
   getDefaultDateRange,
   loadStoredDateRange,
@@ -23,7 +22,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { PencilIcon, TrashIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { set, uniq } from "lodash";
-import { AddCashDialog } from "./add-cash-dialog";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -50,6 +48,9 @@ import { ExpenseType, formatExpenseType } from "@/lib/types";
 import { useUser } from "@clerk/nextjs";
 import { useFormattedCurrency } from "@/lib/currency-utils";
 import {
+  useRegisterAddExpense,
+} from "@/components/app-shell/add-expense-context";
+import {
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -69,18 +70,7 @@ declare module "@tanstack/react-table" {
   interface TableMeta<TData> extends CustomTableMeta {}
 }
 
-const getTypeColor = (type: ExpenseType) => {
-  switch (type) {
-    case ExpenseType.Need:
-      return "bg-green-500 hover:bg-green-600";
-    case ExpenseType.Want:
-      return "bg-blue-500 hover:bg-blue-600";
-    case ExpenseType.NotSure:
-      return "bg-yellow-500 hover:bg-yellow-600";
-    default:
-      return "bg-gray-500 hover:bg-gray-600";
-  }
-};
+const getTypeLabel = (type: ExpenseType) => formatExpenseType(type);
 
 export type ExpenseColumn = ColumnDef<Expense>;
 
@@ -132,14 +122,9 @@ export const columns: ExpenseColumn[] = [
     accessorKey: "type",
     header: "Type",
     cell: ({ row }: { row: { original: Expense } }) => (
-      <Badge
-        className={cn(
-          "text-white dark:text-black",
-          getTypeColor(row.original.type)
-        )}
-      >
-        {formatExpenseType(row.original.type)}
-      </Badge>
+      <span className="text-ui text-muted-foreground">
+        {getTypeLabel(row.original.type)}
+      </span>
     ),
   },
   {
@@ -183,7 +168,6 @@ export function DashboardContent({ userId }: { userId: string }) {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
-  const [isAddCashOpen, setIsAddCashOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -201,6 +185,13 @@ export function DashboardContent({ userId }: { userId: string }) {
   const service = expenseService;
   const { user } = useUser();
   const fullName = user?.fullName || "";
+
+  const openAddExpense = () => {
+    setEditingExpense(null);
+    setIsAddExpenseOpen(true);
+  };
+
+  useRegisterAddExpense(openAddExpense);
 
   useEffect(() => {
     const storedDateRange = loadStoredDateRange(userId);
@@ -400,6 +391,38 @@ export function DashboardContent({ userId }: { userId: string }) {
     });
   }, [expenses, filters, searchQuery]);
 
+  const handleExportExcel = () => {
+    const from = dateRange?.from;
+    const to = dateRange?.to;
+    const dateRangeStr =
+      from && to
+        ? `${from.toISOString().slice(0, 10)}_to_${to.toISOString().slice(0, 10)}`
+        : "all";
+    exportToExcel({
+      data: filteredExpenses,
+      fullName,
+      dateRange: dateRange ?? {},
+      fileName: `statements_${dateRangeStr}.xlsx`,
+      formatCurrency,
+    });
+  };
+
+  const handleExportPdf = () => {
+    const from = dateRange?.from;
+    const to = dateRange?.to;
+    const dateRangeStr =
+      from && to
+        ? `${from.toISOString().slice(0, 10)}_to_${to.toISOString().slice(0, 10)}`
+        : "all";
+    exportToPDF({
+      data: filteredExpenses,
+      fullName,
+      dateRange: dateRange ?? {},
+      fileName: `statements_${dateRangeStr}.pdf`,
+      formatCurrency,
+    });
+  };
+
   useEffect(() => {
     const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
     setTotalExpenses(total);
@@ -547,44 +570,35 @@ export function DashboardContent({ userId }: { userId: string }) {
   }, [filteredExpenses]);
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-6 md:px-8 md:py-10">
+      <header className="flex flex-col gap-4 border-b border-border pb-6 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-title">Review</h1>
+          <p className="mt-1 text-meta">Period totals, charts, and ledger</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           <DateRangePicker
             dateRange={dateRange}
             onDateRangeChange={(range) => range && setDateRange(range)}
-            className="cursor-pointer w-full sm:w-auto"
+            className="w-full sm:w-auto"
           />
-          <div className="flex gap-4 w-full sm:w-auto">
-            <Button
-              className="w-1/2 sm:w-auto cursor-pointer"
-              onClick={() => {
-                setEditingExpense(null);
-                setIsAddExpenseOpen(true);
-              }}
-            >
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Add Expense
-            </Button>
-            <Button
-              className="w-2/4.5 sm:w-auto cursor-pointer"
-              onClick={() => setIsBulkUploadOpen(true)}
-            >
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Upload Bulk Records
-            </Button>
-          </div>
-          <AddCashDialog
-            open={isAddCashOpen}
-            onOpenChange={setIsAddCashOpen}
-            onCashAdded={() => {
-              showSuccessToast("Cash added successfully");
-            }}
-            onClose={() => setIsAddCashOpen(false)}
-          />
+          <Button onClick={openAddExpense} className="gap-2" aria-keyshortcuts="a">
+            Add
+            <kbd className="ml-0.5 hidden rounded border border-primary-foreground/30 px-1.5 py-0.5 text-[10px] font-normal lg:inline">
+              A
+            </kbd>
+          </Button>
+          <Button variant="outline" onClick={() => setIsBulkUploadOpen(true)}>
+            Upload
+          </Button>
+          <Button variant="outline" onClick={handleExportExcel}>
+            Export Excel
+          </Button>
+          <Button variant="outline" onClick={handleExportPdf}>
+            Export PDF
+          </Button>
         </div>
-      </div>
+      </header>
 
       <StatsCards
         totalExpenses={totalExpenses}
@@ -634,9 +648,9 @@ export function DashboardContent({ userId }: { userId: string }) {
       </div>
 
       {/* Desktop View with Grid */}
-      <div className="hidden md:grid gap-4 md:grid-cols-2">
-        <Card>
-          <h2 className="text-xl font-bold m-4">Daily Expenses</h2>
+      <div className="hidden gap-4 md:grid md:grid-cols-2">
+        <Card className="rounded-md border-border p-4 shadow-none">
+          <h2 className="text-section mb-4">Daily spend</h2>
           <AreaChart data={chartData} />
         </Card>
 
@@ -658,6 +672,7 @@ export function DashboardContent({ userId }: { userId: string }) {
         bulkDeleteResetKey={bulkDeleteResetKey}
         loading={isLoading}
         meta={tableMeta}
+        hideExportControls
       />
 
       <AddExpenseDialog

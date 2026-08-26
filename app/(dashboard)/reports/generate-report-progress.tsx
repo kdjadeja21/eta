@@ -146,21 +146,18 @@ export function GenerateReportProgress({
   }, [month]); // intentionally omit callbacks — stored in refs above
 
   const currentLabel = isDone
-    ? "Done!"
+    ? "Done"
     : isWaiting
-      ? "Waiting for AI…"
+      ? "Finishing…"
       : ALL_STAGE_LABELS[stageIndex];
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm flex items-center justify-center">
-      <div className="w-full max-w-md mx-4 space-y-6">
-        <div className="text-center space-y-1">
-          <h2 className="text-2xl font-bold">Generating Report</h2>
-          <p className="text-muted-foreground text-sm">
-            Analysing your expenses for{" "}
-            <span className="font-medium text-foreground">
-              {formatMonthLabel(month)}
-            </span>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95">
+      <div className="mx-4 w-full max-w-md space-y-6 rounded-md border border-border bg-card p-8">
+        <div className="space-y-1 text-center">
+          <h2 className="text-title">Generating report</h2>
+          <p className="text-meta">
+            {formatMonthLabel(month)}
           </p>
         </div>
 
@@ -169,7 +166,7 @@ export function GenerateReportProgress({
             <span
               className={cn(
                 "font-medium transition-colors duration-300",
-                isDone ? "text-emerald-500" : "text-foreground"
+                isDone ? "text-[var(--good)]" : "text-foreground"
               )}
             >
               {currentLabel}
@@ -179,24 +176,17 @@ export function GenerateReportProgress({
             </span>
           </div>
 
-          {/* Progress bar */}
-          <div className="relative h-2.5 rounded-full bg-muted overflow-hidden">
+          <div className="relative h-2 overflow-hidden rounded-sm bg-muted">
             {isWaiting ? (
-              /* Indeterminate sliding bar while waiting for server */
-              <div className="absolute inset-y-0 w-2/5 rounded-full bg-gradient-to-r from-primary/60 via-primary to-primary/60 animate-indeterminate" />
+              <div className="absolute inset-y-0 w-2/5 animate-pulse rounded-sm bg-primary/40" />
             ) : (
-              /* Determinate fill — rAF drives width, no CSS transition conflict */
               <div
                 className={cn(
-                  "absolute inset-y-0 left-0 rounded-full overflow-hidden",
-                  isDone ? "bg-emerald-500" : "bg-primary"
+                  "absolute inset-y-0 left-0 rounded-sm bg-primary",
+                  isDone && "bg-[var(--good)]"
                 )}
                 style={{ width: `${progress}%` }}
-              >
-                {!isDone && (
-                  <div className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/25 to-transparent animate-shimmer" />
-                )}
-              </div>
+              />
             )}
           </div>
         </div>
@@ -215,7 +205,7 @@ export function GenerateReportProgress({
                 key={label}
                 className={cn(
                   "flex items-center gap-3 text-sm transition-all duration-300",
-                  isCompleted && "text-emerald-500",
+                  isCompleted && "text-[var(--good)]",
                   isCurrent && "text-foreground font-medium",
                   !isCompleted && !isCurrent && "text-muted-foreground/40"
                 )}

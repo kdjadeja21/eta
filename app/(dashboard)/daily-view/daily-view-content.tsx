@@ -14,10 +14,7 @@ import {
   type Expense,
   type ExpenseFormData,
 } from "@/lib/expense-service";
-import {
-  showSuccessToast,
-  showErrorToast,
-} from "@/components/ui/toast";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +28,11 @@ import {
 import { AddExpenseDialog } from "../dashboard/add-expense-dialog";
 import { DailyHeroCard } from "./daily-hero-card";
 import { ExpenseList } from "./expense-list";
-import { DailyViewFab } from "./daily-view-fab";
+import {
+  useRegisterAddExpense,
+} from "@/components/app-shell/add-expense-context";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 interface DailyViewContentProps {
   userId: string;
@@ -50,6 +51,7 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
   const [totalSpent, setTotalSpent] = useState(0);
   const [trendPercent, setTrendPercent] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -59,8 +61,16 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
   const today = new Date();
   const canGoNext = !isSameDay(selectedDate, today);
 
+  const openAdd = useCallback(() => {
+    setEditingExpense(null);
+    setIsAddOpen(true);
+  }, []);
+
+  useRegisterAddExpense(openAdd);
+
   const fetchDayData = useCallback(async () => {
     setIsLoading(true);
+    setFetchError(null);
     try {
       const dayStart = startOfDay(selectedDate);
       const dayEnd = endOfDay(selectedDate);
@@ -72,16 +82,14 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
         expenseService.getTotalExpenses(userId, yesterdayStart, yesterdayEnd),
       ]);
 
-      const dayTotal = dayExpenses.reduce(
-        (sum, e) => sum + e.amount,
-        0
-      );
+      const dayTotal = dayExpenses.reduce((sum, e) => sum + e.amount, 0);
 
       setExpenses(dayExpenses);
       setTotalSpent(dayTotal);
       setTrendPercent(calcTrendPercent(dayTotal, yesterdayTotal));
     } catch (error) {
       console.error("Error fetching daily expenses:", error);
+      setFetchError("Could not load expenses for this day.");
     } finally {
       setIsLoading(false);
     }
@@ -110,11 +118,12 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
         id: crypto.randomUUID(),
       };
       await expenseService.addExpense(userId, newExpense);
-      showSuccessToast("Expense added successfully");
+      showSuccessToast("Expense added");
       await fetchDayData();
     } catch (error) {
       console.error("Error adding expense:", error);
       showErrorToast("Failed to add expense");
+      throw error;
     }
   };
 
@@ -122,12 +131,13 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
     if (!editingExpense?.id) return;
     try {
       await expenseService.updateExpense(editingExpense.id, data);
-      showSuccessToast("Expense updated successfully");
+      showSuccessToast("Expense updated");
       setEditingExpense(null);
       await fetchDayData();
     } catch (error) {
       console.error("Error updating expense:", error);
       showErrorToast("Failed to update expense");
+      throw error;
     }
   };
 
@@ -148,8 +158,19 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
   };
 
   return (
-    <div className="min-h-dvh bg-muted">
-      <div className="mx-auto w-full max-w-lg px-4 pb-4 pt-4 sm:max-w-2xl sm:px-6 sm:py-8 sm:pb-6">
+    <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-10">
+      <div className="hidden md:mb-6 md:flex md:items-center md:justify-between">
+        <h1 className="text-title">Today</h1>
+        <Button onClick={openAdd} className="gap-2" aria-keyshortcuts="a">
+          <Plus className="size-4" />
+          Add
+          <kbd className="ml-1 hidden rounded border border-primary-foreground/30 px-1.5 py-0.5 text-[10px] font-normal lg:inline">
+            A
+          </kbd>
+        </Button>
+      </div>
+
+      <div className="md:grid md:grid-cols-[minmax(200px,280px)_1fr] md:gap-12 md:items-start">
         <DailyHeroCard
           selectedDate={selectedDate}
           totalSpent={totalSpent}
@@ -165,14 +186,12 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
           expenses={expenses}
           selectedDate={selectedDate}
           isLoading={isLoading}
+          error={fetchError}
           onEdit={(expense) => setEditingExpense(expense)}
           onDelete={(expense) => setDeletingExpense(expense)}
         />
       </div>
 
-      <DailyViewFab onClick={() => setIsAddOpen(true)} />
-
-      {/* Add expense dialog */}
       <AddExpenseDialog
         open={isAddOpen}
         onOpenChange={setIsAddOpen}
@@ -181,19 +200,21 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
         defaultDate={selectedDate}
       />
 
-      {/* Edit expense dialog */}
       <AddExpenseDialog
         open={!!editingExpense}
-        onOpenChange={(open) => { if (!open) setEditingExpense(null); }}
+        onOpenChange={(open) => {
+          if (!open) setEditingExpense(null);
+        }}
         onSubmit={handleUpdateExpense}
         expense={editingExpense}
         userId={userId}
       />
 
-      {/* Delete confirmation */}
       <AlertDialog
         open={!!deletingExpense}
-        onOpenChange={(open) => { if (!open) setDeletingExpense(null); }}
+        onOpenChange={(open) => {
+          if (!open) setDeletingExpense(null);
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -205,7 +226,7 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
                   {deletingExpense.description?.trim() ||
                     deletingExpense.subcategory ||
                     deletingExpense.category}
-                  &rdquo; will be permanently removed. This cannot be undone.
+                  &rdquo; will be permanently removed.
                 </>
               )}
             </AlertDialogDescription>
@@ -215,7 +236,7 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               disabled={isDeleting}
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive text-primary-foreground hover:bg-destructive/90"
             >
               {isDeleting ? "Deleting…" : "Delete"}
             </AlertDialogAction>

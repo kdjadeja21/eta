@@ -120,7 +120,7 @@ function drawFooter(doc: jsPDF, pageNum: number, totalPages: number) {
   bold(doc);
   doc.setFontSize(8);
   setTxt(doc, C.border);
-  doc.text("Expense Tracker  |  Monthly Report", ML, y);
+  doc.text("ETA  |  Monthly Report", ML, y);
   doc.text(`Page ${pageNum} of ${totalPages}`, PW - MR, y, { align: "right" });
 }
 

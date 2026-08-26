@@ -192,7 +192,7 @@ export function AddExpenseDialog({
           "gap-0 p-0",
           isMobile
             ? "max-h-[92dvh] pb-[env(safe-area-inset-bottom)] flex flex-col"
-            : "flex flex-col overflow-y-auto"
+            : "flex w-full max-w-[480px] flex-col overflow-y-auto"
         )}
       >
         {/* Mobile drag handle */}
@@ -209,8 +209,8 @@ export function AddExpenseDialog({
             isMobile ? "border-b pb-4 pt-1" : "pt-5 pb-4 pr-10"
           )}
         >
-          <SheetTitle className="text-lg">
-            {expense ? "Edit Expense" : "Add Expense"}
+          <SheetTitle className="font-display text-section">
+            {expense ? "Edit expense" : "Add expense"}
           </SheetTitle>
           <SheetDescription className="text-sm">
             {expense
