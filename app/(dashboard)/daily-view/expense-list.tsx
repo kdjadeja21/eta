@@ -50,6 +50,7 @@ interface ExpenseListProps {
   selectedDate: Date;
   isLoading: boolean;
   error?: string | null;
+  onRetry?: () => void;
   onEdit: (expense: Expense) => void;
   onDelete: (expense: Expense) => void;
 }
@@ -72,6 +73,7 @@ export function ExpenseList({
   selectedDate,
   isLoading,
   error,
+  onRetry,
   onEdit,
   onDelete,
 }: ExpenseListProps) {
@@ -94,7 +96,7 @@ export function ExpenseList({
         <div>
           <h2 className="text-section">Receipts</h2>
           <p className="text-meta mt-0.5">
-            {isLoading ? "Loading…" : error ? "Could not load" : transactionLabel}
+            {isLoading ? "Loading…" : error ? "Unavailable" : transactionLabel}
           </p>
         </div>
         <DropdownMenu>
@@ -121,8 +123,13 @@ export function ExpenseList({
       </div>
 
       {error ? (
-        <div className="rounded-md border border-destructive/30 bg-[var(--danger-soft)] px-4 py-8 text-center">
-          <p className="text-ui text-destructive">{error}</p>
+        <div className="rounded-md border border-border bg-card px-4 py-10 text-center">
+          <p className="text-ui text-foreground">{error}</p>
+          {onRetry && (
+            <Button variant="outline" className="mt-4" onClick={onRetry}>
+              Retry
+            </Button>
+          )}
         </div>
       ) : isLoading ? (
         <ExpenseListSkeleton />

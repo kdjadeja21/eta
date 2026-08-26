@@ -11,6 +11,7 @@ interface DailyHeroCardProps {
   totalSpent: number;
   trendPercent: number | null;
   isLoading: boolean;
+  loadError?: string | null;
   canGoNext: boolean;
   onPrev: () => void;
   onNext: () => void;
@@ -22,6 +23,7 @@ export function DailyHeroCard({
   totalSpent,
   trendPercent,
   isLoading,
+  loadError,
   canGoNext,
   onPrev,
   onNext,
@@ -78,10 +80,12 @@ export function DailyHeroCard({
             className="mt-2 h-16 w-48 max-w-full animate-pulse rounded-md bg-muted"
             aria-label="Loading total"
           />
+        ) : loadError ? (
+          <p className="text-money-lg mt-1 text-muted-foreground">—</p>
         ) : (
           <p className="text-money-lg mt-1 text-foreground">{formatCurrency(totalSpent)}</p>
         )}
-        {!isLoading && trendPercent !== null && (
+        {!isLoading && !loadError && trendPercent !== null && (
           <p
             className={cn(
               "mt-3 text-ui",

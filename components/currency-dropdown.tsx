@@ -34,7 +34,7 @@ export const CurrencyDropdown = () => {
         onValueChange={(value: string) => handleChange(value)}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Select payment method" />
+          <SelectValue placeholder="Currency" />
         </SelectTrigger>
         <SelectContent>
           {currencyOptions.map((option) => (

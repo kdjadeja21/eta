@@ -10,8 +10,6 @@ interface GenerateReportProgressProps {
   onError: () => void;
 }
 
-// Stages shown during the initial animated warm-up (before server responds).
-// The final "Done!" stage is shown only once the server actually returns.
 const WARMUP_STAGES = [
   { label: "Fetching expenses", targetProgress: 22, durationMs: 900 },
   { label: "Categorizing with AI", targetProgress: 52, durationMs: 1400 },
@@ -36,20 +34,15 @@ export function GenerateReportProgress({
   const [stageIndex, setStageIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isDone, setIsDone] = useState(false);
-  // Use a ref for waiting-for-server state to avoid stale closures
   const [isWaiting, setIsWaiting] = useState(false);
 
-  // Store callbacks in refs so they never trigger the effect again
   const onDoneRef = useRef(onDone);
   const onErrorRef = useRef(onError);
   onDoneRef.current = onDone;
   onErrorRef.current = onError;
 
-  // Hold the in-flight fetch Promise across React Strict Mode remounts so the
-  // API is only called once even when the effect is double-invoked.
   const fetchPromiseRef = useRef<Promise<Response> | null>(null);
 
-  // Only depends on `month` — stable for the lifetime of this overlay
   useEffect(() => {
     let cancelled = false;
 
@@ -71,11 +64,7 @@ export function GenerateReportProgress({
       new Promise<void>((r) => setTimeout(r, ms));
 
     const run = async () => {
-      // Reuse an already-started request (Strict Mode remount) rather than
-      // firing a second one. The ref persists across the cleanup/remount cycle.
       if (!fetchPromiseRef.current) {
-        // Use the timezone offset for the middle of the target month so DST
-        // changes between now and the report month don't affect the boundaries.
         const [year, monthNum] = month.split("-").map(Number);
         const timezoneOffset = new Date(year, monthNum - 1, 15).getTimezoneOffset();
 
@@ -87,7 +76,6 @@ export function GenerateReportProgress({
       }
       const fetchPromise = fetchPromiseRef.current;
 
-      // Run warm-up stage animations concurrently with the fetch
       for (let i = 0; i < WARMUP_STAGES.length; i++) {
         if (cancelled) return;
         setStageIndex(i);
@@ -95,15 +83,16 @@ export function GenerateReportProgress({
         await animate(prev, WARMUP_STAGES[i].targetProgress, WARMUP_STAGES[i].durationMs);
       }
 
-      // Warm-up done — wait for the server. Show a gentle indeterminate pulse.
       if (cancelled) return;
       setIsWaiting(true);
 
       let res: Response;
       try {
         res = await fetchPromise;
-      } catch (err: any) {
-        if (!cancelled) setError(err.message ?? "Network error — could not reach server");
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : "Network error — could not reach server";
+        if (!cancelled) setError(message);
         return;
       }
 
@@ -115,7 +104,9 @@ export function GenerateReportProgress({
         try {
           const data = await res.json();
           msg = data.error ?? msg;
-        } catch {}
+        } catch {
+          // ignore parse errors
+        }
         if (!cancelled) setError(msg);
         return;
       }
@@ -128,7 +119,6 @@ export function GenerateReportProgress({
         return;
       }
 
-      // Snap to Done
       if (cancelled) return;
       setStageIndex(ALL_STAGE_LABELS.length - 1);
       await animate(WARMUP_STAGES[WARMUP_STAGES.length - 1].targetProgress, 100, 500);
@@ -143,26 +133,31 @@ export function GenerateReportProgress({
       cancelled = true;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [month]); // intentionally omit callbacks — stored in refs above
+  }, [month]);
 
   const currentLabel = isDone
-    ? "Done"
+    ? "Done!"
     : isWaiting
-      ? "Finishing…"
+      ? "Waiting for server…"
       : ALL_STAGE_LABELS[stageIndex];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95">
-      <div className="mx-4 w-full max-w-md space-y-6 rounded-md border border-border bg-card p-8">
-        <div className="space-y-1 text-center">
-          <h2 className="text-title">Generating report</h2>
-          <p className="text-meta">
-            {formatMonthLabel(month)}
-          </p>
+    <div
+      className="fixed inset-0 z-50 flex flex-col bg-background"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="generate-report-title"
+    >
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-12">
+        <div className="space-y-2 text-center">
+          <h2 id="generate-report-title" className="text-title">
+            Generating report
+          </h2>
+          <p className="text-meta">{formatMonthLabel(month)}</p>
         </div>
 
-        <div className="space-y-3">
-          <div className="flex justify-between text-sm">
+        <div className="mt-10 space-y-3">
+          <div className="flex justify-between text-ui">
             <span
               className={cn(
                 "font-medium transition-colors duration-300",
@@ -182,7 +177,7 @@ export function GenerateReportProgress({
             ) : (
               <div
                 className={cn(
-                  "absolute inset-y-0 left-0 rounded-sm bg-primary",
+                  "absolute inset-y-0 left-0 rounded-sm bg-primary transition-[width]",
                   isDone && "bg-[var(--good)]"
                 )}
                 style={{ width: `${progress}%` }}
@@ -191,7 +186,7 @@ export function GenerateReportProgress({
           </div>
         </div>
 
-        <div className="space-y-2">
+        <ul className="mt-8 space-y-3">
           {ALL_STAGE_LABELS.map((label, i) => {
             const isCompleted =
               isDone || (i < stageIndex && !isWaiting) || (isWaiting && i < WARMUP_STAGES.length);
@@ -201,35 +196,36 @@ export function GenerateReportProgress({
                 (!isWaiting && i === stageIndex));
 
             return (
-              <div
+              <li
                 key={label}
                 className={cn(
-                  "flex items-center gap-3 text-sm transition-all duration-300",
+                  "flex items-center gap-3 text-ui transition-colors",
                   isCompleted && "text-[var(--good)]",
-                  isCurrent && "text-foreground font-medium",
-                  !isCompleted && !isCurrent && "text-muted-foreground/40"
+                  isCurrent && "font-medium text-foreground",
+                  !isCompleted && !isCurrent && "text-muted-foreground"
                 )}
               >
                 {isCompleted ? (
-                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  <CheckCircle2 className="size-4 shrink-0" />
                 ) : isCurrent ? (
-                  <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                  <Loader2 className="size-4 shrink-0 animate-spin" />
                 ) : (
-                  <div className="h-4 w-4 shrink-0 rounded-full border border-current/30" />
+                  <div className="size-4 shrink-0 rounded-full border border-border" />
                 )}
                 <span>{label}</span>
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ul>
 
         {error && (
-          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive space-y-2">
+          <div className="mt-8 rounded-md border border-destructive/30 bg-[var(--danger-soft)] p-4 text-ui text-destructive">
             <p className="font-medium">Report generation failed</p>
-            <p>{error}</p>
+            <p className="mt-1">{error}</p>
             <button
+              type="button"
               onClick={onErrorRef.current}
-              className="text-xs underline underline-offset-2 cursor-pointer"
+              className="mt-3 underline underline-offset-2"
             >
               Go back
             </button>

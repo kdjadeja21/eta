@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { startOfDay } from "date-fns";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -66,7 +67,11 @@ const formSchema = z.object({
     })
     .min(0.01, "Amount must be greater than zero")
     .positive("Amount must be positive"),
-  date: z.date(),
+  date: z
+    .date()
+    .refine((d) => startOfDay(d) <= startOfDay(new Date()), {
+      message: "Date cannot be in the future",
+    }),
   description: z.string().min(1, "Description is required"),
   type: z.nativeEnum(ExpenseType),
   category: z.string(),
@@ -100,6 +105,7 @@ export function AddExpenseDialog({
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: "onChange",
     defaultValues: {
       date: new Date(),
       amount: undefined,
@@ -159,7 +165,7 @@ export function AddExpenseDialog({
   }, [expense, form, open, defaultDate]);
 
   const handleSubmit = async (values: FormValues) => {
-    if (isEditMode && !form.formState.isDirty) return;
+    if (isEditMode && !isDirty) return;
 
     setIsSubmitting(true);
     try {
@@ -179,8 +185,8 @@ export function AddExpenseDialog({
   };
 
   const selectedCategory = form.watch("category");
-  const isSubmitDisabled =
-    isSubmitting || (isEditMode && !form.formState.isDirty);
+  const { isDirty } = form.formState;
+  const isSubmitDisabled = isSubmitting || (isEditMode && !isDirty);
   const submitLabel = isEditMode ? "Update" : "Save";
   const submittingLabel = isEditMode ? "Updating..." : "Saving...";
 
@@ -191,14 +197,13 @@ export function AddExpenseDialog({
         className={cn(
           "gap-0 p-0",
           isMobile
-            ? "max-h-[92dvh] pb-[env(safe-area-inset-bottom)] flex flex-col"
-            : "flex w-full max-w-[480px] flex-col overflow-y-auto"
+            ? "flex max-h-[92dvh] flex-col rounded-t-lg border-t pb-[env(safe-area-inset-bottom)]"
+            : "flex h-full w-full max-w-[480px] flex-col overflow-y-auto sm:max-w-[480px]"
         )}
       >
-        {/* Mobile drag handle */}
         {isMobile && (
-          <div className="flex shrink-0 justify-center pb-2 pt-3">
-            <div className="h-1 w-10 rounded-full bg-muted-foreground/25" />
+          <div className="flex shrink-0 justify-center pb-1 pt-3" aria-hidden>
+            <div className="h-1 w-10 rounded-full bg-border" />
           </div>
         )}
 

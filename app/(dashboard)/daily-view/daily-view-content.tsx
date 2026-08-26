@@ -89,7 +89,10 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
       setTrendPercent(calcTrendPercent(dayTotal, yesterdayTotal));
     } catch (error) {
       console.error("Error fetching daily expenses:", error);
-      setFetchError("Could not load expenses for this day.");
+      setFetchError("Couldn't load this day.");
+      setExpenses([]);
+      setTotalSpent(0);
+      setTrendPercent(null);
     } finally {
       setIsLoading(false);
     }
@@ -176,6 +179,7 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
           totalSpent={totalSpent}
           trendPercent={trendPercent}
           isLoading={isLoading}
+          loadError={fetchError}
           canGoNext={canGoNext}
           onPrev={goToPrev}
           onNext={goToNext}
@@ -187,6 +191,7 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
           selectedDate={selectedDate}
           isLoading={isLoading}
           error={fetchError}
+          onRetry={fetchDayData}
           onEdit={(expense) => setEditingExpense(expense)}
           onDelete={(expense) => setDeletingExpense(expense)}
         />
