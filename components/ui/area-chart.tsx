@@ -8,7 +8,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   TooltipProps,
 } from "recharts";
@@ -23,7 +22,9 @@ const CustomTooltip = ({
   payload,
   label,
   formatCurrency,
-}: TooltipProps<number, string> & { formatCurrency: (amount: number) => string }) => {
+}: TooltipProps<number, string> & {
+  formatCurrency: (amount: number) => string;
+}) => {
   if (active && payload && payload.length) {
     const value =
       typeof payload[0].value === "number"
@@ -31,11 +32,9 @@ const CustomTooltip = ({
         : payload[0].value;
 
     return (
-      <div className="bg-gray-800 border border-gray-700 p-3 rounded-lg shadow-lg">
-        <p className="text-gray-200 font-medium">{label}</p>
-        <p className="text-gray-300">
-          Value: <span className="text-purple-400">{value}</span>
-        </p>
+      <div className="rounded-lg border border-border bg-popover p-3 shadow-sm">
+        <p className="text-sm font-medium text-popover-foreground">{label}</p>
+        <p className="font-money text-sm text-primary">{value}</p>
       </div>
     );
   }
@@ -46,28 +45,34 @@ const AreaChart: React.FC<AreaChartProps> = ({ data }) => {
   const formatCurrency = useFormattedCurrency();
 
   return (
-    <div className="w-full h-64">
-      {" "}
-      {/* Set a fixed height for visibility */}
+    <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <RechartsAreaChart
           data={data}
           margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
         >
-          <CartesianGrid strokeDasharray="3 3" className="stroke-gray-700" />
-          <XAxis dataKey="name" stroke="#9ca3af" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+          <XAxis
+            dataKey="name"
+            stroke="var(--muted-foreground)"
+            tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+          />
           <YAxis
-            stroke="#9ca3af"
+            stroke="var(--muted-foreground)"
+            tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
             tickFormatter={(value) => formatCurrency(Number(value))}
           />
-          <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} />} />
-          <Legend />
+          <Tooltip
+            content={<CustomTooltip formatCurrency={formatCurrency} />}
+          />
           <Area
             type="monotone"
             dataKey="value"
-            stroke="#8884d8"
-            fill="#8884d8"
-            fillOpacity={0.3}
+            name="Spent"
+            stroke="var(--chart-1)"
+            strokeWidth={2}
+            fill="var(--chart-1)"
+            fillOpacity={0.18}
           />
         </RechartsAreaChart>
       </ResponsiveContainer>
