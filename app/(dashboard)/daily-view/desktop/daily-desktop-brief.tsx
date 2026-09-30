@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { format, isToday } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Wallet } from "lucide-react";
 import { getCategoryIcon } from "@/lib/category-icons";
 import { useFormattedCurrency } from "@/lib/currency-utils";
 import type { Expense } from "@/lib/expense-service";
@@ -34,7 +34,8 @@ export function DailyDesktopBrief({
   onGoToToday,
 }: DailyDesktopBriefProps) {
   const formatCurrency = useFormattedCurrency();
-  const { categories, types, transactionCount } = summarizeDay(expenses);
+  const { categories, paymentMethods, types, transactionCount } = summarizeDay(expenses);
+  const showPaymentMethods = categories.length === 0 && paymentMethods.length > 0;
   const viewingToday = isToday(selectedDate);
 
   return (
@@ -96,7 +97,7 @@ export function DailyDesktopBrief({
 
       <div className="mt-8">
         <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          Categories
+          {showPaymentMethods ? "Payment methods" : "Categories"}
         </p>
         {isLoading ? (
           <div className="mt-4 space-y-3">
@@ -104,35 +105,82 @@ export function DailyDesktopBrief({
               <div key={index} className="h-8 animate-pulse rounded-md bg-muted" />
             ))}
           </div>
+        ) : showPaymentMethods ? (
+          <BreakdownList
+            rows={paymentMethods.map(({ method, amount }) => ({
+              key: method,
+              label: method,
+              amount,
+            }))}
+            totalSpent={totalSpent}
+            formatCurrency={formatCurrency}
+            icon="payment"
+          />
         ) : categories.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">
             No spending recorded for this day.
           </p>
         ) : (
-          <ul className="mt-3 divide-y divide-border/70">
-            {categories.map(({ category, amount }) => {
-              const { icon: Icon, color } = getCategoryIcon(category);
-              const share =
-                totalSpent > 0 ? Math.round((amount / totalSpent) * 100) : 0;
-
-              return (
-                <li key={category} className="flex items-center gap-3 py-2.5">
-                  <Icon className={cn("size-4 shrink-0", color)} />
-                  <span className="min-w-0 flex-1 truncate text-sm">{category}</span>
-                  <span className="text-xs tabular-nums text-muted-foreground">
-                    {share}%
-                  </span>
-                  <span className="w-24 text-right text-sm tabular-nums">
-                    {formatCurrency(amount)}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
+          <BreakdownList
+            rows={categories.map(({ category, amount }) => ({
+              key: category,
+              label: category,
+              amount,
+            }))}
+            totalSpent={totalSpent}
+            formatCurrency={formatCurrency}
+            icon="category"
+          />
         )}
       </div>
     </aside>
   );
+}
+
+function BreakdownList({
+  rows,
+  totalSpent,
+  formatCurrency,
+  icon,
+}: {
+  rows: { key: string; label: string; amount: number }[];
+  totalSpent: number;
+  formatCurrency: (amount: number) => string;
+  icon: "category" | "payment";
+}) {
+  return (
+    <ul className="mt-3 divide-y divide-border/70">
+      {rows.map((row) => {
+        const share = totalSpent > 0 ? Math.round((row.amount / totalSpent) * 100) : 0;
+
+        return (
+          <li key={row.key} className="flex items-center gap-3 py-2.5">
+            <BreakdownIcon kind={icon} label={row.label} />
+            <span className="min-w-0 flex-1 truncate text-sm">{row.label}</span>
+            <span className="text-xs tabular-nums text-muted-foreground">{share}%</span>
+            <span className="w-24 text-right text-sm tabular-nums">
+              {formatCurrency(row.amount)}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function BreakdownIcon({ kind, label }: { kind: "category" | "payment"; label: string }) {
+  switch (kind) {
+    case "category": {
+      const { icon: Icon, color } = getCategoryIcon(label);
+      return <Icon className={cn("size-4 shrink-0", color)} />;
+    }
+    case "payment":
+      return <Wallet className="size-4 shrink-0 text-muted-foreground" />;
+    default: {
+      const exhaustive: never = kind;
+      return exhaustive;
+    }
+  }
 }
 
 function TypeMix({
