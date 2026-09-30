@@ -32,6 +32,7 @@ import { AddExpenseDialog } from "../dashboard/add-expense-dialog";
 import { DailyHeroCard } from "./daily-hero-card";
 import { ExpenseList } from "./expense-list";
 import { DailyViewFab } from "./daily-view-fab";
+import { DailyViewDesktop } from "./desktop/daily-view-desktop";
 
 interface DailyViewContentProps {
   userId: string;
@@ -148,29 +149,46 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
   };
 
   return (
-    <div className="min-h-dvh bg-muted">
-      <div className="mx-auto w-full max-w-lg px-4 pb-4 pt-4 sm:max-w-2xl sm:px-6 sm:py-8 sm:pb-6">
-        <DailyHeroCard
-          selectedDate={selectedDate}
-          totalSpent={totalSpent}
-          trendPercent={trendPercent}
-          isLoading={isLoading}
-          canGoNext={canGoNext}
-          onPrev={goToPrev}
-          onNext={goToNext}
-          onGoToToday={goToToday}
-        />
+    <>
+      <div className="min-h-dvh bg-muted md:hidden">
+        <div className="mx-auto w-full max-w-lg px-4 pb-4 pt-4 sm:max-w-2xl sm:px-6 sm:py-8 sm:pb-6">
+          <DailyHeroCard
+            selectedDate={selectedDate}
+            totalSpent={totalSpent}
+            trendPercent={trendPercent}
+            isLoading={isLoading}
+            canGoNext={canGoNext}
+            onPrev={goToPrev}
+            onNext={goToNext}
+            onGoToToday={goToToday}
+          />
 
-        <ExpenseList
-          expenses={expenses}
-          selectedDate={selectedDate}
-          isLoading={isLoading}
-          onEdit={(expense) => setEditingExpense(expense)}
-          onDelete={(expense) => setDeletingExpense(expense)}
-        />
+          <ExpenseList
+            expenses={expenses}
+            selectedDate={selectedDate}
+            isLoading={isLoading}
+            onEdit={(expense) => setEditingExpense(expense)}
+            onDelete={(expense) => setDeletingExpense(expense)}
+          />
+        </div>
+
+        <DailyViewFab onClick={() => setIsAddOpen(true)} />
       </div>
 
-      <DailyViewFab onClick={() => setIsAddOpen(true)} />
+      <DailyViewDesktop
+        selectedDate={selectedDate}
+        expenses={expenses}
+        totalSpent={totalSpent}
+        trendPercent={trendPercent}
+        isLoading={isLoading}
+        canGoNext={canGoNext}
+        onPrev={goToPrev}
+        onNext={goToNext}
+        onGoToToday={goToToday}
+        onAdd={() => setIsAddOpen(true)}
+        onEdit={(expense) => setEditingExpense(expense)}
+        onDelete={(expense) => setDeletingExpense(expense)}
+      />
 
       {/* Add expense dialog */}
       <AddExpenseDialog
@@ -222,6 +240,6 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }
