@@ -1,10 +1,8 @@
 "use client";
 
 import type { Expense } from "@/lib/expense-service";
-import { DailyDesktopBreakdown } from "./daily-desktop-breakdown";
-import { DailyDesktopHeader } from "./daily-desktop-header";
+import { DailyDesktopBrief } from "./daily-desktop-brief";
 import { DailyDesktopLedger } from "./daily-desktop-ledger";
-import { DailyDesktopMetrics } from "./daily-desktop-metrics";
 
 export interface DailyViewDesktopProps {
   selectedDate: Date;
@@ -36,31 +34,26 @@ export function DailyViewDesktop({
   onDelete,
 }: DailyViewDesktopProps) {
   return (
-    <div className="hidden min-h-[calc(100dvh-4rem)] bg-muted md:block">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-8 lg:px-8">
-        <DailyDesktopHeader
+    <div className="hidden min-h-[calc(100dvh-4rem)] bg-background md:block">
+      <div className="mx-auto grid w-full max-w-6xl items-start gap-10 px-6 py-8 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-0 lg:px-10">
+        <DailyDesktopBrief
           selectedDate={selectedDate}
-          canGoNext={canGoNext}
-          onPrev={onPrev}
-          onNext={onNext}
-          onGoToToday={onGoToToday}
-          onAdd={onAdd}
-        />
-        <DailyDesktopMetrics
           expenses={expenses}
           totalSpent={totalSpent}
           trendPercent={trendPercent}
           isLoading={isLoading}
+          canGoNext={canGoNext}
+          onPrev={onPrev}
+          onNext={onNext}
+          onGoToToday={onGoToToday}
         />
-        <div className="grid items-start gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-          <DailyDesktopBreakdown expenses={expenses} isLoading={isLoading} />
-          <DailyDesktopLedger
-            expenses={expenses}
-            isLoading={isLoading}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        </div>
+        <DailyDesktopLedger
+          expenses={expenses}
+          isLoading={isLoading}
+          onAdd={onAdd}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       </div>
     </div>
   );

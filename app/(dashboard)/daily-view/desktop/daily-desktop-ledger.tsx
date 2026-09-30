@@ -2,7 +2,15 @@
 
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
-import { ArrowDownUp, Check, MoreHorizontal, Pencil, Receipt, Trash2 } from "lucide-react";
+import {
+  ArrowDownUp,
+  Check,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Receipt,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { getCategoryIcon } from "@/lib/category-icons";
 import { useFormattedCurrency } from "@/lib/currency-utils";
 import type { Expense } from "@/lib/expense-service";
 import { getExpenseTypeStyle } from "@/lib/expense-type-styles";
@@ -47,6 +56,7 @@ function sortExpenses(expenses: Expense[], sortKey: SortKey): Expense[] {
 interface DailyDesktopLedgerProps {
   expenses: Expense[];
   isLoading: boolean;
+  onAdd: () => void;
   onEdit: (expense: Expense) => void;
   onDelete: (expense: Expense) => void;
 }
@@ -54,6 +64,7 @@ interface DailyDesktopLedgerProps {
 export function DailyDesktopLedger({
   expenses,
   isLoading,
+  onAdd,
   onEdit,
   onDelete,
 }: DailyDesktopLedgerProps) {
@@ -65,78 +76,71 @@ export function DailyDesktopLedger({
   const currentSortLabel = SORT_OPTIONS.find((option) => option.key === sortKey)?.label;
 
   return (
-    <section className="min-w-0 rounded-xl border bg-card shadow-sm">
-      <div className="flex items-center justify-between gap-3 border-b px-5 py-4">
+    <section className="min-w-0 lg:border-l lg:pl-10">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold">Transactions</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <h2 className="text-lg font-semibold tracking-tight">Activity</h2>
+          <p className="text-sm text-muted-foreground">
             {isLoading
               ? "Loading…"
               : `${expenses.length} transaction${expenses.length === 1 ? "" : "s"}`}
           </p>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1.5">
-              <ArrowDownUp />
-              {currentSortLabel}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-[180px]">
-            {SORT_OPTIONS.map((option) => (
-              <DropdownMenuItem
-                key={option.key}
-                onClick={() => setSortKey(option.key)}
-                className="flex items-center justify-between gap-3"
-              >
-                {option.label}
-                {sortKey === option.key && <Check className="size-3.5 text-primary" />}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="outline" size="sm" className="gap-1.5">
+                <ArrowDownUp />
+                {currentSortLabel}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[180px]">
+              {SORT_OPTIONS.map((option) => (
+                <DropdownMenuItem
+                  key={option.key}
+                  onClick={() => setSortKey(option.key)}
+                  className="flex items-center justify-between gap-3"
+                >
+                  {option.label}
+                  {sortKey === option.key && <Check className="size-3.5 text-primary" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button type="button" size="sm" onClick={onAdd}>
+            <Plus />
+            Add expense
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
-        <LedgerSkeleton />
+        <div className="mt-6 space-y-3">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div key={index} className="h-14 animate-pulse rounded-lg bg-muted" />
+          ))}
+        </div>
       ) : expenses.length === 0 ? (
-        <div className="flex flex-col items-center px-6 py-16 text-center">
+        <div className="mt-16 flex flex-col items-center text-center">
           <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-muted">
             <Receipt className="size-5 text-muted-foreground" />
           </div>
-          <p className="font-medium">No expenses yet</p>
-          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            Add an expense to record a transaction for this day.
+          <p className="font-medium">Nothing recorded</p>
+          <p className="mt-1 max-w-xs text-sm text-muted-foreground">
+            Add an expense to start this day’s record.
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-sm">
-            <thead>
-              <tr className="border-b text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                <th className="px-5 py-3 font-medium">Time</th>
-                <th className="px-3 py-3 font-medium">Description</th>
-                <th className="px-3 py-3 font-medium">Category</th>
-                <th className="px-3 py-3 font-medium">Type</th>
-                <th className="px-3 py-3 font-medium">Paid by</th>
-                <th className="px-3 py-3 text-right font-medium">Amount</th>
-                <th className="px-3 py-3">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedExpenses.map((expense) => (
-                <LedgerRow
-                  key={expense.id}
-                  expense={expense}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ul className="mt-4 divide-y divide-border/70">
+          {sortedExpenses.map((expense) => (
+            <LedgerRow
+              key={expense.id}
+              expense={expense}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          ))}
+        </ul>
       )}
     </section>
   );
@@ -153,79 +157,67 @@ function LedgerRow({
 }) {
   const formatCurrency = useFormattedCurrency();
   const typeStyle = getExpenseTypeStyle(expense.type);
+  const { icon: Icon, bg, color } = getCategoryIcon(expense.category);
   const title =
     expense.description?.trim() || expense.subcategory || expense.category;
-  const subtitle =
-    expense.subcategory && expense.subcategory !== title ? expense.subcategory : null;
+  const meta = [expense.category, expense.subcategory, expense.paidBy]
+    .filter((part, index, parts) => Boolean(part) && parts.indexOf(part) === index)
+    .join(" · ");
 
   return (
-    <tr className="border-b last:border-b-0 hover:bg-muted/40">
-      <td className="px-5 py-3.5 whitespace-nowrap text-muted-foreground tabular-nums">
+    <li className="flex items-center gap-3 py-3.5">
+      <time className="w-[4.5rem] shrink-0 text-xs tabular-nums text-muted-foreground">
         {format(expense.date, "h:mm a")}
-      </td>
-      <td className="max-w-[240px] px-3 py-3.5">
-        <p className="truncate font-medium">{title}</p>
-        {subtitle && (
-          <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
+      </time>
+      <span
+        className={cn(
+          "flex size-9 shrink-0 items-center justify-center rounded-lg",
+          bg,
         )}
-      </td>
-      <td className="max-w-[160px] px-3 py-3.5">
-        <p className="truncate">{expense.category}</p>
-      </td>
-      <td className="px-3 py-3.5 whitespace-nowrap">
-        <span
-          className={cn(
-            "inline-flex rounded-md px-1.5 py-0.5 text-[11px] font-medium tracking-wide",
-            typeStyle.badge,
-          )}
-        >
-          {formatExpenseType(expense.type)}
-        </span>
-      </td>
-      <td className="max-w-[140px] px-3 py-3.5 text-muted-foreground">
-        <p className="truncate">{expense.paidBy}</p>
-      </td>
-      <td className="px-3 py-3.5 text-right font-medium whitespace-nowrap tabular-nums">
+      >
+        <Icon className={cn("size-4", color)} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{title}</p>
+        <p className="truncate text-xs text-muted-foreground">{meta}</p>
+      </div>
+      <span
+        className={cn(
+          "hidden shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-medium tracking-wide xl:inline-flex",
+          typeStyle.badge,
+        )}
+      >
+        {formatExpenseType(expense.type)}
+      </span>
+      <p className="w-24 shrink-0 text-right text-sm font-semibold tabular-nums">
         {formatCurrency(expense.amount)}
-      </td>
-      <td className="px-3 py-3.5 text-right">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="size-8"
-              aria-label="Expense options"
-            >
-              <MoreHorizontal />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-36">
-            <DropdownMenuItem onClick={() => onEdit(expense)} className="cursor-pointer gap-2">
-              <Pencil />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onDelete(expense)}
-              className="cursor-pointer gap-2 text-destructive focus:text-destructive"
-            >
-              <Trash2 />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </td>
-    </tr>
-  );
-}
-
-function LedgerSkeleton() {
-  return (
-    <div className="space-y-3 px-5 py-4">
-      {Array.from({ length: 5 }).map((_, index) => (
-        <div key={index} className="h-10 animate-pulse rounded-md bg-muted" />
-      ))}
-    </div>
+      </p>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-8 shrink-0 text-muted-foreground"
+            aria-label="Expense options"
+          >
+            <MoreHorizontal />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-36">
+          <DropdownMenuItem onClick={() => onEdit(expense)} className="cursor-pointer gap-2">
+            <Pencil />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => onDelete(expense)}
+            className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+          >
+            <Trash2 />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </li>
   );
 }
