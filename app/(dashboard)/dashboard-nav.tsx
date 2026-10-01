@@ -216,7 +216,7 @@ export function MobileBottomNav() {
             height: BUTTON_SIZE,
           }}
         >
-          <Plus className="h-6 w-6 stroke-[2.5px]" aria-hidden />
+          <Plus className="h-8 w-8 text-white" strokeWidth={3} aria-hidden />
         </button>
       </div>
     </nav>
