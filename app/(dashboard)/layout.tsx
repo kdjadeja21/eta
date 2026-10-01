@@ -39,7 +39,7 @@ export default async function DashboardLayout({
               <UserButton />
             </div>
           </header>
-          <main className="flex-1 pb-[calc(7.25rem+env(safe-area-inset-bottom)+var(--vv-offset-bottom))] md:pb-0">
+          <main className="flex-1 pb-[calc(6rem+env(safe-area-inset-bottom)+var(--vv-offset-bottom))] md:pb-0">
             {children}
           </main>
           <MobileBottomNav />
