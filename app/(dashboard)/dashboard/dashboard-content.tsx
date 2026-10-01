@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import type { DateRange } from "react-day-picker";
 import { DateRangePicker } from "@/components/date-range-picker";
 import { StatsCards } from "./stats-cards";
@@ -55,6 +55,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useRegisterMobileAddExpense } from "../mobile-add-expense";
 
 // Extend the TableMeta type to include onEdit and onDelete
 interface CustomTableMeta {
@@ -197,6 +198,11 @@ export function DashboardContent({ userId }: { userId: string }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [bulkDeleteResetKey, setBulkDeleteResetKey] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
+  const openAddExpense = useCallback(() => {
+    setEditingExpense(null);
+    setIsAddExpenseOpen(true);
+  }, []);
+  useRegisterMobileAddExpense(openAddExpense);
 
   const service = expenseService;
   const { user } = useUser();
@@ -559,10 +565,7 @@ export function DashboardContent({ userId }: { userId: string }) {
           <div className="flex gap-4 w-full sm:w-auto">
             <Button
               className="w-1/2 sm:w-auto cursor-pointer"
-              onClick={() => {
-                setEditingExpense(null);
-                setIsAddExpenseOpen(true);
-              }}
+              onClick={openAddExpense}
             >
               <PlusIcon className="mr-2 h-4 w-4" />
               Add Expense
