@@ -31,11 +31,12 @@ import {
 import { AddExpenseDialog } from "../dashboard/add-expense-dialog";
 import { DailyHeroCard } from "./daily-hero-card";
 import { ExpenseList } from "./expense-list";
-import { DailyViewFab } from "./daily-view-fab";
 import { DailyViewDesktop } from "./desktop/daily-view-desktop";
+import { useRegisterMobileAddExpense } from "../mobile-add-expense";
 
 interface DailyViewContentProps {
   userId: string;
+  initialAddOpen?: boolean;
 }
 
 function calcTrendPercent(current: number, previous: number): number | null {
@@ -45,17 +46,22 @@ function calcTrendPercent(current: number, previous: number): number | null {
   return Math.round(((current - previous) / previous) * 100);
 }
 
-export function DailyViewContent({ userId }: DailyViewContentProps) {
+export function DailyViewContent({
+  userId,
+  initialAddOpen = false,
+}: DailyViewContentProps) {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [totalSpent, setTotalSpent] = useState(0);
   const [trendPercent, setTrendPercent] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(initialAddOpen);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const openAddExpense = useCallback(() => setIsAddOpen(true), []);
+  useRegisterMobileAddExpense(openAddExpense);
 
   const today = new Date();
   const canGoNext = !isSameDay(selectedDate, today);
@@ -91,6 +97,19 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
   useEffect(() => {
     fetchDayData();
   }, [fetchDayData]);
+
+  useEffect(() => {
+    if (!initialAddOpen) return;
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("add")) return;
+    url.searchParams.delete("add");
+    const query = url.searchParams.toString();
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${url.pathname}${query ? `?${query}` : ""}${url.hash}`,
+    );
+  }, [initialAddOpen]);
 
   const goToPrev = () => setSelectedDate((prev) => subDays(prev, 1));
 
@@ -171,8 +190,6 @@ export function DailyViewContent({ userId }: DailyViewContentProps) {
             onDelete={(expense) => setDeletingExpense(expense)}
           />
         </div>
-
-        <DailyViewFab onClick={() => setIsAddOpen(true)} />
       </div>
 
       <DailyViewDesktop
