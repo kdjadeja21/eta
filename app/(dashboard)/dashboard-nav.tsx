@@ -84,12 +84,12 @@ function MobileNavLink({
   );
 }
 
-const BAR_HEIGHT = 72;
-const TOP_PAD = 14;
-const BUTTON_SIZE = 56;
+const BAR_HEIGHT = 80;
+const TOP_PAD = 16;
+const BUTTON_SIZE = 64;
 const BUTTON_CENTER_FROM_BAR_TOP = 22;
-const NOTCH_RADIUS = 38;
-const FILLET = 16;
+const NOTCH_RADIUS = 37;
+const FILLET = 14;
 const SVG_HEIGHT = TOP_PAD + BAR_HEIGHT;
 const BUTTON_CENTER_Y = TOP_PAD + BUTTON_CENTER_FROM_BAR_TOP;
 
@@ -163,6 +163,10 @@ export function MobileBottomNav() {
           style={notchPath ? { clipPath: `path('${notchPath}')` } : undefined}
         >
           <div
+            className="pointer-events-none absolute left-1/2 h-28 w-28 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(139,92,246,0.55),transparent_68%)] blur-md"
+            style={{ top: BUTTON_CENTER_Y - 56 }}
+          />
+          <div
             className={cn(
               "pointer-events-none absolute bottom-2 h-14 w-[42%] rounded-full blur-md",
               activeHref === "/daily-view" &&
@@ -192,7 +196,7 @@ export function MobileBottomNav() {
           style={{ top: TOP_PAD, height: BAR_HEIGHT }}
         >
           <MobileNavLink {...mobileNavItems[0]} pathname={pathname} />
-          <div className="w-24 shrink-0" aria-hidden />
+          <div className="w-[6.5rem] shrink-0" aria-hidden />
           <MobileNavLink {...mobileNavItems[1]} pathname={pathname} />
         </div>
         <button
@@ -201,8 +205,8 @@ export function MobileBottomNav() {
           aria-label="Add expense"
           className={cn(
             "absolute left-1/2 z-10 flex -translate-x-1/2 items-center justify-center rounded-full text-white",
-            "bg-gradient-to-br from-indigo-400 via-violet-500 to-fuchsia-500",
-            "shadow-[0_10px_28px_-6px_rgba(139,92,246,0.85)]",
+            "bg-gradient-to-b from-indigo-400 via-violet-500 to-fuchsia-500",
+            "shadow-[0_0_0_3px_rgba(8,10,28,0.9),0_0_24px_6px_rgba(139,92,246,0.55)]",
             "transition-transform active:scale-95",
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white",
           )}
