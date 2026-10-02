@@ -206,7 +206,7 @@ export function MobileBottomNav() {
           className={cn(
             "absolute left-1/2 z-10 flex -translate-x-1/2 items-center justify-center rounded-full text-white",
             "bg-gradient-to-b from-indigo-400 via-violet-500 to-fuchsia-500",
-            "shadow-[0_0_0_3px_rgba(8,10,28,0.9),0_0_24px_6px_rgba(139,92,246,0.55)]",
+            "shadow-[0_0_24px_6px_rgba(139,92,246,0.55)]",
             "transition-transform active:scale-95",
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white",
           )}
