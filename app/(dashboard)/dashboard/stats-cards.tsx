@@ -41,15 +41,15 @@ export function StatsCards({
   refreshKey,
 }: StatsCardsProps) {
   return (
-    <div className="grid gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-5">
-      <Card>
+    <div className="grid gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-5 [&>*]:min-w-0">
+      <Card className="min-w-0 overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
           <DollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
-            <CountUp end={totalExpenses} duration={300} />
+        <CardContent className="min-w-0">
+          <div className="min-w-0">
+            <CountUp end={totalExpenses} duration={300} fit />
           </div>
           <p className="text-xs text-muted-foreground">
             For the selected date range

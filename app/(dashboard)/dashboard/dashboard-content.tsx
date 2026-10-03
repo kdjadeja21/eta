@@ -566,16 +566,20 @@ export function DashboardContent({ userId }: { userId: string }) {
             <Button
               className="w-1/2 sm:w-auto cursor-pointer"
               onClick={openAddExpense}
+              aria-label="Add Expense"
             >
               <PlusIcon className="mr-2 h-4 w-4" />
-              Add Expense
+              <span className="sm:hidden">Add</span>
+              <span className="hidden sm:inline">Add Expense</span>
             </Button>
             <Button
               className="w-2/4.5 sm:w-auto cursor-pointer"
               onClick={() => setIsBulkUploadOpen(true)}
+              aria-label="Upload Bulk Records"
             >
               <PlusIcon className="mr-2 h-4 w-4" />
-              Upload Bulk Records
+              <span className="sm:hidden">Upload</span>
+              <span className="hidden sm:inline">Upload Bulk Records</span>
             </Button>
           </div>
           <AddCashDialog

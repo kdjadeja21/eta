@@ -22,14 +22,14 @@ export function AverageDailyExpensesCard({ totalExpenses, dateRange }: AverageDa
   const averageDailyExpenses = totalExpenses / daysDiff;
 
   return (
-    <Card>
+    <Card className="min-w-0 overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">Average Daily Expenses</CardTitle>
         <BarChart className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">
-          <CountUp end={averageDailyExpenses} duration={300} />
+      <CardContent className="min-w-0">
+        <div className="min-w-0">
+          <CountUp end={averageDailyExpenses} duration={300} fit />
         </div>
         <p className="text-xs text-muted-foreground">
           Per day average for the period
