@@ -562,9 +562,9 @@ export function DashboardContent({ userId }: { userId: string }) {
             onDateRangeChange={(range) => range && setDateRange(range)}
             className="cursor-pointer w-full sm:w-auto"
           />
-          <div className="flex gap-4 w-full sm:w-auto">
+          <div className="grid w-full grid-cols-2 gap-4 sm:flex sm:w-auto">
             <Button
-              className="w-1/2 sm:w-auto cursor-pointer"
+              className="w-full cursor-pointer sm:w-auto"
               onClick={openAddExpense}
               aria-label="Add Expense"
             >
@@ -573,7 +573,7 @@ export function DashboardContent({ userId }: { userId: string }) {
               <span className="hidden sm:inline">Add Expense</span>
             </Button>
             <Button
-              className="w-2/4.5 sm:w-auto cursor-pointer"
+              className="w-full cursor-pointer sm:w-auto"
               onClick={() => setIsBulkUploadOpen(true)}
               aria-label="Upload Bulk Records"
             >
