@@ -2,6 +2,8 @@
 
 import { format } from "date-fns";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { PendingSyncIcon } from "@/components/pending-sync-icon";
+import type { OptimisticExpense } from "@/hooks/use-optimistic-expenses";
 import { cn } from "@/lib/utils";
 import { getCategoryIcon } from "@/lib/category-icons";
 import { useFormattedCurrency } from "@/lib/currency-utils";
@@ -13,13 +15,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Expense } from "@/lib/expense-service";
 
 interface ExpenseListItemProps {
-  expense: Expense;
+  expense: OptimisticExpense;
   index: number;
-  onEdit: (expense: Expense) => void;
-  onDelete: (expense: Expense) => void;
+  onEdit: (expense: OptimisticExpense) => void;
+  onDelete: (expense: OptimisticExpense) => void;
 }
 
 export function ExpenseListItem({
@@ -80,6 +81,7 @@ export function ExpenseListItem({
           <p className="truncate text-[15px] font-medium leading-tight text-foreground sm:text-base">
             {title}
           </p>
+          {expense.pending ? <PendingSyncIcon /> : null}
           <span
             className={cn(
               "shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-medium tracking-wide",
@@ -110,6 +112,7 @@ export function ExpenseListItem({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-36">
           <DropdownMenuItem
+            disabled={expense.pending}
             onClick={() => onEdit(expense)}
             className="cursor-pointer gap-2"
           >
@@ -117,6 +120,7 @@ export function ExpenseListItem({
             Edit
           </DropdownMenuItem>
           <DropdownMenuItem
+            disabled={expense.pending}
             onClick={() => onDelete(expense)}
             className="cursor-pointer gap-2 text-destructive focus:text-destructive"
           >

@@ -21,6 +21,8 @@ import {
 import { getCategoryIcon } from "@/lib/category-icons";
 import { useFormattedCurrency } from "@/lib/currency-utils";
 import type { Expense } from "@/lib/expense-service";
+import { PendingSyncIcon } from "@/components/pending-sync-icon";
+import type { OptimisticExpense } from "@/hooks/use-optimistic-expenses";
 import { getExpenseTypeStyle } from "@/lib/expense-type-styles";
 import { formatExpenseType } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -151,7 +153,7 @@ function LedgerRow({
   onEdit,
   onDelete,
 }: {
-  expense: Expense;
+  expense: OptimisticExpense;
   onEdit: (expense: Expense) => void;
   onDelete: (expense: Expense) => void;
 }) {
@@ -178,7 +180,10 @@ function LedgerRow({
         <Icon className={cn("size-4", color)} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{title}</p>
+        <p className="flex min-w-0 items-center gap-2 text-sm font-medium">
+          <span className="truncate">{title}</span>
+          {expense.pending ? <PendingSyncIcon /> : null}
+        </p>
         <p className="truncate text-xs text-muted-foreground">{meta}</p>
       </div>
       <span
@@ -205,11 +210,16 @@ function LedgerRow({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-36">
-          <DropdownMenuItem onClick={() => onEdit(expense)} className="cursor-pointer gap-2">
+          <DropdownMenuItem
+            disabled={expense.pending}
+            onClick={() => onEdit(expense)}
+            className="cursor-pointer gap-2"
+          >
             <Pencil />
             Edit
           </DropdownMenuItem>
           <DropdownMenuItem
+            disabled={expense.pending}
             onClick={() => onDelete(expense)}
             className="cursor-pointer gap-2 text-destructive focus:text-destructive"
           >

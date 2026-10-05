@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useOptimistic,
+  startTransition,
+} from "react";
 import type { DateRange } from "react-day-picker";
 import { DateRangePicker } from "@/components/date-range-picker";
 import { StatsCards } from "./stats-cards";
@@ -56,6 +63,12 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useRegisterMobileAddExpense } from "../mobile-add-expense";
+import { PendingSyncIcon } from "@/components/pending-sync-icon";
+import {
+  createPendingExpense,
+  reduceOptimisticExpenses,
+  type OptimisticExpense,
+} from "@/hooks/use-optimistic-expenses";
 
 // Extend the TableMeta type to include onEdit and onDelete
 interface CustomTableMeta {
@@ -83,25 +96,31 @@ const getTypeColor = (type: ExpenseType) => {
   }
 };
 
-export type ExpenseColumn = ColumnDef<Expense>;
+export type ExpenseColumn = ColumnDef<OptimisticExpense>;
 
 export const columns: ExpenseColumn[] = [
   {
     accessorKey: "date",
     header: "Date",
-    cell: ({ row }: { row: { original: Expense } }) =>
+    cell: ({ row }: { row: { original: OptimisticExpense } }) =>
       formatDate(row.original.date, "MMM dd, yyyy"),
   },
   {
     accessorKey: "amount",
     header: "Amount",
-    cell: ({ row, table }: { row: { original: Expense }; table: any }) =>
+    cell: ({ row, table }: { row: { original: OptimisticExpense }; table: any }) =>
       table.options.meta?.formatCurrency?.(row.original.amount) ??
       String(row.original.amount),
   },
   {
     accessorKey: "description",
     header: "Description",
+    cell: ({ row }: { row: { original: OptimisticExpense } }) => (
+      <div className="flex items-center gap-2">
+        <span className="truncate">{row.original.description}</span>
+        {row.original.pending ? <PendingSyncIcon /> : null}
+      </div>
+    ),
   },
   {
     accessorKey: "paidBy",
@@ -118,7 +137,7 @@ export const columns: ExpenseColumn[] = [
   {
     accessorKey: "tags",
     header: "Tags",
-    cell: ({ row }: { row: { original: Expense } }) => (
+    cell: ({ row }: { row: { original: OptimisticExpense } }) => (
       <div className="flex flex-wrap gap-1">
         {row.original.tags &&
           row.original.tags.map((tag: string) => (
@@ -132,7 +151,7 @@ export const columns: ExpenseColumn[] = [
   {
     accessorKey: "type",
     header: "Type",
-    cell: ({ row }: { row: { original: Expense } }) => (
+    cell: ({ row }: { row: { original: OptimisticExpense } }) => (
       <Badge
         className={cn(
           "text-white dark:text-black",
@@ -146,12 +165,13 @@ export const columns: ExpenseColumn[] = [
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row, table }: { row: { original: Expense }; table: any }) => (
+    cell: ({ row, table }: { row: { original: OptimisticExpense }; table: any }) => (
       <div className="flex gap-2">
         <Button
           className="cursor-pointer"
           size="icon"
           variant="ghost"
+          disabled={row.original.pending}
           onClick={() => table.options.meta?.onEdit?.(row.original)}
           aria-label="Edit"
         >
@@ -161,6 +181,7 @@ export const columns: ExpenseColumn[] = [
           className="cursor-pointer"
           size="icon"
           variant="ghost"
+          disabled={row.original.pending}
           onClick={() => table.options.meta?.onDelete?.(row.original.id)}
           aria-label="Delete"
         >
@@ -181,7 +202,11 @@ export function DashboardContent({ userId }: { userId: string }) {
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange);
   const [isDateRangeReady, setIsDateRangeReady] = useState(false);
 
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [expenses, setExpenses] = useState<OptimisticExpense[]>([]);
+  const [optimisticExpenses, applyOptimistic] = useOptimistic(
+    expenses,
+    reduceOptimisticExpenses,
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [isAddCashOpen, setIsAddCashOpen] = useState(false);
@@ -254,36 +279,47 @@ export function DashboardContent({ userId }: { userId: string }) {
     fetchExpenses();
   }, [userId, dateRange, service, isDateRangeReady]);
 
-  const handleAddExpense = async (data: ExpenseFormData) => {
-    try {
-      const savedExpense = await service.addExpense(userId, data);
-      showSuccessToast("Expense added successfully");
-      const isInRange =
-        !dateRange.from ||
-        !dateRange.to ||
-        (savedExpense.date >= dateRange.from &&
-          savedExpense.date <= dateRange.to);
+  const handleAddExpense = (data: ExpenseFormData) => {
+    const pendingExpense = createPendingExpense(data);
+    const isInRange =
+      !dateRange.from ||
+      !dateRange.to ||
+      (pendingExpense.date >= dateRange.from &&
+        pendingExpense.date <= dateRange.to);
+
+    startTransition(async () => {
       if (isInRange) {
-        setExpenses((prev) => [savedExpense, ...prev]);
+        applyOptimistic({ type: "add", expense: pendingExpense });
       }
-      setRefreshKey((prev) => prev + 1);
-    } catch (error) {
-      console.error("Error adding expense:", error);
-    }
+      try {
+        const savedExpense = await service.addExpense(userId, data);
+        showSuccessToast("Expense added successfully");
+        if (isInRange) {
+          setExpenses((prev) => [savedExpense, ...prev]);
+        }
+        setRefreshKey((prev) => prev + 1);
+      } catch (error) {
+        console.error("Error adding expense:", error);
+        showErrorToast("Error adding expense");
+      }
+    });
   };
 
-  const handleUpdateExpense = async (id: string, expense: Partial<Expense>) => {
-    try {
-      await service.updateExpense(id, expense);
-      setExpenses((prev) =>
-        prev.map((e) => (e.id === id ? { ...e, ...expense } : e))
-      );
-      showSuccessToast("Expense updated successfully");
-      setRefreshKey((prev) => prev + 1);
-    } catch (error) {
-      console.error("Error updating expense:", error);
-      showErrorToast("Error updating expense");
-    }
+  const handleUpdateExpense = (id: string, expense: Partial<Expense>) => {
+    startTransition(async () => {
+      applyOptimistic({ type: "update", id, patch: expense });
+      try {
+        await service.updateExpense(id, expense);
+        setExpenses((prev) =>
+          prev.map((e) => (e.id === id ? { ...e, ...expense } : e))
+        );
+        showSuccessToast("Expense updated successfully");
+        setRefreshKey((prev) => prev + 1);
+      } catch (error) {
+        console.error("Error updating expense:", error);
+        showErrorToast("Error updating expense");
+      }
+    });
   };
 
   const handleBulkUpload = async (data: any[]) => {
@@ -315,50 +351,50 @@ export function DashboardContent({ userId }: { userId: string }) {
   };
 
   const amountBounds = useMemo(() => {
-    if (expenses.length === 0) {
+    if (optimisticExpenses.length === 0) {
       return { min: 0, max: 0 };
     }
 
-    const amounts = expenses.map((expense) => expense.amount);
+    const amounts = optimisticExpenses.map((expense) => expense.amount);
     return {
       min: Math.min(...amounts),
       max: Math.max(...amounts),
     };
-  }, [expenses]);
+  }, [optimisticExpenses]);
 
   const filterOptions = [
     {
       columnKey: "paidBy",
       label: "Payment Method",
-      options: uniq(expenses.map((e) => e.paidBy)).filter(
+      options: uniq(optimisticExpenses.map((e) => e.paidBy)).filter(
         (v): v is string => typeof v === "string"
       ),
     },
     {
       columnKey: "category",
       label: "Category",
-      options: uniq(expenses.map((e) => e.category)).filter(
+      options: uniq(optimisticExpenses.map((e) => e.category)).filter(
         (v): v is string => typeof v === "string"
       ),
     },
     {
       columnKey: "subcategory",
       label: "Sub Category",
-      options: uniq(expenses.map((e) => e.subcategory)).filter(
+      options: uniq(optimisticExpenses.map((e) => e.subcategory)).filter(
         (v): v is string => typeof v === "string"
       ),
     },
     {
       columnKey: "tags",
       label: "Tags",
-      options: uniq(expenses.flatMap((e) => e.tags)).filter(
+      options: uniq(optimisticExpenses.flatMap((e) => e.tags)).filter(
         (v): v is string => typeof v === "string"
       ),
     },
     {
       columnKey: "type",
       label: "Type",
-      options: uniq(expenses.map((e) => e.type)).filter((v): v is ExpenseType =>
+      options: uniq(optimisticExpenses.map((e) => e.type)).filter((v): v is ExpenseType =>
         isValidType(v)
       ),
     },
@@ -372,7 +408,7 @@ export function DashboardContent({ userId }: { userId: string }) {
   ];
 
   const filteredExpenses = useMemo(() => {
-    return expenses.filter((expense) => {
+    return optimisticExpenses.filter((expense) => {
       const matchesFilters = Object.entries(filters).every(([key, value]) => {
         if (key === "amount") {
           const [minValue, maxValue] = value.split(",");
@@ -404,18 +440,21 @@ export function DashboardContent({ userId }: { userId: string }) {
 
       return matchesFilters && matchesSearch;
     });
-  }, [expenses, filters, searchQuery]);
+  }, [optimisticExpenses, filters, searchQuery]);
 
   useEffect(() => {
-    const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+    const total = optimisticExpenses.reduce(
+      (sum, expense) => sum + expense.amount,
+      0,
+    );
     setTotalExpenses(total);
-  }, [expenses]);
+  }, [optimisticExpenses]);
 
-  const cashWithdrawals = expenses
+  const cashWithdrawals = optimisticExpenses
     .filter((e) => e.category === "Cash Withdrawal")
     .reduce((sum, e) => sum + e.amount, 0);
 
-  const cashExpenses = expenses
+  const cashExpenses = optimisticExpenses
     .filter((e) => e.paidBy === "Cash")
     .reduce((sum, e) => sum + e.amount, 0);
 
