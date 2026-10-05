@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useOptimistic,
+  useState,
+} from "react";
 import {
   addDays,
   endOfDay,
@@ -33,6 +39,10 @@ import { DailyHeroCard } from "./daily-hero-card";
 import { ExpenseList } from "./expense-list";
 import { DailyViewDesktop } from "./desktop/daily-view-desktop";
 import { useRegisterMobileAddExpense } from "../mobile-add-expense";
+import {
+  createPendingExpense,
+  reduceOptimisticExpenses,
+} from "@/hooks/use-optimistic-expenses";
 
 interface DailyViewContentProps {
   userId: string;
@@ -52,9 +62,17 @@ export function DailyViewContent({
 }: DailyViewContentProps) {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [totalSpent, setTotalSpent] = useState(0);
-  const [trendPercent, setTrendPercent] = useState<number | null>(null);
+  const [yesterdayTotal, setYesterdayTotal] = useState(0);
+  const [optimisticExpenses, applyOptimistic] = useOptimistic(
+    expenses,
+    reduceOptimisticExpenses,
+  );
   const [isLoading, setIsLoading] = useState(true);
+  const totalSpent = optimisticExpenses.reduce(
+    (sum, expense) => sum + expense.amount,
+    0,
+  );
+  const trendPercent = calcTrendPercent(totalSpent, yesterdayTotal);
 
   const [isAddOpen, setIsAddOpen] = useState(initialAddOpen);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -74,19 +92,13 @@ export function DailyViewContent({
       const yesterdayStart = startOfDay(subDays(selectedDate, 1));
       const yesterdayEnd = endOfDay(subDays(selectedDate, 1));
 
-      const [dayExpenses, yesterdayTotal] = await Promise.all([
+      const [dayExpenses, previousDayTotal] = await Promise.all([
         expenseService.getExpenses(userId, dayStart, dayEnd),
         expenseService.getTotalExpenses(userId, yesterdayStart, yesterdayEnd),
       ]);
 
-      const dayTotal = dayExpenses.reduce(
-        (sum, e) => sum + e.amount,
-        0
-      );
-
       setExpenses(dayExpenses);
-      setTotalSpent(dayTotal);
-      setTrendPercent(calcTrendPercent(dayTotal, yesterdayTotal));
+      setYesterdayTotal(previousDayTotal);
     } catch (error) {
       console.error("Error fetching daily expenses:", error);
     } finally {
@@ -123,32 +135,52 @@ export function DailyViewContent({
   const goToToday = () => setSelectedDate(new Date());
 
   const handleAddExpense = async (data: ExpenseFormData) => {
-    try {
-      const newExpense = {
-        ...data,
-        date: data.date ?? selectedDate,
-        id: crypto.randomUUID(),
-      };
-      await expenseService.addExpense(userId, newExpense);
-      showSuccessToast("Expense added successfully");
-      await fetchDayData();
-    } catch (error) {
-      console.error("Error adding expense:", error);
-      showErrorToast("Failed to add expense");
-    }
+    const expenseData = {
+      ...data,
+      date: data.date ?? selectedDate,
+    };
+    const pendingExpense = createPendingExpense(expenseData);
+    const showsOnSelectedDay = isSameDay(pendingExpense.date, selectedDate);
+
+    startTransition(async () => {
+      if (showsOnSelectedDay) {
+        applyOptimistic({ type: "add", expense: pendingExpense });
+      }
+      try {
+        const savedExpense = await expenseService.addExpense(userId, expenseData);
+        showSuccessToast("Expense added successfully");
+        if (showsOnSelectedDay) {
+          setExpenses((prev) => [savedExpense, ...prev]);
+        }
+      } catch (error) {
+        console.error("Error adding expense:", error);
+        showErrorToast("Failed to add expense");
+      }
+    });
   };
 
   const handleUpdateExpense = async (data: ExpenseFormData) => {
     if (!editingExpense?.id) return;
-    try {
-      await expenseService.updateExpense(editingExpense.id, data);
-      showSuccessToast("Expense updated successfully");
-      setEditingExpense(null);
-      await fetchDayData();
-    } catch (error) {
-      console.error("Error updating expense:", error);
-      showErrorToast("Failed to update expense");
-    }
+    const id = editingExpense.id;
+
+    startTransition(async () => {
+      applyOptimistic({ type: "update", id, patch: data });
+      try {
+        await expenseService.updateExpense(id, data);
+        showSuccessToast("Expense updated successfully");
+        setEditingExpense(null);
+        setExpenses((prev) =>
+          prev
+            .map((expense) =>
+              expense.id === id ? { ...expense, ...data } : expense,
+            )
+            .filter((expense) => isSameDay(expense.date, selectedDate)),
+        );
+      } catch (error) {
+        console.error("Error updating expense:", error);
+        showErrorToast("Failed to update expense");
+      }
+    });
   };
 
   const handleDeleteConfirm = async () => {
@@ -183,7 +215,7 @@ export function DailyViewContent({
           />
 
           <ExpenseList
-            expenses={expenses}
+            expenses={optimisticExpenses}
             selectedDate={selectedDate}
             isLoading={isLoading}
             onEdit={(expense) => setEditingExpense(expense)}
@@ -194,7 +226,7 @@ export function DailyViewContent({
 
       <DailyViewDesktop
         selectedDate={selectedDate}
-        expenses={expenses}
+        expenses={optimisticExpenses}
         totalSpent={totalSpent}
         trendPercent={trendPercent}
         isLoading={isLoading}
