@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { PendingSyncIcon } from "@/components/pending-sync-icon";
+import { PendingSyncBadge } from "@/components/pending-sync-icon";
 import type { OptimisticExpense } from "@/hooks/use-optimistic-expenses";
 import { cn } from "@/lib/utils";
 import { getCategoryIcon } from "@/lib/category-icons";
@@ -67,13 +67,16 @@ export function ExpenseListItem({
         )}
       />
 
-      <div
-        className={cn(
-          "relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg sm:h-11 sm:w-11",
-          bg
-        )}
-      >
-        <Icon className={cn("h-[17px] w-[17px] sm:h-[18px] sm:w-[18px]", color)} />
+      <div className="relative shrink-0">
+        <div
+          className={cn(
+            "relative flex h-10 w-10 items-center justify-center rounded-lg sm:h-11 sm:w-11",
+            bg
+          )}
+        >
+          <Icon className={cn("h-[17px] w-[17px] sm:h-[18px] sm:w-[18px]", color)} />
+        </div>
+        {expense.pending ? <PendingSyncBadge /> : null}
       </div>
 
       <div className="relative min-w-0 flex-1">
@@ -81,7 +84,6 @@ export function ExpenseListItem({
           <p className="truncate text-[15px] font-medium leading-tight text-foreground sm:text-base">
             {title}
           </p>
-          {expense.pending ? <PendingSyncIcon /> : null}
           <span
             className={cn(
               "shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-medium tracking-wide",

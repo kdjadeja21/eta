@@ -77,7 +77,6 @@ export function DailyViewContent({
   const [isAddOpen, setIsAddOpen] = useState(initialAddOpen);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   const openAddExpense = useCallback(() => setIsAddOpen(true), []);
   useRegisterMobileAddExpense(openAddExpense);
 
@@ -183,20 +182,22 @@ export function DailyViewContent({
     });
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = () => {
     if (!deletingExpense?.id) return;
-    setIsDeleting(true);
-    try {
-      await expenseService.deleteExpense(deletingExpense.id);
-      showSuccessToast("Expense deleted");
-      setDeletingExpense(null);
-      await fetchDayData();
-    } catch (error) {
-      console.error("Error deleting expense:", error);
-      showErrorToast("Failed to delete expense");
-    } finally {
-      setIsDeleting(false);
-    }
+    const id = deletingExpense.id;
+    setDeletingExpense(null);
+
+    startTransition(async () => {
+      applyOptimistic({ type: "delete", ids: [id] });
+      try {
+        await expenseService.deleteExpense(id);
+        showSuccessToast("Expense deleted");
+        setExpenses((prev) => prev.filter((expense) => expense.id !== id));
+      } catch (error) {
+        console.error("Error deleting expense:", error);
+        showErrorToast("Failed to delete expense");
+      }
+    });
   };
 
   return (
@@ -278,13 +279,12 @@ export function DailyViewContent({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              disabled={isDeleting}
               className="bg-destructive text-white hover:bg-destructive/90"
             >
-              {isDeleting ? "Deleting…" : "Delete"}
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -21,7 +21,7 @@ import {
 import { getCategoryIcon } from "@/lib/category-icons";
 import { useFormattedCurrency } from "@/lib/currency-utils";
 import type { Expense } from "@/lib/expense-service";
-import { PendingSyncIcon } from "@/components/pending-sync-icon";
+import { PendingSyncBadge } from "@/components/pending-sync-icon";
 import type { OptimisticExpense } from "@/hooks/use-optimistic-expenses";
 import { getExpenseTypeStyle } from "@/lib/expense-type-styles";
 import { formatExpenseType } from "@/lib/types";
@@ -171,19 +171,19 @@ function LedgerRow({
       <time className="w-[4.5rem] shrink-0 text-xs tabular-nums text-muted-foreground">
         {format(expense.date, "h:mm a")}
       </time>
-      <span
-        className={cn(
-          "flex size-9 shrink-0 items-center justify-center rounded-lg",
-          bg,
-        )}
-      >
-        <Icon className={cn("size-4", color)} />
+      <span className="relative shrink-0">
+        <span
+          className={cn(
+            "flex size-9 items-center justify-center rounded-lg",
+            bg,
+          )}
+        >
+          <Icon className={cn("size-4", color)} />
+        </span>
+        {expense.pending ? <PendingSyncBadge /> : null}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="flex min-w-0 items-center gap-2 text-sm font-medium">
-          <span className="truncate">{title}</span>
-          {expense.pending ? <PendingSyncIcon /> : null}
-        </p>
+        <p className="truncate text-sm font-medium">{title}</p>
         <p className="truncate text-xs text-muted-foreground">{meta}</p>
       </div>
       <span
