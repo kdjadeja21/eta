@@ -4,7 +4,8 @@ export type OptimisticExpense = Expense & { pending?: boolean };
 
 export type OptimisticExpenseAction =
   | { type: "add"; expense: OptimisticExpense }
-  | { type: "update"; id: string; patch: Partial<Expense> };
+  | { type: "update"; id: string; patch: Partial<Expense> }
+  | { type: "delete"; ids: string[] };
 
 export function createPendingExpense(
   data: ExpenseFormData,
@@ -33,6 +34,8 @@ export function reduceOptimisticExpenses(
           ? { ...expense, ...action.patch, pending: true }
           : expense,
       );
+    case "delete":
+      return current.filter((expense) => !action.ids.includes(expense.id));
     default: {
       const unhandled: never = action;
       return unhandled;
