@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { format, isToday } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useFormattedCurrency } from "@/lib/currency-utils";
+import CountUp from "@/components/count-up";
 
 interface DailyHeroCardProps {
   selectedDate: Date;
@@ -31,7 +31,6 @@ export function DailyHeroCard({
   onNext,
   onGoToToday,
 }: DailyHeroCardProps) {
-  const formatCurrency = useFormattedCurrency();
   const isExpenseFastDay = !isLoading && totalSpent === 0;
 
   const dayLabel = isToday(selectedDate)
@@ -123,7 +122,7 @@ export function DailyHeroCard({
           <div className="mx-auto mt-2.5 h-10 w-36 animate-pulse rounded-xl bg-white/15 sm:h-12 sm:w-44" />
         ) : (
           <p className="mt-1.5 text-[36px] font-bold leading-none tracking-tight text-white sm:text-[42px]">
-            {formatCurrency(totalSpent)}
+            <CountUp end={totalSpent} duration={600} />
           </p>
         )}
 
