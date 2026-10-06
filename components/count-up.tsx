@@ -12,6 +12,10 @@ function integerDigitCount(amount: number) {
   return Math.max(1, String(value).length);
 }
 
+function easeOutCubic(t: number) {
+  return 1 - Math.pow(1 - t, 3);
+}
+
 /**
  * Fallback sizes for amounts longer than five digits. Narrow stat cards
  * (two-up on phones, five-up on large screens) cannot hold text-2xl past that.
@@ -28,32 +32,56 @@ export default function CountUp({
   end,
   duration = 1000,
   fit = false,
+  className,
 }: {
   end: number;
   duration?: number;
   fit?: boolean;
+  className?: string;
 }) {
   const formattedAmount = useFormattedCurrency();
   const [value, setValue] = useState(0);
+  const displayValueRef = useRef(0);
+  const frameRef = useRef<number | undefined>(undefined);
   const containerRef = useRef<HTMLSpanElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
   const formattedEnd = formattedAmount(end);
 
   useEffect(() => {
-    let start = 0;
-    const increment = end / (duration / 10);
-    const interval = setInterval(() => {
-      start += increment;
-      if (start >= end) {
-        clearInterval(interval);
-        setValue(end);
-      } else {
-        setValue(start);
-      }
-    }, 10);
+    const start = displayValueRef.current;
+    const target = end;
 
-    return () => clearInterval(interval);
+    if (start === target) {
+      setValue(target);
+      return;
+    }
+
+    const startTime = performance.now();
+
+    const tick = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = easeOutCubic(progress);
+      const next = start + (target - start) * eased;
+
+      if (progress >= 1) {
+        displayValueRef.current = target;
+        setValue(target);
+        return;
+      }
+
+      displayValueRef.current = next;
+      setValue(next);
+      frameRef.current = requestAnimationFrame(tick);
+    };
+
+    frameRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      if (frameRef.current !== undefined) {
+        cancelAnimationFrame(frameRef.current);
+      }
+    };
   }, [end, duration]);
 
   useLayoutEffect(() => {
@@ -107,11 +135,15 @@ export default function CountUp({
   }, [end, fit, formattedEnd]);
 
   if (!fit) {
-    return <span>{formattedAmount(value)}</span>;
+    return (
+      <span className={cn("tabular-nums", className)}>
+        {formattedAmount(value)}
+      </span>
+    );
   }
 
   return (
-    <span ref={containerRef} className="relative block w-full min-w-0">
+    <span ref={containerRef} className={cn("relative block w-full min-w-0", className)}>
       <span
         ref={textRef}
         className={cn(

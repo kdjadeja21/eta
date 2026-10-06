@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { format, isToday } from "date-fns";
 import { ChevronLeft, ChevronRight, Wallet } from "lucide-react";
 import { getCategoryIcon } from "@/lib/category-icons";
+import CountUp from "@/components/count-up";
 import { useFormattedCurrency } from "@/lib/currency-utils";
 import type { Expense } from "@/lib/expense-service";
 import { ExpenseType, formatExpenseType } from "@/lib/types";
@@ -78,7 +79,7 @@ export function DailyDesktopBrief({
           <div className="mt-3 h-10 w-40 animate-pulse rounded-md bg-muted" />
         ) : (
           <p className="mt-1 text-4xl font-semibold tracking-tight tabular-nums">
-            {formatCurrency(totalSpent)}
+            <CountUp end={totalSpent} duration={600} />
           </p>
         )}
         <p className="mt-2 text-sm text-muted-foreground">
