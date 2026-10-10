@@ -16,7 +16,6 @@ interface ReportHeroProps {
 export function ReportHero({ report, comparison }: ReportHeroProps) {
   const deltaAbs = comparison ? Math.abs(comparison.totalDeltaPct) : 0;
   const isUp = comparison?.trend === "up";
-  const isDown = comparison?.trend === "down";
 
   return (
     <div className="relative w-full overflow-hidden rounded-2xl">
@@ -49,11 +48,12 @@ export function ReportHero({ report, comparison }: ReportHeroProps) {
             {report.monthLabel}
           </h1>
 
-          {/* Big total */}
-          <div className="flex items-end gap-4 mt-2">
-            <div>
+          {/* Big total. On narrow screens the comparison chip sits on its own
+              row so it cannot shrink and get clipped by the card. */}
+          <div className="mt-2 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-4">
+            <div className="min-w-0 max-w-full">
               <p className="text-xs text-muted-foreground mb-1">Total Spent</p>
-              <p className="text-5xl sm:text-6xl font-black tabular-nums">
+              <p className="text-4xl font-black tabular-nums tracking-tight min-[420px]:text-5xl sm:text-6xl">
                 <CountUp end={report.summary.totalSpent} duration={1200} />
               </p>
             </div>
@@ -61,23 +61,23 @@ export function ReportHero({ report, comparison }: ReportHeroProps) {
             {comparison && comparison.trend !== "flat" && (
               <div
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold mb-2",
+                  "inline-flex w-max max-w-full shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold sm:mb-2",
                   isUp
                     ? "bg-red-500/15 text-red-500"
                     : "bg-green-500/15 text-green-500"
                 )}
               >
                 {isUp ? (
-                  <TrendingUp className="h-4 w-4" />
+                  <TrendingUp className="h-4 w-4 shrink-0" />
                 ) : (
-                  <TrendingDown className="h-4 w-4" />
+                  <TrendingDown className="h-4 w-4 shrink-0" />
                 )}
                 {deltaAbs.toFixed(1)}% vs last month
               </div>
             )}
             {comparison?.trend === "flat" && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold mb-2 bg-muted text-muted-foreground">
-                <Minus className="h-4 w-4" />
+              <div className="inline-flex w-max max-w-full shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-muted px-3 py-1.5 text-sm font-semibold text-muted-foreground sm:mb-2">
+                <Minus className="h-4 w-4 shrink-0" />
                 Similar to last month
               </div>
             )}
