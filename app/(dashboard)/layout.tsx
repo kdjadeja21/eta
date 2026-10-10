@@ -7,6 +7,7 @@ import { auth } from "@clerk/nextjs/server";
 import { CurrencyProvider } from "@/components/currency-context";
 import { CurrencyDropdown } from "@/components/currency-dropdown";
 import { DashboardNav, MobileBottomNav } from "./dashboard-nav";
+import { DashboardFooter } from "./dashboard-footer";
 import { MobileAddExpenseProvider } from "./mobile-add-expense";
 
 export default async function DashboardLayout({
@@ -39,9 +40,8 @@ export default async function DashboardLayout({
               <UserButton />
             </div>
           </header>
-          <main className="flex-1 pb-[calc(7.25rem+env(safe-area-inset-bottom)+var(--vv-offset-bottom))] md:pb-0">
-            {children}
-          </main>
+          <main className="flex-1">{children}</main>
+          <DashboardFooter />
           <MobileBottomNav />
         </div>
       </MobileAddExpenseProvider>
