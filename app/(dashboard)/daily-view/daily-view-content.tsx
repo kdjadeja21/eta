@@ -56,6 +56,32 @@ function calcTrendPercent(current: number, previous: number): number | null {
   return Math.round(((current - previous) / previous) * 100);
 }
 
+const scrollResetTimers = new Set<number>();
+
+function scrollPageToTop() {
+  for (const timer of scrollResetTimers) {
+    window.clearTimeout(timer);
+  }
+  scrollResetTimers.clear();
+
+  const apply = () => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  };
+
+  const active = document.activeElement;
+  if (active instanceof HTMLElement && active !== document.body) {
+    active.blur();
+  }
+
+  apply();
+  requestAnimationFrame(apply);
+  for (const delay of [50, 350]) {
+    scrollResetTimers.add(window.setTimeout(apply, delay));
+  }
+}
+
 export function DailyViewContent({
   userId,
   initialAddOpen = false,
@@ -245,6 +271,7 @@ export function DailyViewContent({
         open={isAddOpen}
         onOpenChange={setIsAddOpen}
         onSubmit={handleAddExpense}
+        onClosed={scrollPageToTop}
         userId={userId}
         defaultDate={selectedDate}
       />
@@ -254,6 +281,7 @@ export function DailyViewContent({
         open={!!editingExpense}
         onOpenChange={(open) => { if (!open) setEditingExpense(null); }}
         onSubmit={handleUpdateExpense}
+        onClosed={scrollPageToTop}
         expense={editingExpense}
         userId={userId}
       />

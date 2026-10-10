@@ -81,6 +81,7 @@ interface AddExpenseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: FormValues) => Promise<void>;
+  onClosed?: () => void;
   expense?: Expense | null;
   userId: string;
   defaultDate?: Date;
@@ -90,6 +91,7 @@ export function AddExpenseDialog({
   open,
   onOpenChange,
   onSubmit,
+  onClosed,
   expense,
   userId,
   defaultDate,
@@ -188,6 +190,11 @@ export function AddExpenseDialog({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side={isMobile ? "bottom" : "right"}
+        onCloseAutoFocus={(event) => {
+          if (!onClosed) return;
+          event.preventDefault();
+          onClosed();
+        }}
         className={cn(
           "gap-0 p-0",
           isMobile
