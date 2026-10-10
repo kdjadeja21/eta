@@ -250,34 +250,38 @@ function StatCardsRow({
   const cards = [
     {
       title: "Total Spent",
-      value: <CountUp end={summary.totalSpent} duration={1000} />,
+      value: <CountUp end={summary.totalSpent} duration={1000} fit />,
       icon: <TrendingUp className="h-4 w-4 text-muted-foreground" />,
     },
     {
       title: "Transactions",
-      value: <span>{summary.transactionCount}</span>,
+      value: (
+        <span className="block text-xl font-bold tabular-nums leading-tight sm:text-2xl">
+          {summary.transactionCount}
+        </span>
+      ),
       icon: <BarChart3 className="h-4 w-4 text-muted-foreground" />,
     },
     {
       title: "Avg Daily",
-      value: <CountUp end={summary.avgDaily} duration={900} />,
+      value: <CountUp end={summary.avgDaily} duration={900} fit />,
       icon: <CreditCard className="h-4 w-4 text-muted-foreground" />,
     },
     {
       title: "Largest",
-      value: <CountUp end={summary.largestExpense} duration={800} />,
+      value: <CountUp end={summary.largestExpense} duration={800} fit />,
       subtitle: summary.largestExpenseDescription,
       icon: <ShoppingBag className="h-4 w-4 text-muted-foreground" />,
     },
   ];
 
   return (
-    <div ref={ref} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div ref={ref} className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
       {cards.map((c, i) => (
         <Card
           key={c.title}
           className={cn(
-            "transition-all duration-500",
+            "min-w-0 transition-all duration-500",
             inView ? "reveal-up opacity-100" : "opacity-0 translate-y-4",
             i === 0 && "stagger-1",
             i === 1 && "stagger-2",
@@ -285,12 +289,12 @@ function StatCardsRow({
             i === 3 && "stagger-4"
           )}
         >
-          <CardContent className="p-5">
-            <div className="flex items-start justify-between">
+          <CardContent className="p-3.5 sm:p-5">
+            <div className="flex items-start justify-between gap-2">
               <p className="text-sm text-muted-foreground">{c.title}</p>
               {c.icon}
             </div>
-            <p className="text-2xl font-bold mt-1">{c.value}</p>
+            <div className="mt-1 min-w-0">{c.value}</div>
             {c.subtitle && (
               <p className="text-xs text-muted-foreground mt-0.5 truncate">{c.subtitle}</p>
             )}
@@ -514,7 +518,7 @@ function ReportSkeleton() {
             <div key={i} className="h-9 w-40 bg-muted rounded-xl" />
           ))}
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <Card key={i}><CardContent className="p-5 h-24" /></Card>
           ))}
