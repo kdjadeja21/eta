@@ -12,8 +12,14 @@ function integerDigitCount(amount: number) {
   return Math.max(1, String(value).length);
 }
 
-function easeOutCubic(t: number) {
-  return 1 - Math.pow(1 - t, 3);
+/**
+ * Most of the distance is covered early. The last few percent use the
+ * remaining half of the duration, so the digits settle instead of stopping
+ * at a constant speed.
+ * At halfway, about 97% of the change is shown.
+ */
+function easeOutQuint(t: number) {
+  return 1 - Math.pow(1 - t, 5);
 }
 
 /**
@@ -61,7 +67,7 @@ export default function CountUp({
 
     const tick = (now: number) => {
       const progress = Math.min((now - startTime) / duration, 1);
-      const eased = easeOutCubic(progress);
+      const eased = easeOutQuint(progress);
       const next = start + (target - start) * eased;
 
       if (progress >= 1) {
