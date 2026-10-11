@@ -122,7 +122,7 @@ export function DailyHeroCard({
           <div className="mx-auto mt-2.5 h-10 w-36 animate-pulse rounded-xl bg-white/15 sm:h-12 sm:w-44" />
         ) : (
           <p className="mt-1.5 text-[36px] font-bold leading-none tracking-tight text-white sm:text-[42px]">
-            <CountUp end={totalSpent} />
+            <CountUp end={totalSpent} duration={600} />
           </p>
         )}
 

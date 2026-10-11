@@ -79,7 +79,7 @@ export function DailyDesktopBrief({
           <div className="mt-3 h-10 w-40 animate-pulse rounded-md bg-muted" />
         ) : (
           <p className="mt-1 text-4xl font-semibold tracking-tight tabular-nums">
-            <CountUp end={totalSpent} />
+            <CountUp end={totalSpent} duration={600} />
           </p>
         )}
         <p className="mt-2 text-sm text-muted-foreground">

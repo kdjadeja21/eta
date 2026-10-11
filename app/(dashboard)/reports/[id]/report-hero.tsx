@@ -54,7 +54,7 @@ export function ReportHero({ report, comparison }: ReportHeroProps) {
             <div className="min-w-0 max-w-full">
               <p className="text-xs text-muted-foreground mb-1">Total Spent</p>
               <p className="text-4xl font-black tabular-nums tracking-tight min-[420px]:text-5xl sm:text-6xl">
-                <CountUp end={report.summary.totalSpent} />
+                <CountUp end={report.summary.totalSpent} duration={1200} />
               </p>
             </div>
 
@@ -91,7 +91,7 @@ export function ReportHero({ report, comparison }: ReportHeroProps) {
             </div>
             <div>
               <span className="text-muted-foreground">Avg / day </span>
-              <CountUp end={report.summary.avgDaily} />
+              <CountUp end={report.summary.avgDaily} duration={1000} />
             </div>
           </div>
 
