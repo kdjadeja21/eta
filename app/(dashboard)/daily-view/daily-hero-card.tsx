@@ -33,9 +33,9 @@ export function DailyHeroCard({
 }: DailyHeroCardProps) {
   const isExpenseFastDay = !isLoading && totalSpent === 0;
 
-  const dayLabel = isToday(selectedDate)
-    ? "TODAY"
-    : format(selectedDate, "EEEE").toUpperCase();
+  const viewingToday = isToday(selectedDate);
+  const dayLabel = viewingToday ? "Today" : format(selectedDate, "EEE");
+  const dateLabel = format(selectedDate, "MMM d, yyyy");
 
   return (
     <div
@@ -96,13 +96,15 @@ export function DailyHeroCard({
 
       {/* Date */}
       <div className="relative text-center">
-        <p className="text-[10px] font-semibold tracking-[0.2em] text-white/75 sm:text-[11px]">
-          {dayLabel}
+        <p className="flex items-baseline justify-center gap-2">
+          <span className="text-sm font-semibold text-white/75 sm:text-base">
+            {dayLabel}
+          </span>
+          <span className="text-sm font-semibold text-white sm:text-base">
+            {dateLabel}
+          </span>
         </p>
-        <p className="mt-0.5 text-sm font-semibold text-white sm:text-base">
-          {format(selectedDate, "MMMM d, yyyy")}
-        </p>
-        {!isToday(selectedDate) && (
+        {!viewingToday && (
           <button
             type="button"
             onClick={onGoToToday}
