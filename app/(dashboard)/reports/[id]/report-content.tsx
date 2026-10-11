@@ -250,7 +250,7 @@ function StatCardsRow({
   const cards = [
     {
       title: "Total Spent",
-      value: <CountUp end={summary.totalSpent} duration={1000} fit />,
+      value: <CountUp end={summary.totalSpent} fit />,
       icon: <TrendingUp className="h-4 w-4 text-muted-foreground" />,
     },
     {
@@ -264,12 +264,12 @@ function StatCardsRow({
     },
     {
       title: "Avg Daily",
-      value: <CountUp end={summary.avgDaily} duration={900} fit />,
+      value: <CountUp end={summary.avgDaily} fit />,
       icon: <CreditCard className="h-4 w-4 text-muted-foreground" />,
     },
     {
       title: "Largest",
-      value: <CountUp end={summary.largestExpense} duration={800} fit />,
+      value: <CountUp end={summary.largestExpense} fit />,
       subtitle: summary.largestExpenseDescription,
       icon: <ShoppingBag className="h-4 w-4 text-muted-foreground" />,
     },

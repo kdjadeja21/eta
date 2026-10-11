@@ -29,7 +29,7 @@ export function AverageDailyExpensesCard({ totalExpenses, dateRange }: AverageDa
       </CardHeader>
       <CardContent className="min-w-0">
         <div className="min-w-0">
-          <CountUp end={averageDailyExpenses} duration={300} fit />
+          <CountUp end={averageDailyExpenses} fit />
         </div>
         <p className="text-xs text-muted-foreground">
           Per day average for the period

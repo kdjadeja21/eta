@@ -12,14 +12,32 @@ function integerDigitCount(amount: number) {
   return Math.max(1, String(value).length);
 }
 
+const BRAKE_START = 0.32;
+const BRAKE_END = 0.52;
+const SPEED_RATIO = 4;
+const BRAKE_SPAN = BRAKE_END - BRAKE_START;
+const TAIL = 1 - BRAKE_END;
+const SLOW_SPEED =
+  1 / (SPEED_RATIO * BRAKE_START + BRAKE_SPAN * 0.5 * (SPEED_RATIO + 1) + TAIL);
+const FAST_SPEED = SPEED_RATIO * SLOW_SPEED;
+const VALUE_AT_BRAKE_END =
+  FAST_SPEED * BRAKE_START + BRAKE_SPAN * 0.5 * (FAST_SPEED + SLOW_SPEED);
+
 /**
- * Most of the distance is covered early. The last few percent use the
- * remaining half of the duration, so the digits settle instead of stopping
- * at a constant speed.
- * At halfway, about 97% of the change is shown.
+ * Rushes through the early digits, then counts the last fifth of the amount
+ * about four times slower. A short ease only in the last few percent still
+ * looks like one speed, because those digits are already the final total.
  */
-function easeOutQuint(t: number) {
-  return 1 - Math.pow(1 - t, 5);
+function easeSettle(t: number) {
+  if (t <= BRAKE_START) return FAST_SPEED * t;
+  if (t >= BRAKE_END) return VALUE_AT_BRAKE_END + SLOW_SPEED * (t - BRAKE_END);
+
+  const u = (t - BRAKE_START) / BRAKE_SPAN;
+  const integral = u * u * u - 0.5 * u * u * u * u;
+  return (
+    FAST_SPEED * BRAKE_START +
+    BRAKE_SPAN * (FAST_SPEED * u + (SLOW_SPEED - FAST_SPEED) * integral)
+  );
 }
 
 /**
@@ -36,7 +54,7 @@ function amountSizeClass(digits: number) {
 
 export default function CountUp({
   end,
-  duration = 1000,
+  duration = 1800,
   fit = false,
   className,
 }: {
@@ -67,7 +85,7 @@ export default function CountUp({
 
     const tick = (now: number) => {
       const progress = Math.min((now - startTime) / duration, 1);
-      const eased = easeOutQuint(progress);
+      const eased = easeSettle(progress);
       const next = start + (target - start) * eased;
 
       if (progress >= 1) {

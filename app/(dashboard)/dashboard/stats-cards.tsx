@@ -49,7 +49,7 @@ export function StatsCards({
         </CardHeader>
         <CardContent className="min-w-0">
           <div className="min-w-0">
-            <CountUp end={totalExpenses} duration={300} fit />
+            <CountUp end={totalExpenses} fit />
           </div>
           <p className="text-xs text-muted-foreground">
             For the selected date range
@@ -64,7 +64,7 @@ export function StatsCards({
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            <CountUp end={onHandCash} duration={300} />
+            <CountUp end={onHandCash} />
           </div>
           <p className="text-xs text-muted-foreground">
             Cash withdrawals minus cash expenses
