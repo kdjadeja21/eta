@@ -1,3 +1,4 @@
+import { isSameDay } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { startOfMonth } from "@/lib/utils";
 
@@ -7,11 +8,26 @@ function getStorageKey(userId: string) {
   return `${STORAGE_KEY_PREFIX}:${userId}`;
 }
 
-export function getDefaultDateRange(): DateRange {
+export function getDefaultDateRange(now = new Date()): DateRange {
   return {
-    from: startOfMonth(new Date()),
-    to: new Date(),
+    from: startOfMonth(now),
+    to: now,
   };
+}
+
+export function isDefaultDateRange(
+  dateRange: DateRange | undefined,
+  now = new Date()
+): boolean {
+  const defaults = getDefaultDateRange(now);
+  if (!dateRange?.from || !dateRange.to || !defaults.from || !defaults.to) {
+    return false;
+  }
+
+  return (
+    isSameDay(dateRange.from, defaults.from) &&
+    isSameDay(dateRange.to, defaults.to)
+  );
 }
 
 export function loadStoredDateRange(userId: string): DateRange | null {
@@ -40,6 +56,18 @@ export function loadStoredDateRange(userId: string): DateRange | null {
     return { from, to };
   } catch {
     return null;
+  }
+}
+
+export function clearStoredDateRange(userId: string): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    localStorage.removeItem(getStorageKey(userId));
+  } catch {
+    // Ignore storage failures (private mode, quota, etc.)
   }
 }
 
