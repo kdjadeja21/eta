@@ -40,58 +40,55 @@ export function DailyHeroCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl px-3 py-5 sm:rounded-3xl sm:px-4 sm:py-6",
+        "relative overflow-hidden rounded-2xl py-5 sm:rounded-3xl sm:py-6",
         isExpenseFastDay
           ? "bg-gradient-to-br from-primary via-emerald-600 to-teal-600 shadow-[0_16px_48px_-10px_rgba(16,185,129,0.42)] dark:from-slate-900 dark:via-emerald-950 dark:to-teal-950 dark:shadow-[0_20px_56px_-14px_rgba(6,78,59,0.6)]"
           : "bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-500 shadow-[0_16px_48px_-10px_rgba(99,102,241,0.45)] dark:bg-gradient-to-br dark:from-slate-900 dark:via-indigo-950 dark:to-violet-950 dark:shadow-[0_20px_56px_-14px_rgba(30,27,75,0.65)]",
         "dark:ring-1 dark:ring-white/[0.07]"
       )}
     >
-      <div>
-        <div className="flex items-center">
-          <button
-            type="button"
-            onClick={onPrev}
-            aria-label="Previous day"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-white transition-all active:scale-95 sm:h-9 sm:w-9"
-          >
-            <ChevronLeft className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
-          </button>
-          <p className="flex min-w-0 flex-1 items-center justify-center gap-2 leading-none">
-            <span className="text-sm font-semibold text-white/75 sm:text-base">
-              {dayLabel}
-            </span>
-            <span className="text-sm font-semibold text-white sm:text-base">
-              {dateLabel}
-            </span>
-          </p>
-          <button
-            type="button"
-            onClick={onNext}
-            disabled={!canGoNext}
-            aria-label="Next day"
-            className={cn(
-              "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-white transition-all active:scale-95 sm:h-9 sm:w-9",
-              !canGoNext && "cursor-not-allowed opacity-35"
-            )}
-          >
-            <ChevronRight className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
-          </button>
-        </div>
+      <button
+        type="button"
+        onClick={onPrev}
+        aria-label="Previous day"
+        className="absolute left-3 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white transition-all active:scale-95 sm:left-4 sm:h-9 sm:w-9"
+      >
+        <ChevronLeft className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
+      </button>
+      <button
+        type="button"
+        onClick={onNext}
+        disabled={!canGoNext}
+        aria-label="Next day"
+        className={cn(
+          "absolute right-3 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white transition-all active:scale-95 sm:right-4 sm:h-9 sm:w-9",
+          !canGoNext && "cursor-not-allowed opacity-35"
+        )}
+      >
+        <ChevronRight className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
+      </button>
+
+      <div className="px-12 text-center sm:px-16">
+        <p className="flex items-center justify-center gap-2 leading-none">
+          <span className="text-sm font-semibold text-white/75 sm:text-base">
+            {dayLabel}
+          </span>
+          <span className="text-sm font-semibold text-white sm:text-base">
+            {dateLabel}
+          </span>
+        </p>
         {!viewingToday && (
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={onGoToToday}
-              className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-0.5 text-[11px] font-semibold text-white/90 transition-all hover:bg-white/30 active:scale-95"
-            >
-              Back to Today
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={onGoToToday}
+            className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-0.5 text-[11px] font-semibold text-white/90 transition-all hover:bg-white/30 active:scale-95"
+          >
+            Back to Today
+          </button>
         )}
       </div>
 
-      <div className="mt-5 text-center sm:mt-6">
+      <div className="mt-5 px-12 text-center sm:mt-6 sm:px-16">
         <p className="text-[10px] font-semibold tracking-[0.18em] text-white/70 sm:text-[11px]">
           TOTAL SPENT
         </p>
