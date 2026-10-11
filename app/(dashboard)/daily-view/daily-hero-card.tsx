@@ -70,49 +70,47 @@ export function DailyHeroCard({
         )}
       />
 
-      {/* Prev button — absolute, vertically centered to the card */}
-      <button
-        type="button"
-        onClick={onPrev}
-        aria-label="Previous day"
-        className="absolute left-3 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-all active:scale-95 sm:left-4 sm:h-9 sm:w-9"
-      >
-        <ChevronLeft className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
-      </button>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={onPrev}
+          aria-label="Previous day"
+          className="absolute -left-7 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-all active:scale-95 sm:-left-10 sm:h-9 sm:w-9"
+        >
+          <ChevronLeft className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
+        </button>
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={!canGoNext}
+          aria-label="Next day"
+          className={cn(
+            "absolute -right-7 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-all active:scale-95 sm:-right-10 sm:h-9 sm:w-9",
+            !canGoNext && "cursor-not-allowed opacity-35"
+          )}
+        >
+          <ChevronRight className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
+        </button>
 
-      {/* Next button — absolute, vertically centered to the card */}
-      <button
-        type="button"
-        onClick={onNext}
-        disabled={!canGoNext}
-        aria-label="Next day"
-        className={cn(
-          "absolute right-3 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-all active:scale-95 sm:right-4 sm:h-9 sm:w-9",
-          !canGoNext && "cursor-not-allowed opacity-35"
-        )}
-      >
-        <ChevronRight className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
-      </button>
-
-      {/* Date */}
-      <div className="relative text-center">
-        <p className="flex items-baseline justify-center gap-2">
-          <span className="text-sm font-semibold text-white/75 sm:text-base">
-            {dayLabel}
-          </span>
-          <span className="text-sm font-semibold text-white sm:text-base">
-            {dateLabel}
-          </span>
-        </p>
-        {!viewingToday && (
-          <button
-            type="button"
-            onClick={onGoToToday}
-            className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-0.5 text-[11px] font-semibold text-white/90 backdrop-blur-sm transition-all hover:bg-white/30 active:scale-95"
-          >
-            Back to Today
-          </button>
-        )}
+        <div className="relative text-center">
+          <p className="flex items-baseline justify-center gap-2">
+            <span className="text-sm font-semibold text-white/75 sm:text-base">
+              {dayLabel}
+            </span>
+            <span className="text-sm font-semibold text-white sm:text-base">
+              {dateLabel}
+            </span>
+          </p>
+          {!viewingToday && (
+            <button
+              type="button"
+              onClick={onGoToToday}
+              className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-0.5 text-[11px] font-semibold text-white/90 backdrop-blur-sm transition-all hover:bg-white/30 active:scale-95"
+            >
+              Back to Today
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Amount section */}
