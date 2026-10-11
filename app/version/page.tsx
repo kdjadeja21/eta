@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ModeToggle } from "@/components/mode-toggle";
 import versionData from "@/lib/version.json";
 import { VersionDetails } from "./version-details";
+import { VersionScreen } from "./version-screen";
 
 export const metadata: Metadata = {
   title: "Version | Expense Tracker",
@@ -11,8 +12,8 @@ export const metadata: Metadata = {
 
 export default function VersionPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <header className="flex h-16 items-center justify-between border-b px-4 md:px-6">
+    <VersionScreen>
+      <header className="flex h-12 shrink-0 items-center justify-between border-b px-4 md:px-6 [@media(max-height:560px)]:!h-10">
         <Link
           href="/daily-view"
           className="flex items-center gap-2 font-semibold transition-opacity hover:opacity-80"
@@ -23,13 +24,13 @@ export default function VersionPage() {
         <ModeToggle />
       </header>
 
-      <main className="flex flex-1 items-center justify-center p-4 md:p-8">
+      <main className="flex min-h-0 flex-1 items-center justify-center overflow-hidden px-3 py-2 sm:px-4 sm:py-3 [@media(max-height:560px)]:py-1.5 [@media(max-height:360px)]:py-1">
         <VersionDetails
           version={versionData.version}
           lastUpdated={versionData.lastUpdated}
           timezone={versionData.timezone}
         />
       </main>
-    </div>
+    </VersionScreen>
   );
 }
