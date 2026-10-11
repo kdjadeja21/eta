@@ -48,6 +48,7 @@ import { NeedsWantsGauge } from "./needs-wants-gauge";
 import { CategoryBreakdownChart } from "./category-breakdown";
 import { ComparisonSection } from "./comparison-section";
 import { DownloadPdfButton } from "./download-pdf-button";
+import { FixedVsNewSection } from "./fixed-vs-new-section";
 import { cn } from "@/lib/utils";
 
 const CHART_COLORS = [
@@ -170,6 +171,8 @@ export function ReportContent({ reportId, userId }: ReportContentProps) {
 
         {/* ── Highlight chips ── */}
         <InsightHighlights highlights={highlights} />
+
+        <FixedVsNewSection userId={userId} reportMonth={report.month} />
 
         {/* ── Stat cards ── */}
         <StatCardsRow summary={summary} formatCurrency={formatCurrency} />

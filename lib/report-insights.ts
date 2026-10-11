@@ -256,3 +256,164 @@ export function weekdayBreakdown(dailyTotals: DailyTotal[]): WeekdaySpend[] {
 
   return DAY_NAMES.map((day, i) => ({ day, ...acc[i] }));
 }
+
+// ─── Fixed vs new, over up to the previous 3 months ──────────────────────────
+
+export type ExpenseMatchMode = "description" | "category";
+
+export interface BaselineExpense {
+  amount: number;
+  description?: string;
+  category?: string;
+  /** Calendar month the expense belongs to, "yyyy-MM". */
+  month: string;
+}
+
+export interface FixedOrNewItem {
+  key: string;
+  label: string;
+  currentAmount: number;
+  priorAmount: number;
+  /** How many of the earlier months with data included this expense. */
+  priorMonthCount: number;
+  transactionCount: number;
+}
+
+export interface FixedVsNewInsight {
+  mode: ExpenseMatchMode;
+  /** Earlier months (oldest first) that actually contain expenses. */
+  comparedMonthKeys: string[];
+  /** Always the full lookback window, even when a month has no expenses. */
+  lookbackMonthKeys: string[];
+  fixed: FixedOrNewItem[];
+  added: FixedOrNewItem[];
+  fixedTotal: number;
+  addedTotal: number;
+}
+
+const EMPTY_DESCRIPTION = "No description";
+const EMPTY_CATEGORY = "Uncategorized";
+
+/** Up to `count` calendar months immediately before `month`, oldest first. */
+export function previousMonthKeys(month: string, count = 3): string[] {
+  if (!/^\d{4}-\d{2}$/.test(month) || count < 1) return [];
+  const [year, monthNum] = month.split("-").map(Number);
+  const keys: string[] = [];
+  for (let i = count; i >= 1; i--) {
+    const d = new Date(year, monthNum - 1 - i, 1);
+    keys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  return keys;
+}
+
+/**
+ * Split this month's spending into expenses already seen in the previous
+ * months (`fixed`) and expenses that show up for the first time (`added`).
+ * Matching is by normalized description or category.
+ */
+export function buildFixedVsNewInsight(
+  expenses: BaselineExpense[],
+  reportMonth: string,
+  mode: ExpenseMatchMode,
+  lookback = 3,
+): FixedVsNewInsight {
+  const lookbackMonthKeys = previousMonthKeys(reportMonth, lookback);
+  const priorSet = new Set(lookbackMonthKeys);
+  const monthsWithData = new Set<string>();
+  const groups = new Map<
+    string,
+    {
+      label: string;
+      currentAmount: number;
+      currentCount: number;
+      priorAmount: number;
+      priorMonths: Set<string>;
+    }
+  >();
+
+  for (const expense of expenses) {
+    const inCurrent = expense.month === reportMonth;
+    const inPrior = priorSet.has(expense.month);
+    if (!inCurrent && !inPrior) continue;
+    if (!Number.isFinite(expense.amount)) continue;
+
+    if (inPrior) monthsWithData.add(expense.month);
+
+    const { key, label } = expenseGroup(mode, expense);
+    let acc = groups.get(key);
+    if (!acc) {
+      acc = {
+        label,
+        currentAmount: 0,
+        currentCount: 0,
+        priorAmount: 0,
+        priorMonths: new Set(),
+      };
+      groups.set(key, acc);
+    } else if (inCurrent) {
+      acc.label = label;
+    }
+
+    if (inCurrent) {
+      acc.currentAmount += expense.amount;
+      acc.currentCount += 1;
+    } else {
+      acc.priorAmount += expense.amount;
+      acc.priorMonths.add(expense.month);
+    }
+  }
+
+  const fixed: FixedOrNewItem[] = [];
+  const added: FixedOrNewItem[] = [];
+
+  for (const [key, acc] of groups) {
+    if (acc.currentCount === 0) continue;
+    const item: FixedOrNewItem = {
+      key,
+      label: acc.label,
+      currentAmount: acc.currentAmount,
+      priorAmount: acc.priorAmount,
+      priorMonthCount: acc.priorMonths.size,
+      transactionCount: acc.currentCount,
+    };
+    if (acc.priorMonths.size > 0) fixed.push(item);
+    else added.push(item);
+  }
+
+  const byAmount = (a: FixedOrNewItem, b: FixedOrNewItem) =>
+    b.currentAmount - a.currentAmount || a.label.localeCompare(b.label);
+  fixed.sort(byAmount);
+  added.sort(byAmount);
+
+  return {
+    mode,
+    comparedMonthKeys: lookbackMonthKeys.filter((key) => monthsWithData.has(key)),
+    lookbackMonthKeys,
+    fixed,
+    added,
+    fixedTotal: fixed.reduce((sum, item) => sum + item.currentAmount, 0),
+    addedTotal: added.reduce((sum, item) => sum + item.currentAmount, 0),
+  };
+}
+
+function expenseGroup(
+  mode: ExpenseMatchMode,
+  expense: BaselineExpense,
+): { key: string; label: string } {
+  switch (mode) {
+    case "description":
+      return labeledGroup(expense.description, EMPTY_DESCRIPTION);
+    case "category":
+      return labeledGroup(expense.category, EMPTY_CATEGORY);
+    default: {
+      const _exhaustive: never = mode;
+      return _exhaustive;
+    }
+  }
+}
+
+function labeledGroup(raw: string | undefined, emptyLabel: string): { key: string; label: string } {
+  const cleaned = (raw ?? "").trim().replace(/\s+/g, " ");
+  if (!cleaned) return { key: "", label: emptyLabel };
+  return { key: cleaned.toLowerCase(), label: cleaned };
+}
