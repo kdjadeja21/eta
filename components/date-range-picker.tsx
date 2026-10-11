@@ -4,8 +4,6 @@ import { formatDate, startOfMonth } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
 import {
   subMonths,
-  startOfWeek,
-  endOfWeek,
   endOfMonth,
   startOfYear,
   endOfYear,
@@ -52,13 +50,6 @@ export function DateRangePicker({
 
   const quickRanges = useMemo(
     () => [
-      {
-        label: "This Week",
-        range: {
-          from: startOfWeek(today),
-          to: endOfWeek(today),
-        },
-      },
       {
         label: "This Month",
         range: {
