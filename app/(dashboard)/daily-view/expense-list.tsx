@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { format, isToday } from "date-fns";
+import { isToday } from "date-fns";
 import { ArrowDownUp, Check, Receipt } from "lucide-react";
 import { ExpenseListItem } from "./expense-list-item";
 import type { Expense } from "@/lib/expense-service";
@@ -138,9 +138,6 @@ export function ExpenseList({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <span className="rounded-full bg-card px-3 py-1 text-[12px] font-medium text-muted-foreground shadow-sm dark:shadow-none dark:ring-1 dark:ring-border">
-            {format(selectedDate, "MMM d")}
-          </span>
         </div>
       </div>
 
