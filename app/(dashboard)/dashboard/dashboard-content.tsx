@@ -12,7 +12,7 @@ import type { DateRange } from "react-day-picker";
 import { DateRangePicker } from "@/components/date-range-picker";
 import { StatsCards } from "./stats-cards";
 import { Button } from "@/components/ui/button";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, RotateCcw } from "lucide-react";
 import { AddExpenseDialog } from "./add-expense-dialog";
 import {
   expenseService,
@@ -21,7 +21,9 @@ import {
 } from "@/lib/expense-service";
 import { formatDate, cn } from "@/lib/utils";
 import {
+  clearStoredDateRange,
   getDefaultDateRange,
+  isDefaultDateRange,
   loadStoredDateRange,
   storeDateRange,
 } from "@/lib/dashboard-date-range-storage";
@@ -201,6 +203,7 @@ export function DashboardContent({ userId }: { userId: string }) {
   const formatCurrency = useFormattedCurrency();
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange);
   const [isDateRangeReady, setIsDateRangeReady] = useState(false);
+  const [hasStoredDateRange, setHasStoredDateRange] = useState(false);
 
   const [expenses, setExpenses] = useState<OptimisticExpense[]>([]);
   const [optimisticExpenses, applyOptimistic] = useOptimistic(
@@ -234,9 +237,15 @@ export function DashboardContent({ userId }: { userId: string }) {
 
   useEffect(() => {
     const storedDateRange = loadStoredDateRange(userId);
-    if (storedDateRange) {
-      setDateRange(storedDateRange);
+    const storedCustomRange =
+      storedDateRange && !isDefaultDateRange(storedDateRange)
+        ? storedDateRange
+        : null;
+
+    if (storedCustomRange) {
+      setDateRange(storedCustomRange);
     }
+    setHasStoredDateRange(Boolean(storedCustomRange));
     setIsDateRangeReady(true);
   }, [userId]);
 
@@ -245,8 +254,25 @@ export function DashboardContent({ userId }: { userId: string }) {
       return;
     }
 
+    if (!dateRange.from || !dateRange.to) {
+      return;
+    }
+
+    if (isDefaultDateRange(dateRange)) {
+      clearStoredDateRange(userId);
+      setHasStoredDateRange(false);
+      return;
+    }
+
     storeDateRange(userId, dateRange);
+    setHasStoredDateRange(true);
   }, [userId, dateRange, isDateRangeReady]);
+
+  const handleResetDateRange = () => {
+    clearStoredDateRange(userId);
+    setHasStoredDateRange(false);
+    setDateRange(getDefaultDateRange());
+  };
 
   useEffect(() => {
     if (!isDateRangeReady) {
@@ -576,11 +602,26 @@ export function DashboardContent({ userId }: { userId: string }) {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
-          <DateRangePicker
-            dateRange={dateRange}
-            onDateRangeChange={(range) => range && setDateRange(range)}
-            className="cursor-pointer w-full sm:w-auto"
-          />
+          <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
+            <DateRangePicker
+              dateRange={dateRange}
+              onDateRangeChange={(range) => range && setDateRange(range)}
+              className="min-w-0 flex-1 cursor-pointer sm:flex-none"
+            />
+            {hasStoredDateRange ? (
+              <Button
+                type="button"
+                variant="outline"
+                aria-label="Reset date range"
+                title="Reset to this month"
+                className="h-9 w-9 shrink-0 cursor-pointer px-0 hover:bg-accent hover:text-accent-foreground sm:w-auto sm:px-3"
+                onClick={handleResetDateRange}
+              >
+                <RotateCcw className="h-4 w-4" />
+                <span className="hidden sm:inline">Reset</span>
+              </Button>
+            ) : null}
+          </div>
           <div className="grid w-full grid-cols-2 gap-4 sm:flex sm:w-auto">
             <Button
               className="w-full cursor-pointer sm:w-auto"
