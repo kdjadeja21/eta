@@ -13,12 +13,11 @@ function integerDigitCount(amount: number) {
 }
 
 const SLOW_NUMBERS = 10;
-const SLOW_STEP_MS = 10;
-const FINAL_NUMBER_MS = 100;
+const SLOW_STEP_MS = 100;
 
-/** The last whole number waits 100ms. Each one before it is 10ms faster. */
-function slowStepMs(step: number, wholeSteps: number) {
-  return FINAL_NUMBER_MS - (wholeSteps - step) * SLOW_STEP_MS;
+/** First of the last numbers waits 100ms. Each following number adds another 100ms. */
+function slowStepMs(step: number) {
+  return step * SLOW_STEP_MS;
 }
 
 function roundCents(amount: number) {
@@ -92,7 +91,7 @@ export default function CountUp({
       displayValueRef.current = next;
       setValue(next);
       if (slowStep >= wholeSteps) return;
-      slowTimeoutRef.current = setTimeout(runSlowStep, slowStepMs(slowStep + 1, wholeSteps));
+      slowTimeoutRef.current = setTimeout(runSlowStep, slowStepMs(slowStep + 1));
     };
 
     const startSlow = () => {
@@ -101,7 +100,7 @@ export default function CountUp({
         setValue(target);
         return;
       }
-      slowTimeoutRef.current = setTimeout(runSlowStep, slowStepMs(1, wholeSteps));
+      slowTimeoutRef.current = setTimeout(runSlowStep, slowStepMs(1));
     };
 
     const stop = () => {
