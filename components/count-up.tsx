@@ -13,12 +13,11 @@ function integerDigitCount(amount: number) {
 }
 
 const SLOW_NUMBERS = 10;
-const FIRST_NUMBER_MS = 100;
-const SLOW_STEP_MS = 50;
+const SETTLE_MS = 800;
 
-/** First of the last numbers waits 100ms. Each following number adds another 50ms. */
-function slowStepMs(step: number) {
-  return FIRST_NUMBER_MS + (step - 1) * SLOW_STEP_MS;
+/** Glide through the last stretch. Starts moving and eases to a stop. */
+function easeOutCubic(t: number) {
+  return 1 - Math.pow(1 - t, 3);
 }
 
 function roundCents(amount: number) {
@@ -57,7 +56,6 @@ export default function CountUp({
   const [value, setValue] = useState(0);
   const displayValueRef = useRef(0);
   const frameRef = useRef<number | undefined>(undefined);
-  const slowTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const containerRef = useRef<HTMLSpanElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
@@ -76,44 +74,32 @@ export default function CountUp({
     const direction = distance > 0 ? 1 : -1;
     const wholeSteps = Math.min(SLOW_NUMBERS, Math.floor(Math.abs(distance)));
     const fastEnd = roundCents(target - direction * wholeSteps);
-    let slowStep = 0;
-
-    const clearSlow = () => {
-      if (slowTimeoutRef.current !== undefined) {
-        clearTimeout(slowTimeoutRef.current);
-        slowTimeoutRef.current = undefined;
-      }
-    };
-
-    const runSlowStep = () => {
-      slowStep += 1;
-      const next =
-        slowStep >= wholeSteps ? target : roundCents(fastEnd + direction * slowStep);
-      displayValueRef.current = next;
-      setValue(next);
-      if (slowStep >= wholeSteps) return;
-      slowTimeoutRef.current = setTimeout(runSlowStep, slowStepMs(slowStep + 1));
-    };
-
-    const startSlow = () => {
-      if (wholeSteps === 0) {
-        displayValueRef.current = target;
-        setValue(target);
-        return;
-      }
-      slowTimeoutRef.current = setTimeout(runSlowStep, slowStepMs(1));
-    };
 
     const stop = () => {
       if (frameRef.current !== undefined) {
         cancelAnimationFrame(frameRef.current);
       }
-      clearSlow();
     };
 
-    if (roundCents(fastEnd) === roundCents(start)) {
-      setValue(start);
-      startSlow();
+    const settleFrom = (from: number) => {
+      const settleStart = performance.now();
+      const tickSettle = (now: number) => {
+        const progress = Math.min((now - settleStart) / SETTLE_MS, 1);
+        const next = from + (target - from) * easeOutCubic(progress);
+        if (progress >= 1) {
+          displayValueRef.current = target;
+          setValue(target);
+          return;
+        }
+        displayValueRef.current = next;
+        setValue(next);
+        frameRef.current = requestAnimationFrame(tickSettle);
+      };
+      frameRef.current = requestAnimationFrame(tickSettle);
+    };
+
+    if (wholeSteps === 0 || roundCents(fastEnd) === roundCents(start)) {
+      settleFrom(start);
       return stop;
     }
 
@@ -127,7 +113,7 @@ export default function CountUp({
       if (progress >= 1) {
         displayValueRef.current = fastEnd;
         setValue(fastEnd);
-        startSlow();
+        settleFrom(fastEnd);
         return;
       }
 
