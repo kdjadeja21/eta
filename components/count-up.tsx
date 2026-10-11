@@ -13,11 +13,11 @@ function integerDigitCount(amount: number) {
 }
 
 const SLOW_NUMBERS = 5;
-const SLOW_STEP_MS = 50;
+const SLOW_WAITS_MS = [50, 70, 110, 170, 250];
 
-/** First of the last numbers waits 50ms. Each following number adds another 50ms. */
+/** Each added wait is larger than the one before it: 20, 40, 60, then 80ms. */
 function slowStepMs(step: number) {
-  return step * SLOW_STEP_MS;
+  return SLOW_WAITS_MS[Math.min(step, SLOW_WAITS_MS.length) - 1];
 }
 
 function roundCents(amount: number) {
