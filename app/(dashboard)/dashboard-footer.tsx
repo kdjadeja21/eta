@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, FileBarChart2, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const footerLinks = [
-  { href: "/daily-view", label: "Daily View", icon: CalendarDays },
-  { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
-  { href: "/reports", label: "Reports", icon: FileBarChart2 },
+  { href: "/daily-view", label: "Daily View" },
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/reports", label: "Reports" },
 ] as const;
 
 function isActiveRoute(pathname: string, href: string) {
@@ -17,18 +16,23 @@ function isActiveRoute(pathname: string, href: string) {
 
 export function DashboardFooter() {
   const pathname = usePathname();
+  const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t bg-background px-4 pt-8 pb-[calc(7.25rem+env(safe-area-inset-bottom)+var(--vv-offset-bottom))] md:px-6 md:pb-8">
-      <div className="mx-auto flex max-w-5xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="font-semibold tracking-tight">Expense Tracker</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Daily spending, dashboard totals, and monthly reports.
-          </p>
-        </div>
-        <nav aria-label="Footer" className="flex flex-col sm:flex-row sm:items-center">
-          {footerLinks.map(({ href, label, icon: Icon }) => {
+    <footer className="px-4 pb-[calc(7.5rem+env(safe-area-inset-bottom)+var(--vv-offset-bottom))] md:px-6 md:pb-0">
+      <div className="mx-auto flex max-w-5xl flex-col gap-2 border-t py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:py-3.5">
+        <p className="text-xs leading-5 text-muted-foreground">
+          <span className="font-medium text-foreground">Expense Tracker</span>
+          <span className="px-1.5" aria-hidden>
+            ·
+          </span>
+          <span>© {year}</span>
+        </p>
+        <nav
+          aria-label="Footer"
+          className="flex flex-wrap items-center gap-x-4 gap-y-1"
+        >
+          {footerLinks.map(({ href, label }) => {
             const isActive = isActiveRoute(pathname, href);
 
             return (
@@ -37,13 +41,12 @@ export function DashboardFooter() {
                 href={href}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "inline-flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors",
+                  "py-1 text-xs font-medium transition-colors",
                   isActive
                     ? "text-foreground"
-                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                <Icon className="h-4 w-4 shrink-0" aria-hidden />
                 {label}
               </Link>
             );
