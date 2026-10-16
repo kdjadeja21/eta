@@ -10,12 +10,14 @@ import type { Expense } from "@/lib/expense-service";
 import { ExpenseType, formatExpenseType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { summarizeDay } from "./summarize-day";
+import { WeeklyFastDayMessage } from "../weekly-fast-day-message";
 
 interface DailyDesktopBriefProps {
   selectedDate: Date;
   expenses: Expense[];
   totalSpent: number;
   trendPercent: number | null;
+  weeklyFastDayCount: number;
   isLoading: boolean;
   canGoNext: boolean;
   onPrev: () => void;
@@ -28,6 +30,7 @@ export function DailyDesktopBrief({
   expenses,
   totalSpent,
   trendPercent,
+  weeklyFastDayCount,
   isLoading,
   canGoNext,
   onPrev,
@@ -87,6 +90,11 @@ export function DailyDesktopBrief({
             ? "Loading this day…"
             : daySummary(transactionCount, trendPercent)}
         </p>
+        <WeeklyFastDayMessage
+          count={weeklyFastDayCount}
+          isLoading={isLoading}
+          className="mt-4 text-left"
+        />
       </div>
 
       <TypeMix
