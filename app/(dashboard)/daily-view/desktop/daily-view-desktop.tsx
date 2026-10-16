@@ -9,6 +9,7 @@ export interface DailyViewDesktopProps {
   expenses: Expense[];
   totalSpent: number;
   trendPercent: number | null;
+  weeklyFastDayCount: number;
   isLoading: boolean;
   canGoNext: boolean;
   onPrev: () => void;
@@ -24,6 +25,7 @@ export function DailyViewDesktop({
   expenses,
   totalSpent,
   trendPercent,
+  weeklyFastDayCount,
   isLoading,
   canGoNext,
   onPrev,
@@ -41,6 +43,7 @@ export function DailyViewDesktop({
           expenses={expenses}
           totalSpent={totalSpent}
           trendPercent={trendPercent}
+          weeklyFastDayCount={weeklyFastDayCount}
           isLoading={isLoading}
           canGoNext={canGoNext}
           onPrev={onPrev}

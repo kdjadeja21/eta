@@ -1,6 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Expense } from "@/lib/expense-service";
-import { eachDayOfInterval, formatDate } from "@/lib/utils";
+import {
+  buildDailyTotals,
+  countExpenseFastDaysInInterval,
+} from "@/lib/expense-fast-utils";
 import { Leaf } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 
@@ -36,17 +39,10 @@ function getExpenseFastDays(expenses: Expense[], dateRange: DateRange) {
     return 0;
   }
 
-  const dailyTotals = expenses.reduce((totals, expense) => {
-    const dateKey = formatDate(expense.date, "yyyy-MM-dd");
-    totals[dateKey] = (totals[dateKey] ?? 0) + expense.amount;
-    return totals;
-  }, {} as Record<string, number>);
-
-  return eachDayOfInterval({
-    start: dateRange.from,
-    end: dateRange.to,
-  }).filter((date) => {
-    const dateKey = formatDate(date, "yyyy-MM-dd");
-    return (dailyTotals[dateKey] ?? 0) === 0;
-  }).length;
+  const dailyTotals = buildDailyTotals(expenses);
+  return countExpenseFastDaysInInterval(
+    dailyTotals,
+    dateRange.from,
+    dateRange.to,
+  );
 }

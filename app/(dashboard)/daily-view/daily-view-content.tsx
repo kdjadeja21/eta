@@ -10,11 +10,17 @@ import {
 import {
   addDays,
   endOfDay,
+  endOfWeek,
   isAfter,
   isSameDay,
   startOfDay,
+  startOfWeek,
   subDays,
 } from "date-fns";
+import {
+  countCompletedExpenseFastDaysInWeek,
+  EXPENSE_FAST_WEEK_STARTS_ON,
+} from "@/lib/expense-fast-utils";
 import {
   expenseService,
   type Expense,
@@ -37,6 +43,7 @@ import {
 import { AddExpenseDialog } from "../dashboard/add-expense-dialog";
 import { DailyHeroCard } from "./daily-hero-card";
 import { ExpenseList } from "./expense-list";
+import { WeeklyFastDayMessage } from "./weekly-fast-day-message";
 import { DailyViewDesktop } from "./desktop/daily-view-desktop";
 import { useRegisterMobileAddExpense } from "../mobile-add-expense";
 import {
@@ -88,6 +95,7 @@ export function DailyViewContent({
 }: DailyViewContentProps) {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [weekExpenses, setWeekExpenses] = useState<Expense[]>([]);
   const [yesterdayTotal, setYesterdayTotal] = useState(0);
   const [optimisticExpenses, applyOptimistic] = useOptimistic(
     expenses,
@@ -99,6 +107,10 @@ export function DailyViewContent({
     0,
   );
   const trendPercent = calcTrendPercent(totalSpent, yesterdayTotal);
+  const weeklyFastDayCount = countCompletedExpenseFastDaysInWeek(
+    weekExpenses,
+    selectedDate,
+  );
 
   const [isAddOpen, setIsAddOpen] = useState(initialAddOpen);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -116,13 +128,22 @@ export function DailyViewContent({
       const dayEnd = endOfDay(selectedDate);
       const yesterdayStart = startOfDay(subDays(selectedDate, 1));
       const yesterdayEnd = endOfDay(subDays(selectedDate, 1));
+      const weekStart = startOfWeek(selectedDate, {
+        weekStartsOn: EXPENSE_FAST_WEEK_STARTS_ON,
+      });
+      const weekEnd = endOfWeek(selectedDate, {
+        weekStartsOn: EXPENSE_FAST_WEEK_STARTS_ON,
+      });
 
-      const [dayExpenses, previousDayTotal] = await Promise.all([
-        expenseService.getExpenses(userId, dayStart, dayEnd),
-        expenseService.getTotalExpenses(userId, yesterdayStart, yesterdayEnd),
-      ]);
+      const [dayExpenses, previousDayTotal, loadedWeekExpenses] =
+        await Promise.all([
+          expenseService.getExpenses(userId, dayStart, dayEnd),
+          expenseService.getTotalExpenses(userId, yesterdayStart, yesterdayEnd),
+          expenseService.getExpenses(userId, weekStart, weekEnd),
+        ]);
 
       setExpenses(dayExpenses);
+      setWeekExpenses(loadedWeekExpenses);
       setYesterdayTotal(previousDayTotal);
     } catch (error) {
       console.error("Error fetching daily expenses:", error);
@@ -177,6 +198,7 @@ export function DailyViewContent({
         if (showsOnSelectedDay) {
           setExpenses((prev) => [savedExpense, ...prev]);
         }
+        void fetchDayData();
       } catch (error) {
         console.error("Error adding expense:", error);
         showErrorToast("Failed to add expense");
@@ -201,6 +223,7 @@ export function DailyViewContent({
             )
             .filter((expense) => isSameDay(expense.date, selectedDate)),
         );
+        void fetchDayData();
       } catch (error) {
         console.error("Error updating expense:", error);
         showErrorToast("Failed to update expense");
@@ -219,6 +242,7 @@ export function DailyViewContent({
         await expenseService.deleteExpense(id);
         showSuccessToast("Expense deleted");
         setExpenses((prev) => prev.filter((expense) => expense.id !== id));
+        void fetchDayData();
       } catch (error) {
         console.error("Error deleting expense:", error);
         showErrorToast("Failed to delete expense");
@@ -241,6 +265,12 @@ export function DailyViewContent({
             onGoToToday={goToToday}
           />
 
+          <WeeklyFastDayMessage
+            count={weeklyFastDayCount}
+            isLoading={isLoading}
+            className="mt-4"
+          />
+
           <ExpenseList
             expenses={optimisticExpenses}
             selectedDate={selectedDate}
@@ -256,6 +286,7 @@ export function DailyViewContent({
         expenses={optimisticExpenses}
         totalSpent={totalSpent}
         trendPercent={trendPercent}
+        weeklyFastDayCount={weeklyFastDayCount}
         isLoading={isLoading}
         canGoNext={canGoNext}
         onPrev={goToPrev}
