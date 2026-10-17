@@ -63,6 +63,16 @@ function calcTrendPercent(current: number, previous: number): number | null {
   return Math.round(((current - previous) / previous) * 100);
 }
 
+function isInExpenseFastWeek(date: Date, selectedDate: Date) {
+  const weekStart = startOfWeek(selectedDate, {
+    weekStartsOn: EXPENSE_FAST_WEEK_STARTS_ON,
+  });
+  const weekEnd = endOfWeek(selectedDate, {
+    weekStartsOn: EXPENSE_FAST_WEEK_STARTS_ON,
+  });
+  return date >= weekStart && date <= weekEnd;
+}
+
 const scrollResetTimers = new Set<number>();
 
 function scrollPageToTop() {
@@ -187,6 +197,7 @@ export function DailyViewContent({
     };
     const pendingExpense = createPendingExpense(expenseData);
     const showsOnSelectedDay = isSameDay(pendingExpense.date, selectedDate);
+    const yesterday = subDays(selectedDate, 1);
 
     startTransition(async () => {
       if (showsOnSelectedDay) {
@@ -198,7 +209,12 @@ export function DailyViewContent({
         if (showsOnSelectedDay) {
           setExpenses((prev) => [savedExpense, ...prev]);
         }
-        void fetchDayData();
+        if (isInExpenseFastWeek(savedExpense.date, selectedDate)) {
+          setWeekExpenses((prev) => [savedExpense, ...prev]);
+        }
+        if (isSameDay(savedExpense.date, yesterday)) {
+          setYesterdayTotal((total) => total + savedExpense.amount);
+        }
       } catch (error) {
         console.error("Error adding expense:", error);
         showErrorToast("Failed to add expense");
@@ -209,6 +225,8 @@ export function DailyViewContent({
   const handleUpdateExpense = async (data: ExpenseFormData) => {
     if (!editingExpense?.id) return;
     const id = editingExpense.id;
+    const previousExpense = editingExpense;
+    const yesterday = subDays(selectedDate, 1);
 
     startTransition(async () => {
       applyOptimistic({ type: "update", id, patch: data });
@@ -223,7 +241,29 @@ export function DailyViewContent({
             )
             .filter((expense) => isSameDay(expense.date, selectedDate)),
         );
-        void fetchDayData();
+        setWeekExpenses((prev) => {
+          const nextExpense = { ...previousExpense, ...data };
+          const without = prev.filter((expense) => expense.id !== id);
+          if (!isInExpenseFastWeek(nextExpense.date, selectedDate)) {
+            return without;
+          }
+          if (prev.some((expense) => expense.id === id)) {
+            return prev.map((expense) =>
+              expense.id === id ? { ...expense, ...data } : expense,
+            );
+          }
+          return [nextExpense, ...without];
+        });
+        const wasYesterday = isSameDay(previousExpense.date, yesterday);
+        const nowYesterday = isSameDay(data.date ?? previousExpense.date, yesterday);
+        if (wasYesterday || nowYesterday) {
+          setYesterdayTotal((total) => {
+            let next = total;
+            if (wasYesterday) next -= previousExpense.amount;
+            if (nowYesterday) next += data.amount ?? previousExpense.amount;
+            return next;
+          });
+        }
       } catch (error) {
         console.error("Error updating expense:", error);
         showErrorToast("Failed to update expense");
@@ -242,7 +282,7 @@ export function DailyViewContent({
         await expenseService.deleteExpense(id);
         showSuccessToast("Expense deleted");
         setExpenses((prev) => prev.filter((expense) => expense.id !== id));
-        void fetchDayData();
+        setWeekExpenses((prev) => prev.filter((expense) => expense.id !== id));
       } catch (error) {
         console.error("Error deleting expense:", error);
         showErrorToast("Failed to delete expense");
